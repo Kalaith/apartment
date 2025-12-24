@@ -1,0 +1,157 @@
+{
+    "archetypes": [
+        {
+            "id": "student",
+            "name": "Student",
+            "description": "Budget-conscious, tolerates some issues",
+            "spawn_weight": 40,
+            "preferences": {
+                "rent_sensitivity": 0.9,
+                "condition_sensitivity": 0.3,
+                "noise_sensitivity": 0.4,
+                "design_sensitivity": 0.2,
+                "ideal_rent_max": 700,
+                "min_acceptable_condition": 30,
+                "prefers_quiet": false,
+                "preferred_design": null,
+                "hates_design": null
+            },
+            "name_pool": {
+                "first_names": [
+                    "Alex",
+                    "Jordan",
+                    "Casey",
+                    "Riley",
+                    "Morgan",
+                    "Sam",
+                    "Taylor",
+                    "Jamie",
+                    "Quinn",
+                    "Avery"
+                ],
+                "last_initials": [
+                    "A",
+                    "B",
+                    "C",
+                    "D",
+                    "E",
+                    "F",
+                    "G",
+                    "H",
+                    "J",
+                    "K",
+                    "L",
+                    "M",
+                    "N",
+                    "P",
+                    "R",
+                    "S",
+                    "T",
+                    "W"
+                ]
+            }
+        },
+        {
+            "id": "professional",
+            "name": "Professional",
+            "description": "Values quality and quiet",
+            "spawn_weight": 35,
+            "preferences": {
+                "rent_sensitivity": 0.4,
+                "condition_sensitivity": 0.8,
+                "noise_sensitivity": 0.9,
+                "design_sensitivity": 0.5,
+                "ideal_rent_max": 1200,
+                "min_acceptable_condition": 60,
+                "prefers_quiet": true,
+                "preferred_design": null,
+                "hates_design": null
+            },
+            "name_pool": {
+                "first_names": [
+                    "Michael",
+                    "Sarah",
+                    "David",
+                    "Jennifer",
+                    "Robert",
+                    "Lisa",
+                    "James",
+                    "Amanda",
+                    "William",
+                    "Elizabeth"
+                ],
+                "last_initials": [
+                    "A",
+                    "B",
+                    "C",
+                    "D",
+                    "E",
+                    "F",
+                    "G",
+                    "H",
+                    "J",
+                    "K",
+                    "L",
+                    "M",
+                    "N",
+                    "P",
+                    "R",
+                    "S",
+                    "T",
+                    "W"
+                ]
+            }
+        },
+        {
+            "id": "artist",
+            "name": "Artist",
+            "description": "Seeks creative, cozy spaces",
+            "spawn_weight": 25,
+            "preferences": {
+                "rent_sensitivity": 0.6,
+                "condition_sensitivity": 0.5,
+                "noise_sensitivity": 0.5,
+                "design_sensitivity": 0.95,
+                "ideal_rent_max": 900,
+                "min_acceptable_condition": 40,
+                "prefers_quiet": false,
+                "preferred_design": "cozy",
+                "hates_design": "bare"
+            },
+            "name_pool": {
+                "first_names": [
+                    "Luna",
+                    "River",
+                    "Sage",
+                    "Phoenix",
+                    "Indigo",
+                    "Willow",
+                    "Ash",
+                    "Sky",
+                    "Ocean",
+                    "Storm"
+                ],
+                "last_initials": [
+                    "A",
+                    "B",
+                    "C",
+                    "D",
+                    "E",
+                    "F",
+                    "G",
+                    "H",
+                    "J",
+                    "K",
+                    "L",
+                    "M",
+                    "N",
+                    "P",
+                    "R",
+                    "S",
+                    "T",
+                    "W"
+                ]
+            }
+        }
+    ]
+}

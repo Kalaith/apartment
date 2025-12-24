@@ -1,0 +1,72 @@
+{
+    "templates": [
+        {
+            "id": "mvp_default",
+            "name": "Sunset Apartments",
+            "floors": 3,
+            "units_per_floor": 2,
+            "hallway_condition": 60,
+            "apartments": [
+                {
+                    "unit_number": "1A",
+                    "floor": 1,
+                    "size": "small",
+                    "base_noise": "high",
+                    "initial_condition": 50,
+                    "initial_design": "bare",
+                    "initial_rent": 600
+                },
+                {
+                    "unit_number": "1B",
+                    "floor": 1,
+                    "size": "medium",
+                    "base_noise": "low",
+                    "initial_condition": 55,
+                    "initial_design": "bare",
+                    "initial_rent": 900
+                },
+                {
+                    "unit_number": "2A",
+                    "floor": 2,
+                    "size": "small",
+                    "base_noise": "high",
+                    "initial_condition": 45,
+                    "initial_design": "bare",
+                    "initial_rent": 650
+                },
+                {
+                    "unit_number": "2B",
+                    "floor": 2,
+                    "size": "medium",
+                    "base_noise": "low",
+                    "initial_condition": 60,
+                    "initial_design": "practical",
+                    "initial_rent": 950
+                },
+                {
+                    "unit_number": "3A",
+                    "floor": 3,
+                    "size": "medium",
+                    "base_noise": "low",
+                    "initial_condition": 40,
+                    "initial_design": "bare",
+                    "initial_rent": 850
+                },
+                {
+                    "unit_number": "3B",
+                    "floor": 3,
+                    "size": "small",
+                    "base_noise": "low",
+                    "initial_condition": 70,
+                    "initial_design": "cozy",
+                    "initial_rent": 800
+                }
+            ],
+            "initial_tenant": {
+                "apartment_unit": "2B",
+                "archetype": "professional",
+                "name": "Sarah M."
+            }
+        }
+    ]
+}

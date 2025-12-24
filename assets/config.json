@@ -1,0 +1,48 @@
+{
+  "version": "0.1.0",
+  
+  "starting_conditions": {
+    "player_money": 5000,
+    "starting_tenants": 1,
+    "building_floors": 3,
+    "units_per_floor": 2
+  },
+  
+  "economy": {
+    "repair_cost_per_point": 10,
+    "hallway_repair_cost_per_point": 15,
+    "design_upgrade_costs": {
+      "bare_to_practical": 500,
+      "practical_to_cozy": 1000
+    },
+    "soundproofing_cost": 300,
+    "base_rent": {
+      "small": 600,
+      "medium": 900
+    }
+  },
+  
+  "decay": {
+    "apartment_per_tick": 2,
+    "hallway_per_tick": 1
+  },
+  
+  "happiness": {
+    "base": 50,
+    "min_for_victory": 60,
+    "leave_threshold": 0,
+    "unhappy_threshold": 30,
+    "tenure_bonus_max": 12
+  },
+  
+  "win_conditions": {
+    "full_occupancy_required": true,
+    "min_ticks_for_victory": 6
+  },
+  
+  "applications": {
+    "expire_after_ticks": 3,
+    "base_per_vacancy": 0.5,
+    "appeal_bonus_divisor": 50
+  }
+}

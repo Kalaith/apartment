@@ -23,8 +23,8 @@ impl Game {
         }
     }
 
-    pub fn draw(&self) {
-        match &self.state {
+    pub fn draw(&mut self) {
+        match &mut self.state {
             GameState::Menu(s) => s.draw(),
             GameState::Gameplay(s) => s.draw(),
             GameState::Results(s) => s.draw(),
