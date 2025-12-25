@@ -1,4 +1,6 @@
+
 use super::{Apartment, Building, DesignType};
+use serde::{Deserialize, Serialize};
 
 /// Costs for various upgrades
 pub mod costs {
@@ -11,7 +13,7 @@ pub mod costs {
     pub const INSTALL_LAUNDRY: i32 = 2000;
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum UpgradeAction {
     RepairApartment { apartment_id: u32, amount: i32 },
     UpgradeDesign { apartment_id: u32 },
@@ -22,6 +24,25 @@ pub enum UpgradeAction {
 }
 
 impl UpgradeAction {
+    /// Get a user-friendly label for this action
+    pub fn label(&self, building: &Building) -> String {
+        match self {
+            UpgradeAction::RepairApartment { amount, .. } => format!("Repair +{}", amount),
+            UpgradeAction::UpgradeDesign { apartment_id } => {
+                if let Some(apt) = building.get_apartment(*apartment_id) {
+                    if let Some(next) = apt.design.next_upgrade() {
+                        return format!("Upgrade to {:?}", next);
+                    }
+                }
+                "Max Design".to_string()
+            }
+            UpgradeAction::AddSoundproofing { .. } => "Add Soundproofing".to_string(),
+            UpgradeAction::RenovateKitchen { .. } => "Renovate Kitchen".to_string(),
+            UpgradeAction::RepairHallway { amount } => format!("Repair Hallway +{}", amount),
+            UpgradeAction::InstallLaundry => "Install Laundry".to_string(),
+        }
+    }
+
     /// Calculate the cost of this upgrade
     pub fn cost(&self, building: &Building) -> Option<i32> {
         match self {
@@ -65,10 +86,7 @@ impl UpgradeAction {
         }
     }
     
-    /// Check if this upgrade is valid (can be performed)
-    pub fn is_valid(&self, building: &Building) -> bool {
-        self.cost(building).is_some()
-    }
+
 }
 
 /// Apply an upgrade action to the building

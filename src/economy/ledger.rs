@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use super::{Transaction, TransactionType};
 use serde::{Deserialize, Serialize};
 

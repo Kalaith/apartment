@@ -1,3 +1,4 @@
+
 use crate::building::Apartment;
 use super::{Tenant, happiness};
 
@@ -114,15 +115,4 @@ pub fn find_best_match<'a>(
         .max_by_key(|(_, result)| result.score)
 }
 
-/// Get all apartments a tenant would consider (meets minimum)
-pub fn get_acceptable_apartments<'a>(
-    tenant: &Tenant,
-    apartments: &'a [&'a Apartment]
-) -> Vec<(&'a Apartment, MatchResult)> {
-    apartments
-        .iter()
-        .filter(|apt| apt.is_vacant())
-        .map(|apt| (*apt, calculate_match_score(tenant, apt)))
-        .filter(|(_, result)| result.meets_minimum)
-        .collect()
-}
+

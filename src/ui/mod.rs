@@ -16,7 +16,7 @@ pub use application_panel::draw_application_panel;
 pub use notifications::draw_notifications;
 pub use header::draw_header;
 pub use visuals::{FloatingText, Tween};
-pub use city_view::CityMapAction;
+
 
 use serde::{Deserialize, Serialize};
 
@@ -36,6 +36,8 @@ impl Default for Selection {
     }
 }
 
+use crate::building::UpgradeAction;
+
 /// UI action intents (returned to game logic)
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum UiAction {
@@ -45,11 +47,9 @@ pub enum UiAction {
     SelectHallway,
     ClearSelection,
     
-    // Upgrade actions
-    RepairApartment { apartment_id: u32, amount: i32 },
-    UpgradeDesign { apartment_id: u32 },
-    AddSoundproofing { apartment_id: u32 },
-    RepairHallway { amount: i32 },
+    // Generic Upgrade Action
+    UpgradeAction(UpgradeAction),
+
     SetRent { apartment_id: u32, new_rent: i32 },
     
     // Tenant actions

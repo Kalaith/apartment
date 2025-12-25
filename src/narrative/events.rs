@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use serde::{Deserialize, Serialize};
 use macroquad::rand::{ChooseRandom, gen_range};
 
@@ -190,7 +191,7 @@ impl NarrativeEventSystem {
         month: u32,
         neighborhoods: &[crate::city::Neighborhood],
         buildings: &[crate::building::Building],
-        tenants: &[crate::tenant::Tenant],
+        _tenants: &[crate::tenant::Tenant],
     ) {
         // Chance for neighborhood news
         if gen_range(0, 100) < 20 {
@@ -222,7 +223,7 @@ impl NarrativeEventSystem {
         }
 
         // Building milestones
-        for (i, building) in buildings.iter().enumerate() {
+        for (_i, building) in buildings.iter().enumerate() {
             if building.occupancy_count() == building.apartments.len() && gen_range(0, 100) < 30 {
                 let event = NarrativeEvent::news(
                     0, month,
@@ -323,7 +324,7 @@ impl NarrativeEventSystem {
         event
     }
 
-    fn generate_offer_event(&self, month: u32, building_id: u32, building: &crate::building::Building) -> NarrativeEvent {
+    fn generate_offer_event(&self, month: u32, _building_id: u32, building: &crate::building::Building) -> NarrativeEvent {
         let base_value = 50000 * building.apartments.len() as i32;
         let offer = (base_value as f32 * gen_range(0.9, 1.3)) as i32;
 

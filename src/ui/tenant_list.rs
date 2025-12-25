@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use macroquad::prelude::*;
 use crate::tenant::Tenant;
 use super::{common::*, UiAction};

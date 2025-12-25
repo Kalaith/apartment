@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use serde::{Deserialize, Serialize};
 use macroquad::rand::{ChooseRandom, gen_range};
 use super::TenantArchetype;

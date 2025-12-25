@@ -1,7 +1,7 @@
 use macroquad::prelude::*;
 use crate::building::{Apartment, Building, DesignType, ApartmentSize, NoiseLevel};
 use crate::tenant::Tenant;
-use crate::economy::UpgradeCosts;
+
 use super::{common::*, UiAction};
 use crate::assets::AssetManager;
 
@@ -140,7 +140,7 @@ pub fn draw_apartment_panel(
             draw_text(&tenant.name, text_x, y + 16.0, 20.0, colors::TEXT);
             draw_text(&format!("{:?}", tenant.archetype), text_x, y + 36.0, 16.0, colors::TEXT_DIM);
             
-            let months_y = if has_portrait { y + 85.0 } else { y + 60.0 };
+            let _months_y = if has_portrait { y + 85.0 } else { y + 60.0 };
              // Use original y increment if no portrait
              if has_portrait {
                  y += 85.0; 
@@ -196,46 +196,18 @@ pub fn draw_apartment_panel(
     let btn_w = panel_w - 30.0;
     let btn_h = 36.0;
     
-    // Repair button
-    if apt.condition < 100 {
-        let repair_amount = (100 - apt.condition).min(25);
-        let repair_cost = UpgradeCosts::repair_cost(repair_amount);
-        let can_afford = money >= repair_cost;
-        
-        // We can draw icon inside button if we write a custom button function or just overlay it.
-        // For now sticking to text button but adding icon next to it if we want.
-        
-        let label = format!("Repair +{} (${})", repair_amount, repair_cost);
-        if button(content_x, y, btn_w, btn_h, &label, can_afford) {
-            action = Some(UiAction::RepairApartment {
-                apartment_id: apt.id,
-                amount: repair_amount,
-            });
-        }
-        y += btn_h + 8.0;
-    }
+    // Dynamic upgrades from building/upgrades.rs
+    let available = crate::building::upgrades::available_apartment_upgrades(apt);
     
-    // Design upgrade button
-    if let Some(next_design) = apt.design.next_upgrade() {
-        if let Some(cost) = UpgradeCosts::design_upgrade_cost(&apt.design) {
+    for upgrade in available {
+        if let Some(cost) = upgrade.cost(_building) {
             let can_afford = money >= cost;
-            let label = format!("Upgrade to {:?} (${})", next_design, cost);
+            let label = format!("{} (${})", upgrade.label(_building), cost);
             
             if button(content_x, y, btn_w, btn_h, &label, can_afford) {
-                action = Some(UiAction::UpgradeDesign { apartment_id: apt.id });
+                action = Some(UiAction::UpgradeAction(upgrade));
             }
             y += btn_h + 8.0;
-        }
-    }
-    
-    // Soundproofing button
-    if !apt.has_soundproofing {
-        let cost = UpgradeCosts::SOUNDPROOFING;
-        let can_afford = money >= cost;
-        let label = format!("Add Soundproofing (${})", cost);
-        
-        if button(content_x, y, btn_w, btn_h, &label, can_afford) {
-            action = Some(UiAction::AddSoundproofing { apartment_id: apt.id });
         }
     }
     
@@ -281,17 +253,20 @@ pub fn draw_hallway_panel(building: &Building, money: i32, offset_x: f32, assets
     draw_text(&format!("Building Appeal: {}", appeal), content_x, y, 18.0, colors::ACCENT);
     y += 50.0;
     
-    // Repair button (mouse-clickable)
-    if building.hallway_condition < 100 {
-        let repair_amount = (100 - building.hallway_condition).min(20);
-        let repair_cost = UpgradeCosts::hallway_repair_cost(repair_amount);
-        let can_afford = money >= repair_cost;
-        
-        let label = format!("Repair +{} (${})", repair_amount, repair_cost);
-        let btn_w = panel_w - 30.0;
-        
-        if button(content_x, y, btn_w, 36.0, &label, can_afford) {
-            action = Some(UiAction::RepairHallway { amount: repair_amount });
+    // Dynamic upgrades
+    let available = crate::building::upgrades::available_building_upgrades(building);
+    
+    let btn_w = panel_w - 30.0;
+    
+    for upgrade in available {
+        if let Some(cost) = upgrade.cost(building) {
+            let can_afford = money >= cost;
+            let label = format!("{} (${})", upgrade.label(building), cost);
+            
+            if button(content_x, y, btn_w, 36.0, &label, can_afford) {
+                action = Some(UiAction::UpgradeAction(upgrade));
+            }
+            y += 44.0;
         }
     }
     

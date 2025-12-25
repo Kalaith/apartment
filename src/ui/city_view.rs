@@ -1,7 +1,7 @@
+#![allow(dead_code)]
 use macroquad::prelude::*;
 use crate::city::{City, Neighborhood, NeighborhoodType, PropertyListing};
-use crate::ui::common::*;
-use crate::ui::{UiAction, colors};
+use crate::ui::colors;
 use crate::assets::AssetManager;
 
 /// Draw the city map showing all neighborhoods
@@ -64,7 +64,7 @@ fn draw_neighborhood_cell(
     y: f32, 
     width: f32, 
     height: f32,
-    city: &City,
+    _city: &City,
     assets: &AssetManager,
 ) -> Option<CityMapAction> {
     let mouse = mouse_position();
@@ -237,7 +237,7 @@ pub fn draw_portfolio_panel(city: &City, selected_building: usize, assets: &Asse
         
         // Building Icon/Thumbnail?
         // Maybe just use a generic icon for now or small building exterior
-        if let Some(tex) = assets.get_texture("icon_building") { // Assuming we have one, or reuse building_exterior
+        if let Some(_tex) = assets.get_texture("icon_building") { // Assuming we have one, or reuse building_exterior
              // If we don't have icon_building, we can use building_exterior scaled down?
              // But building_exterior is large. Let's just skip for now or use rectangle.
         }

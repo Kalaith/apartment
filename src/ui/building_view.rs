@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use macroquad::prelude::*;
 use crate::building::{Building, Apartment, DesignType, NoiseLevel, ApartmentSize};
 use crate::tenant::Tenant;

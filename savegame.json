@@ -1,277 +1,331 @@
 {
-  "building": {
-    "name": "Sunset Apartments",
-    "apartments": [
+  "city": {
+    "name": "Metropolis",
+    "neighborhoods": [
       {
         "id": 0,
-        "unit_number": "1A",
-        "floor": 1,
-        "condition": 98,
-        "design": "Practical",
-        "size": "Medium",
-        "base_noise": "High",
-        "has_soundproofing": true,
-        "kitchen_level": 0,
-        "rent_price": 900,
-        "tenant_id": null
+        "neighborhood_type": "Downtown",
+        "name": "Central District",
+        "stats": {
+          "crime_level": 43,
+          "transit_access": 95,
+          "walkability": 90,
+          "school_quality": 50,
+          "services": 95,
+          "rent_demand": 1.23,
+          "gentrification": 80
+        },
+        "building_ids": [],
+        "available_slots": 3,
+        "reputation": 50
       },
       {
         "id": 1,
-        "unit_number": "1B",
-        "floor": 1,
-        "condition": 98,
-        "design": "Bare",
-        "size": "Small",
-        "base_noise": "High",
-        "has_soundproofing": true,
-        "kitchen_level": 0,
-        "rent_price": 600,
-        "tenant_id": null
+        "neighborhood_type": "Suburbs",
+        "name": "Greenfield Heights",
+        "stats": {
+          "crime_level": 18,
+          "transit_access": 40,
+          "walkability": 30,
+          "school_quality": 85,
+          "services": 60,
+          "rent_demand": 1.02,
+          "gentrification": 20
+        },
+        "building_ids": [
+          0
+        ],
+        "available_slots": 3,
+        "reputation": 50
       },
       {
         "id": 2,
-        "unit_number": "2A",
-        "floor": 2,
-        "condition": 98,
-        "design": "Practical",
-        "size": "Small",
-        "base_noise": "High",
-        "has_soundproofing": false,
-        "kitchen_level": 0,
-        "rent_price": 600,
-        "tenant_id": 7
+        "neighborhood_type": "Industrial",
+        "name": "Old Docks",
+        "stats": {
+          "crime_level": 52,
+          "transit_access": 60,
+          "walkability": 50,
+          "school_quality": 35,
+          "services": 45,
+          "rent_demand": 1.04,
+          "gentrification": 60
+        },
+        "building_ids": [],
+        "available_slots": 3,
+        "reputation": 50
       },
       {
         "id": 3,
-        "unit_number": "2B",
-        "floor": 2,
-        "condition": 98,
-        "design": "Practical",
-        "size": "Medium",
-        "base_noise": "Low",
-        "has_soundproofing": true,
-        "kitchen_level": 0,
-        "rent_price": 900,
-        "tenant_id": null
-      },
-      {
-        "id": 4,
-        "unit_number": "3A",
-        "floor": 3,
-        "condition": 96,
-        "design": "Cozy",
-        "size": "Medium",
-        "base_noise": "High",
-        "has_soundproofing": true,
-        "kitchen_level": 0,
-        "rent_price": 900,
-        "tenant_id": 9
-      },
-      {
-        "id": 5,
-        "unit_number": "3B",
-        "floor": 3,
-        "condition": 98,
-        "design": "Practical",
-        "size": "Small",
-        "base_noise": "Low",
-        "has_soundproofing": false,
-        "kitchen_level": 0,
-        "rent_price": 600,
-        "tenant_id": 1
+        "neighborhood_type": "Historic",
+        "name": "Heritage Row",
+        "stats": {
+          "crime_level": 28,
+          "transit_access": 70,
+          "walkability": 75,
+          "school_quality": 65,
+          "services": 80,
+          "rent_demand": 1.12,
+          "gentrification": 40
+        },
+        "building_ids": [],
+        "available_slots": 3,
+        "reputation": 50
       }
     ],
-    "hallway_condition": 57,
-    "rent_multiplier": 1.0,
-    "has_laundry": false
+    "buildings": [
+      {
+        "name": "Sunset Apartments",
+        "apartments": [
+          {
+            "id": 0,
+            "unit_number": "1A",
+            "floor": 1,
+            "condition": 50,
+            "design": "Bare",
+            "size": "Medium",
+            "base_noise": "High",
+            "has_soundproofing": false,
+            "kitchen_level": 0,
+            "rent_price": 900,
+            "tenant_id": null
+          },
+          {
+            "id": 1,
+            "unit_number": "1B",
+            "floor": 1,
+            "condition": 50,
+            "design": "Bare",
+            "size": "Small",
+            "base_noise": "High",
+            "has_soundproofing": false,
+            "kitchen_level": 0,
+            "rent_price": 600,
+            "tenant_id": null
+          },
+          {
+            "id": 2,
+            "unit_number": "2A",
+            "floor": 2,
+            "condition": 50,
+            "design": "Bare",
+            "size": "Small",
+            "base_noise": "High",
+            "has_soundproofing": false,
+            "kitchen_level": 0,
+            "rent_price": 600,
+            "tenant_id": null
+          },
+          {
+            "id": 3,
+            "unit_number": "2B",
+            "floor": 2,
+            "condition": 50,
+            "design": "Bare",
+            "size": "Medium",
+            "base_noise": "Low",
+            "has_soundproofing": false,
+            "kitchen_level": 0,
+            "rent_price": 900,
+            "tenant_id": null
+          },
+          {
+            "id": 4,
+            "unit_number": "3A",
+            "floor": 3,
+            "condition": 50,
+            "design": "Bare",
+            "size": "Medium",
+            "base_noise": "High",
+            "has_soundproofing": false,
+            "kitchen_level": 0,
+            "rent_price": 900,
+            "tenant_id": null
+          },
+          {
+            "id": 5,
+            "unit_number": "3B",
+            "floor": 3,
+            "condition": 50,
+            "design": "Bare",
+            "size": "Small",
+            "base_noise": "Low",
+            "has_soundproofing": false,
+            "kitchen_level": 0,
+            "rent_price": 600,
+            "tenant_id": null
+          }
+        ],
+        "hallway_condition": 60,
+        "rent_multiplier": 1.0,
+        "has_laundry": false
+      }
+    ],
+    "market": {
+      "listings": [
+        {
+          "id": 0,
+          "name": "City Court",
+          "neighborhood_id": 0,
+          "condition": "Condemned",
+          "num_floors": 3,
+          "units_per_floor": 2,
+          "asking_price": 177120,
+          "existing_tenants": 0,
+          "months_on_market": 0,
+          "available_financing": [
+            "Cash",
+            {
+              "Mortgage": {
+                "down_payment_percent": 0.2,
+                "interest_rate": 0.06,
+                "term_months": 120
+              }
+            },
+            {
+              "Investor": {
+                "investment_percent": 0.5,
+                "profit_share_percent": 0.3
+              }
+            }
+          ],
+          "notes": [
+            "⚠️ Major renovation required",
+            "📈 Area rapidly gentrifying"
+          ]
+        },
+        {
+          "id": 1,
+          "name": "Central Place",
+          "neighborhood_id": 0,
+          "condition": "Good",
+          "num_floors": 3,
+          "units_per_floor": 2,
+          "asking_price": 767520,
+          "existing_tenants": 0,
+          "months_on_market": 0,
+          "available_financing": [
+            "Cash",
+            {
+              "Mortgage": {
+                "down_payment_percent": 0.2,
+                "interest_rate": 0.06,
+                "term_months": 120
+              }
+            },
+            {
+              "Investor": {
+                "investment_percent": 0.5,
+                "profit_share_percent": 0.3
+              }
+            }
+          ],
+          "notes": [
+            "📈 Area rapidly gentrifying"
+          ]
+        }
+      ],
+      "next_listing_id": 2
+    },
+    "active_building_index": 0,
+    "economy_health": 1.06,
+    "interest_rate": 0.057825502,
+    "inflation_rate": 0.017999997,
+    "total_months": 3,
+    "total_buildings_managed": 1
   },
   "tenants": [
     {
-      "id": 2,
-      "name": "The Johnsons G.",
+      "id": 4,
+      "name": "The Joneses D.",
       "archetype": "Family",
-      "happiness": 89,
-      "months_residing": 3,
-      "apartment_id": 5,
-      "rent_tolerance": 968,
-      "noise_tolerance": 29
-    },
-    {
-      "id": 1,
-      "name": "Riley T.",
-      "archetype": "Student",
-      "happiness": 60,
-      "months_residing": 3,
-      "apartment_id": 5,
-      "rent_tolerance": 696,
-      "noise_tolerance": 70
-    },
-    {
-      "id": 7,
-      "name": "Taylor J.",
-      "archetype": "Student",
-      "happiness": 57,
-      "months_residing": 2,
-      "apartment_id": 2,
-      "rent_tolerance": 633,
-      "noise_tolerance": 64
-    },
-    {
-      "id": 9,
-      "name": "Robert P.",
-      "archetype": "Professional",
-      "happiness": 74,
+      "happiness": 87,
       "months_residing": 1,
-      "apartment_id": 4,
-      "rent_tolerance": 1197,
+      "apartment_id": 5,
+      "rent_tolerance": 1156,
       "noise_tolerance": 30
     }
   ],
   "applications": [
     {
       "tenant": {
-        "id": 12,
-        "name": "Casey W.",
+        "id": 13,
+        "name": "James R.",
+        "archetype": "Professional",
+        "happiness": 70,
+        "months_residing": 0,
+        "apartment_id": null,
+        "rent_tolerance": 1158,
+        "noise_tolerance": 27
+      },
+      "apartment_id": 3,
+      "match_result": {
+        "score": 92,
+        "meets_minimum": true,
+        "reasons": [
+          "Great price",
+          "Excellent condition",
+          "Nice and quiet",
+          "Good space"
+        ]
+      },
+      "tick_created": 3
+    },
+    {
+      "tenant": {
+        "id": 14,
+        "name": "Quinn B.",
         "archetype": "Student",
         "happiness": 70,
         "months_residing": 0,
         "apartment_id": null,
-        "rent_tolerance": 718,
-        "noise_tolerance": 69
+        "rent_tolerance": 790,
+        "noise_tolerance": 66
       },
-      "apartment_id": 1,
+      "apartment_id": 2,
       "match_result": {
-        "score": 62,
+        "score": 49,
         "meets_minimum": true,
         "reasons": [
           "Fair price",
-          "Excellent condition"
+          "Poor condition",
+          "Too noisy"
+        ]
+      },
+      "tick_created": 3
+    },
+    {
+      "tenant": {
+        "id": 16,
+        "name": "The Smiths M.",
+        "archetype": "Family",
+        "happiness": 70,
+        "months_residing": 0,
+        "apartment_id": null,
+        "rent_tolerance": 1206,
+        "noise_tolerance": 27
+      },
+      "apartment_id": 3,
+      "match_result": {
+        "score": 85,
+        "meets_minimum": true,
+        "reasons": [
+          "Fair price",
+          "Excellent condition",
+          "Nice and quiet",
+          "Good space"
         ]
       },
       "tick_created": 3
     }
   ],
-  "next_tenant_id": 15,
+  "next_tenant_id": 17,
   "funds": {
-    "balance": 2780,
-    "total_income": 5700,
-    "total_expenses": 7920,
+    "balance": 750,
+    "total_income": 600,
+    "total_expenses": 4850,
     "transactions": [
       {
-        "transaction_type": "RentIncome",
-        "amount": 600,
-        "description": "Rent from The Johnsons G. (Unit 3B)",
-        "tick": 1
-      },
-      {
-        "transaction_type": "RentIncome",
-        "amount": 600,
-        "description": "Rent from Riley T. (Unit 3B)",
-        "tick": 1
-      },
-      {
-        "transaction_type": "UpgradeCost",
-        "amount": -500,
-        "description": "Upgrade Unit 3A to Practical",
-        "tick": 1
-      },
-      {
-        "transaction_type": "UpgradeCost",
-        "amount": -1000,
-        "description": "Upgrade Unit 3A to Cozy",
-        "tick": 1
-      },
-      {
-        "transaction_type": "UpgradeCost",
-        "amount": -300,
-        "description": "Soundproofing Unit 3A",
-        "tick": 1
-      },
-      {
-        "transaction_type": "RepairCost",
-        "amount": -250,
-        "description": "Repair Unit 3A (+25 condition)",
-        "tick": 1
-      },
-      {
-        "transaction_type": "RepairCost",
-        "amount": -250,
-        "description": "Repair Unit 3A (+25 condition)",
-        "tick": 1
-      },
-      {
-        "transaction_type": "RepairCost",
-        "amount": -20,
-        "description": "Repair Unit 3A (+2 condition)",
-        "tick": 1
-      },
-      {
-        "transaction_type": "RentIncome",
-        "amount": 600,
-        "description": "Rent from The Johnsons G. (Unit 3B)",
-        "tick": 2
-      },
-      {
-        "transaction_type": "RentIncome",
-        "amount": 600,
-        "description": "Rent from Riley T. (Unit 3B)",
-        "tick": 2
-      },
-      {
-        "transaction_type": "RentIncome",
-        "amount": 600,
-        "description": "Rent from Taylor J. (Unit 2A)",
-        "tick": 2
-      },
-      {
-        "transaction_type": "RepairCost",
-        "amount": -250,
-        "description": "Repair Unit 2A (+25 condition)",
-        "tick": 2
-      },
-      {
-        "transaction_type": "RepairCost",
-        "amount": -250,
-        "description": "Repair Unit 2A (+25 condition)",
-        "tick": 2
-      },
-      {
-        "transaction_type": "RepairCost",
-        "amount": -40,
-        "description": "Repair Unit 2A (+4 condition)",
-        "tick": 2
-      },
-      {
-        "transaction_type": "UpgradeCost",
-        "amount": -500,
-        "description": "Upgrade Unit 2A to Practical",
-        "tick": 2
-      },
-      {
-        "transaction_type": "RepairCost",
-        "amount": -250,
-        "description": "Repair Unit 3B (+25 condition)",
-        "tick": 2
-      },
-      {
-        "transaction_type": "RepairCost",
-        "amount": -250,
-        "description": "Repair Unit 3B (+25 condition)",
-        "tick": 2
-      },
-      {
-        "transaction_type": "RepairCost",
-        "amount": -40,
-        "description": "Repair Unit 3B (+4 condition)",
-        "tick": 2
-      },
-      {
-        "transaction_type": "UpgradeCost",
-        "amount": -500,
-        "description": "Upgrade Unit 3B to Practical",
-        "tick": 2
-      },
-      {
         "transaction_type": "RepairCost",
         "amount": -250,
         "description": "Repair Unit 2B (+25 condition)",
@@ -281,66 +335,6 @@
         "transaction_type": "RepairCost",
         "amount": -250,
         "description": "Repair Unit 2B (+25 condition)",
-        "tick": 2
-      },
-      {
-        "transaction_type": "RepairCost",
-        "amount": -40,
-        "description": "Repair Unit 2B (+4 condition)",
-        "tick": 2
-      },
-      {
-        "transaction_type": "RepairCost",
-        "amount": -250,
-        "description": "Repair Unit 1A (+25 condition)",
-        "tick": 2
-      },
-      {
-        "transaction_type": "RepairCost",
-        "amount": -250,
-        "description": "Repair Unit 1A (+25 condition)",
-        "tick": 2
-      },
-      {
-        "transaction_type": "RepairCost",
-        "amount": -40,
-        "description": "Repair Unit 1A (+4 condition)",
-        "tick": 2
-      },
-      {
-        "transaction_type": "RepairCost",
-        "amount": -250,
-        "description": "Repair Unit 1B (+25 condition)",
-        "tick": 2
-      },
-      {
-        "transaction_type": "RepairCost",
-        "amount": -250,
-        "description": "Repair Unit 1B (+25 condition)",
-        "tick": 2
-      },
-      {
-        "transaction_type": "RepairCost",
-        "amount": -40,
-        "description": "Repair Unit 1B (+4 condition)",
-        "tick": 2
-      },
-      {
-        "transaction_type": "UpgradeCost",
-        "amount": -300,
-        "description": "Soundproofing Unit 2B",
-        "tick": 2
-      },
-      {
-        "transaction_type": "UpgradeCost",
-        "amount": -300,
-        "description": "Soundproofing Unit 1A",
-        "tick": 2
-      },
-      {
-        "transaction_type": "UpgradeCost",
-        "amount": -300,
-        "description": "Soundproofing Unit 1B",
         "tick": 2
       },
       {
@@ -351,32 +345,62 @@
       },
       {
         "transaction_type": "UpgradeCost",
+        "amount": -1000,
+        "description": "Upgrade Unit 2B to Cozy",
+        "tick": 2
+      },
+      {
+        "transaction_type": "UpgradeCost",
         "amount": -500,
-        "description": "Upgrade Unit 1A to Practical",
+        "description": "Renovated Kitchen Apt 3",
+        "tick": 2
+      },
+      {
+        "transaction_type": "UpgradeCost",
+        "amount": -500,
+        "description": "Renovated Kitchen Apt 3",
+        "tick": 2
+      },
+      {
+        "transaction_type": "UpgradeCost",
+        "amount": -300,
+        "description": "Soundproofing Unit 2B",
+        "tick": 2
+      },
+      {
+        "transaction_type": "RepairCost",
+        "amount": -250,
+        "description": "Repair Unit 3B (+25 condition)",
+        "tick": 2
+      },
+      {
+        "transaction_type": "RepairCost",
+        "amount": -250,
+        "description": "Repair Unit 3B (+25 condition)",
+        "tick": 2
+      },
+      {
+        "transaction_type": "UpgradeCost",
+        "amount": -500,
+        "description": "Upgrade Unit 3B to Practical",
+        "tick": 2
+      },
+      {
+        "transaction_type": "UpgradeCost",
+        "amount": -300,
+        "description": "Soundproofing Unit 3B",
+        "tick": 2
+      },
+      {
+        "transaction_type": "RepairCost",
+        "amount": -250,
+        "description": "Repair Unit 3A (+25 condition)",
         "tick": 2
       },
       {
         "transaction_type": "RentIncome",
         "amount": 600,
-        "description": "Rent from The Johnsons G. (Unit 3B)",
-        "tick": 3
-      },
-      {
-        "transaction_type": "RentIncome",
-        "amount": 600,
-        "description": "Rent from Riley T. (Unit 3B)",
-        "tick": 3
-      },
-      {
-        "transaction_type": "RentIncome",
-        "amount": 600,
-        "description": "Rent from Taylor J. (Unit 2A)",
-        "tick": 3
-      },
-      {
-        "transaction_type": "RentIncome",
-        "amount": 900,
-        "description": "Rent from Robert P. (Unit 3A)",
+        "description": "Rent from The Joneses D. (Unit 3B)",
         "tick": 3
       }
     ]
@@ -385,204 +409,48 @@
     "reports": [
       {
         "tick": 1,
-        "rent_income": 1200,
+        "rent_income": 0,
         "repair_costs": 0,
         "upgrade_costs": 0,
-        "net": 1200,
-        "ending_balance": 6200
+        "net": 0,
+        "ending_balance": 5000
       },
       {
         "tick": 2,
-        "rent_income": 1800,
+        "rent_income": 0,
         "repair_costs": 0,
         "upgrade_costs": 0,
-        "net": 1800,
-        "ending_balance": 5680
+        "net": 0,
+        "ending_balance": 5000
       },
       {
         "tick": 3,
-        "rent_income": 2700,
+        "rent_income": 600,
         "repair_costs": 0,
         "upgrade_costs": 0,
-        "net": 2700,
-        "ending_balance": 2780
+        "net": 600,
+        "ending_balance": 750
       }
     ]
   },
   "event_log": {
     "events": [
       [
-        0,
-        {
-          "TenantMovedIn": {
-            "tenant_name": "The Johnsons G.",
-            "apartment_unit": "3B"
-          }
-        }
-      ],
-      [
-        0,
-        {
-          "TenantMovedIn": {
-            "tenant_name": "Riley T.",
-            "apartment_unit": "3B"
-          }
-        }
-      ],
-      [
-        1,
-        {
-          "RentPaid": {
-            "tenant_name": "The Johnsons G.",
-            "amount": 600
-          }
-        }
-      ],
-      [
-        1,
-        {
-          "RentPaid": {
-            "tenant_name": "Riley T.",
-            "amount": 600
-          }
-        }
-      ],
-      [
-        1,
-        {
-          "Heatwave": {
-            "tick_duration": 3
-          }
-        }
-      ],
-      [
-        1,
-        {
-          "NewApplication": {
-            "tenant_name": "Taylor J.",
-            "archetype": "Student",
-            "apartment_unit": "2A"
-          }
-        }
-      ],
-      [
         1,
         {
           "MonthEnd": {
             "tick": 1,
-            "income": 1200,
+            "income": 0,
             "expenses": 0,
-            "balance": 6200
-          }
-        }
-      ],
-      [
-        1,
-        {
-          "TenantMovedIn": {
-            "tenant_name": "Taylor J.",
-            "apartment_unit": "2A"
-          }
-        }
-      ],
-      [
-        1,
-        {
-          "UpgradeCompleted": {
-            "description": "Upgraded design",
-            "cost": 500
-          }
-        }
-      ],
-      [
-        1,
-        {
-          "UpgradeCompleted": {
-            "description": "Upgraded design",
-            "cost": 1000
-          }
-        }
-      ],
-      [
-        1,
-        {
-          "UpgradeCompleted": {
-            "description": "Added soundproofing",
-            "cost": 300
-          }
-        }
-      ],
-      [
-        1,
-        {
-          "UpgradeCompleted": {
-            "description": "Repaired apartment +25",
-            "cost": 250
-          }
-        }
-      ],
-      [
-        1,
-        {
-          "UpgradeCompleted": {
-            "description": "Repaired apartment +25",
-            "cost": 250
-          }
-        }
-      ],
-      [
-        1,
-        {
-          "UpgradeCompleted": {
-            "description": "Repaired apartment +2",
-            "cost": 20
+            "balance": 5000
           }
         }
       ],
       [
         2,
         {
-          "RentPaid": {
-            "tenant_name": "The Johnsons G.",
-            "amount": 600
-          }
-        }
-      ],
-      [
-        2,
-        {
-          "RentPaid": {
-            "tenant_name": "Riley T.",
-            "amount": 600
-          }
-        }
-      ],
-      [
-        2,
-        {
-          "RentPaid": {
-            "tenant_name": "Taylor J.",
-            "amount": 600
-          }
-        }
-      ],
-      [
-        2,
-        {
-          "NewApplication": {
-            "tenant_name": "Robert P.",
-            "archetype": "Professional",
-            "apartment_unit": "3A"
-          }
-        }
-      ],
-      [
-        2,
-        {
-          "NewApplication": {
-            "tenant_name": "Sage M.",
-            "archetype": "Artist",
-            "apartment_unit": "3A"
+          "Heatwave": {
+            "tick_duration": 3
           }
         }
       ],
@@ -591,9 +459,117 @@
         {
           "MonthEnd": {
             "tick": 2,
-            "income": 1800,
+            "income": 0,
             "expenses": 0,
-            "balance": 5680
+            "balance": 5000
+          }
+        }
+      ],
+      [
+        2,
+        {
+          "UpgradeCompleted": {
+            "description": "Repair +25",
+            "cost": 250
+          }
+        }
+      ],
+      [
+        2,
+        {
+          "UpgradeCompleted": {
+            "description": "Repair +25",
+            "cost": 250
+          }
+        }
+      ],
+      [
+        2,
+        {
+          "UpgradeCompleted": {
+            "description": "Upgrade to Practical",
+            "cost": 500
+          }
+        }
+      ],
+      [
+        2,
+        {
+          "UpgradeCompleted": {
+            "description": "Upgrade to Cozy",
+            "cost": 1000
+          }
+        }
+      ],
+      [
+        2,
+        {
+          "UpgradeCompleted": {
+            "description": "Renovate Kitchen",
+            "cost": 500
+          }
+        }
+      ],
+      [
+        2,
+        {
+          "UpgradeCompleted": {
+            "description": "Renovate Kitchen",
+            "cost": 500
+          }
+        }
+      ],
+      [
+        2,
+        {
+          "UpgradeCompleted": {
+            "description": "Add Soundproofing",
+            "cost": 300
+          }
+        }
+      ],
+      [
+        2,
+        {
+          "UpgradeCompleted": {
+            "description": "Repair +25",
+            "cost": 250
+          }
+        }
+      ],
+      [
+        2,
+        {
+          "UpgradeCompleted": {
+            "description": "Repair +25",
+            "cost": 250
+          }
+        }
+      ],
+      [
+        2,
+        {
+          "UpgradeCompleted": {
+            "description": "Upgrade to Practical",
+            "cost": 500
+          }
+        }
+      ],
+      [
+        2,
+        {
+          "UpgradeCompleted": {
+            "description": "Add Soundproofing",
+            "cost": 300
+          }
+        }
+      ],
+      [
+        2,
+        {
+          "UpgradeCompleted": {
+            "description": "Repair +25",
+            "cost": 250
           }
         }
       ],
@@ -601,206 +577,8 @@
         2,
         {
           "TenantMovedIn": {
-            "tenant_name": "Robert P.",
-            "apartment_unit": "3A"
-          }
-        }
-      ],
-      [
-        2,
-        {
-          "UpgradeCompleted": {
-            "description": "Repaired apartment +25",
-            "cost": 250
-          }
-        }
-      ],
-      [
-        2,
-        {
-          "UpgradeCompleted": {
-            "description": "Repaired apartment +25",
-            "cost": 250
-          }
-        }
-      ],
-      [
-        2,
-        {
-          "UpgradeCompleted": {
-            "description": "Repaired apartment +4",
-            "cost": 40
-          }
-        }
-      ],
-      [
-        2,
-        {
-          "UpgradeCompleted": {
-            "description": "Upgraded design",
-            "cost": 500
-          }
-        }
-      ],
-      [
-        2,
-        {
-          "UpgradeCompleted": {
-            "description": "Repaired apartment +25",
-            "cost": 250
-          }
-        }
-      ],
-      [
-        2,
-        {
-          "UpgradeCompleted": {
-            "description": "Repaired apartment +25",
-            "cost": 250
-          }
-        }
-      ],
-      [
-        2,
-        {
-          "UpgradeCompleted": {
-            "description": "Repaired apartment +4",
-            "cost": 40
-          }
-        }
-      ],
-      [
-        2,
-        {
-          "UpgradeCompleted": {
-            "description": "Upgraded design",
-            "cost": 500
-          }
-        }
-      ],
-      [
-        2,
-        {
-          "UpgradeCompleted": {
-            "description": "Repaired apartment +25",
-            "cost": 250
-          }
-        }
-      ],
-      [
-        2,
-        {
-          "UpgradeCompleted": {
-            "description": "Repaired apartment +25",
-            "cost": 250
-          }
-        }
-      ],
-      [
-        2,
-        {
-          "UpgradeCompleted": {
-            "description": "Repaired apartment +4",
-            "cost": 40
-          }
-        }
-      ],
-      [
-        2,
-        {
-          "UpgradeCompleted": {
-            "description": "Repaired apartment +25",
-            "cost": 250
-          }
-        }
-      ],
-      [
-        2,
-        {
-          "UpgradeCompleted": {
-            "description": "Repaired apartment +25",
-            "cost": 250
-          }
-        }
-      ],
-      [
-        2,
-        {
-          "UpgradeCompleted": {
-            "description": "Repaired apartment +4",
-            "cost": 40
-          }
-        }
-      ],
-      [
-        2,
-        {
-          "UpgradeCompleted": {
-            "description": "Repaired apartment +25",
-            "cost": 250
-          }
-        }
-      ],
-      [
-        2,
-        {
-          "UpgradeCompleted": {
-            "description": "Repaired apartment +25",
-            "cost": 250
-          }
-        }
-      ],
-      [
-        2,
-        {
-          "UpgradeCompleted": {
-            "description": "Repaired apartment +4",
-            "cost": 40
-          }
-        }
-      ],
-      [
-        2,
-        {
-          "UpgradeCompleted": {
-            "description": "Added soundproofing",
-            "cost": 300
-          }
-        }
-      ],
-      [
-        2,
-        {
-          "UpgradeCompleted": {
-            "description": "Added soundproofing",
-            "cost": 300
-          }
-        }
-      ],
-      [
-        2,
-        {
-          "UpgradeCompleted": {
-            "description": "Added soundproofing",
-            "cost": 300
-          }
-        }
-      ],
-      [
-        2,
-        {
-          "UpgradeCompleted": {
-            "description": "Upgraded design",
-            "cost": 500
-          }
-        }
-      ],
-      [
-        2,
-        {
-          "UpgradeCompleted": {
-            "description": "Upgraded design",
-            "cost": 500
+            "tenant_name": "The Joneses D.",
+            "apartment_unit": "3B"
           }
         }
       ],
@@ -808,7 +586,7 @@
         3,
         {
           "RentPaid": {
-            "tenant_name": "The Johnsons G.",
+            "tenant_name": "The Joneses D.",
             "amount": 600
           }
         }
@@ -816,27 +594,8 @@
       [
         3,
         {
-          "RentPaid": {
-            "tenant_name": "Riley T.",
-            "amount": 600
-          }
-        }
-      ],
-      [
-        3,
-        {
-          "RentPaid": {
-            "tenant_name": "Taylor J.",
-            "amount": 600
-          }
-        }
-      ],
-      [
-        3,
-        {
-          "RentPaid": {
-            "tenant_name": "Robert P.",
-            "amount": 900
+          "Heatwave": {
+            "tick_duration": 3
           }
         }
       ],
@@ -844,9 +603,29 @@
         3,
         {
           "NewApplication": {
-            "tenant_name": "Casey W.",
+            "tenant_name": "James R.",
+            "archetype": "Professional",
+            "apartment_unit": "2B"
+          }
+        }
+      ],
+      [
+        3,
+        {
+          "NewApplication": {
+            "tenant_name": "Quinn B.",
             "archetype": "Student",
-            "apartment_unit": "1B"
+            "apartment_unit": "2A"
+          }
+        }
+      ],
+      [
+        3,
+        {
+          "NewApplication": {
+            "tenant_name": "The Smiths M.",
+            "archetype": "Family",
+            "apartment_unit": "2B"
           }
         }
       ],
@@ -855,9 +634,9 @@
         {
           "MonthEnd": {
             "tick": 3,
-            "income": 2700,
+            "income": 600,
             "expenses": 0,
-            "balance": 2780
+            "balance": 750
           }
         }
       ]
@@ -865,52 +644,166 @@
   },
   "current_tick": 3,
   "game_outcome": null,
-  "last_tick_result": {
+  "last_tick_result": null,
+  "tenant_network": {
+    "relationships": [],
+    "long_term_tenants": []
+  },
+  "compliance": {
+    "building_regulations": {
+      "0": [
+        {
+          "regulation_type": "FireSafety",
+          "active": true,
+          "warned": false,
+          "compliant": true,
+          "violation_count": 0,
+          "months_until_inspection": 9
+        },
+        {
+          "regulation_type": "Electrical",
+          "active": true,
+          "warned": false,
+          "compliant": true,
+          "violation_count": 0,
+          "months_until_inspection": 21
+        },
+        {
+          "regulation_type": "Plumbing",
+          "active": true,
+          "warned": false,
+          "compliant": true,
+          "violation_count": 0,
+          "months_until_inspection": 15
+        },
+        {
+          "regulation_type": "Structural",
+          "active": true,
+          "warned": false,
+          "compliant": true,
+          "violation_count": 0,
+          "months_until_inspection": 33
+        },
+        {
+          "regulation_type": "HealthSanitation",
+          "active": true,
+          "warned": false,
+          "compliant": true,
+          "violation_count": 0,
+          "months_until_inspection": 3
+        }
+      ]
+    },
+    "inspection_history": [],
+    "pending_fixes": [],
+    "unpaid_fines": 0,
+    "compliance_reputation": 100
+  },
+  "gentrification": {
+    "displacements": [],
+    "rent_history": {},
+    "demographic_shifts": {},
+    "gentrification_score": 0,
+    "tenants_preserved": 0,
+    "affordable_units": 3
+  },
+  "narrative_events": {
     "events": [
       {
-        "RentPaid": {
-          "tenant_name": "The Johnsons G.",
-          "amount": 600
-        }
+        "id": 0,
+        "event_type": "NeighborhoodNews",
+        "month": 2,
+        "headline": "Street Improvements",
+        "description": "The city has announced road improvements for the area.",
+        "choices": [],
+        "default_effect": {
+          "RentDemand": {
+            "neighborhood_id": 2,
+            "change": 0.05
+          }
+        },
+        "read": false,
+        "requires_response": false,
+        "response_deadline": null
       },
       {
-        "RentPaid": {
-          "tenant_name": "Riley T.",
-          "amount": 600
-        }
-      },
-      {
-        "RentPaid": {
-          "tenant_name": "Taylor J.",
-          "amount": 600
-        }
-      },
-      {
-        "NewApplication": {
-          "tenant_name": "Robert P.",
-          "archetype": "Professional",
-          "apartment_unit": "3A"
-        }
-      },
-      {
-        "NewApplication": {
-          "tenant_name": "Sage M.",
-          "archetype": "Artist",
-          "apartment_unit": "3A"
-        }
-      },
-      {
-        "MonthEnd": {
-          "tick": 2,
-          "income": 1800,
-          "expenses": 0,
-          "balance": 5680
-        }
+        "id": 1,
+        "event_type": "ExternalOffer",
+        "month": 3,
+        "headline": "Developer Makes Offer",
+        "description": "A developer has expressed interest in purchasing Sunset Apartments for $318829.",
+        "choices": [
+          {
+            "label": "Accept Offer",
+            "description": "Sell the building for $318829",
+            "effect": {
+              "Money": 318829
+            },
+            "reputation_change": -20
+          },
+          {
+            "label": "Counter Offer",
+            "description": "Negotiate for a better price",
+            "effect": "None",
+            "reputation_change": 0
+          },
+          {
+            "label": "Decline",
+            "description": "This building is not for sale",
+            "effect": "None",
+            "reputation_change": 5
+          }
+        ],
+        "default_effect": "None",
+        "read": false,
+        "requires_response": true,
+        "response_deadline": 5
       }
     ],
-    "rent_collected": 1800,
-    "tenants_moved_out": [],
-    "new_applications": 2,
-    "outcome": null
-  }
+    "next_event_id": 2,
+    "pending_events": [
+      1
+    ],
+    "processed_events": []
+  },
+  "mailbox": {
+    "items": [
+      {
+        "id": 0,
+        "mail_type": "Financial",
+        "month_received": 1,
+        "sender": "Property Management Office",
+        "subject": "Monthly Statement - Month 1",
+        "body": "Monthly Financial Summary:\n\nTotal Income: $0\nTotal Expenses: $0\n─────────────────\nNet: $0\n\nKeep up the good work!",
+        "read": false,
+        "action": null,
+        "requires_attention": false
+      },
+      {
+        "id": 1,
+        "mail_type": "Financial",
+        "month_received": 2,
+        "sender": "Property Management Office",
+        "subject": "Monthly Statement - Month 2",
+        "body": "Monthly Financial Summary:\n\nTotal Income: $0\nTotal Expenses: $0\n─────────────────\nNet: $0\n\nKeep up the good work!",
+        "read": false,
+        "action": null,
+        "requires_attention": false
+      },
+      {
+        "id": 2,
+        "mail_type": "Financial",
+        "month_received": 3,
+        "sender": "Property Management Office",
+        "subject": "Monthly Statement - Month 3",
+        "body": "Monthly Financial Summary:\n\nTotal Income: $0\nTotal Expenses: $0\n─────────────────\nNet: $0\n\nKeep up the good work!",
+        "read": false,
+        "action": null,
+        "requires_attention": false
+      }
+    ],
+    "next_id": 3,
+    "unread_count": 3
+  },
+  "tenant_stories": {}
 }

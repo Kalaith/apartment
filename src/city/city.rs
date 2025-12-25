@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use serde::{Deserialize, Serialize};
 use super::{Neighborhood, NeighborhoodType, PropertyMarket};
 use crate::building::Building;
@@ -160,7 +161,7 @@ impl City {
             .map(|a| a.design.appeal_score() * 500 + if a.has_soundproofing { 2000 } else { 0 })
             .sum();
         
-        ((base_value as f32 * condition_factor) as i32 + upgrades_value)
+        (base_value as f32 * condition_factor) as i32 + upgrades_value
     }
 
     /// Get all buildings as a vector of (index, building, neighborhood_name)

@@ -1,7 +1,8 @@
+
 use macroquad::prelude::*;
 use std::collections::HashMap;
 use super::{StateTransition, ResultsState};
-use crate::building::{Building, UpgradeAction};
+use crate::building::Building;
 use crate::tenant::{Tenant, TenantApplication};
 use crate::economy::{PlayerFunds, FinancialLedger, process_upgrade};
 use crate::simulation::{EventLog, GameOutcome, TickResult, advance_tick, GameEvent};
@@ -139,22 +140,17 @@ impl GameplayState {
         state
     }
     
-    /// Get the currently active building (for backwards compatibility)
-    pub fn active_building(&self) -> &Building {
-        self.city.active_building().unwrap_or(&self.building)
-    }
+
     
-    /// Get mutable reference to the currently active building
-    pub fn active_building_mut(&mut self) -> &mut Building {
-        if let Some(building) = self.city.active_building_mut() {
-            building
-        } else {
-            &mut self.building
+    /// Save the current `building` state back to the city
+    pub fn save_building_to_city(&mut self) {
+        if let Some(city_building) = self.city.active_building_mut() {
+            *city_building = self.building.clone();
         }
     }
     
     /// Sync the `building` field with the active city building
-    fn sync_building(&mut self) {
+    pub fn sync_building(&mut self) {
         if let Some(b) = self.city.active_building() {
             self.building = b.clone();
         }
@@ -214,6 +210,9 @@ impl GameplayState {
         }
         
         // === Phase 3: Update consequence and narrative systems ===
+        
+        // Save local building changes to city before processing city updates
+        self.save_building_to_city();
         
         // Update city (neighborhoods, market)
         self.city.tick();
@@ -285,66 +284,15 @@ impl GameplayState {
             UiAction::ClearSelection => {
                 self.selection = Selection::None;
             }
-            UiAction::RepairApartment { apartment_id, amount } => {
-                let upgrade = UpgradeAction::RepairApartment { apartment_id, amount };
+            UiAction::UpgradeAction(upgrade) => {
+                let description = upgrade.label(&self.building);
                 if let Ok(cost) = process_upgrade(&upgrade, &mut self.building, &mut self.funds, self.current_tick) {
                     self.event_log.log(GameEvent::UpgradeCompleted {
-                        description: format!("Repaired apartment +{}", amount),
+                        description: description,
                         cost,
                     }, self.current_tick);
                     
                     // Floating text
-                    let mouse = mouse_position();
-                    self.floating_texts.push(FloatingText::new(
-                        &format!("-${}", cost),
-                        mouse.0,
-                        mouse.1 - 20.0,
-                        colors::NEGATIVE,
-                    ));
-                }
-            }
-            UiAction::UpgradeDesign { apartment_id } => {
-                let upgrade = UpgradeAction::UpgradeDesign { apartment_id };
-                if let Ok(cost) = process_upgrade(&upgrade, &mut self.building, &mut self.funds, self.current_tick) {
-                    self.event_log.log(GameEvent::UpgradeCompleted {
-                        description: "Upgraded design".to_string(),
-                        cost,
-                    }, self.current_tick);
-                    
-                    let mouse = mouse_position();
-                    self.floating_texts.push(FloatingText::new(
-                        &format!("-${}", cost),
-                        mouse.0,
-                        mouse.1 - 20.0,
-                        colors::NEGATIVE,
-                    ));
-                }
-            }
-            UiAction::AddSoundproofing { apartment_id } => {
-                let upgrade = UpgradeAction::AddSoundproofing { apartment_id };
-                if let Ok(cost) = process_upgrade(&upgrade, &mut self.building, &mut self.funds, self.current_tick) {
-                    self.event_log.log(GameEvent::UpgradeCompleted {
-                        description: "Added soundproofing".to_string(),
-                        cost,
-                    }, self.current_tick);
-                    
-                    let mouse = mouse_position();
-                    self.floating_texts.push(FloatingText::new(
-                        &format!("-${}", cost),
-                        mouse.0,
-                        mouse.1 - 20.0,
-                        colors::NEGATIVE,
-                    ));
-                }
-            }
-            UiAction::RepairHallway { amount } => {
-                let upgrade = UpgradeAction::RepairHallway { amount };
-                if let Ok(cost) = process_upgrade(&upgrade, &mut self.building, &mut self.funds, self.current_tick) {
-                    self.event_log.log(GameEvent::UpgradeCompleted {
-                        description: format!("Repaired hallway +{}", amount),
-                        cost,
-                    }, self.current_tick);
-                    
                     let mouse = mouse_position();
                     self.floating_texts.push(FloatingText::new(
                         &format!("-${}", cost),
@@ -423,6 +371,7 @@ impl GameplayState {
             
             // Phase 3: Multi-building
             UiAction::SwitchBuilding { index } => {
+                self.save_building_to_city();
                 self.city.switch_building(index);
                 self.sync_building();
                 self.selection = Selection::None;
@@ -510,6 +459,12 @@ impl GameplayState {
     }
 
     pub fn update(&mut self, _assets: &AssetManager) -> Option<StateTransition> {
+        // Process pending UI actions from previous frame
+        let actions: Vec<UiAction> = self.pending_actions.drain(..).collect();
+        for action in actions {
+            self.process_action(action);
+        }
+        
         let dt = get_frame_time();
         
         // Update floating texts

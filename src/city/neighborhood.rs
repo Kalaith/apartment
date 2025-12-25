@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use serde::{Deserialize, Serialize};
 
 /// The type of neighborhood - each has distinct characteristics affecting gameplay

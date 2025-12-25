@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use macroquad::prelude::*;
 use crate::simulation::{EventLog, EventSeverity};
 use super::common::*;

@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use std::fs;
 use std::path::Path;
 use serde_json;
@@ -15,7 +16,11 @@ pub fn save_game(state: &GameplayState) -> std::io::Result<()> {
 /// Load the game state from disk
 pub fn load_game() -> std::io::Result<GameplayState> {
     let json = fs::read_to_string(SAVE_FILE_PATH)?;
-    let state = serde_json::from_str(&json)?;
+    let mut state: GameplayState = serde_json::from_str(&json)?;
+    
+    // Restore non-serialized fields
+    state.sync_building();
+    
     Ok(state)
 }
 
