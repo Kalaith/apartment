@@ -6,6 +6,7 @@ pub enum TransactionType {
     RepairCost,
     UpgradeCost,
     HallwayRepair,
+    BuildingPurchase,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -78,6 +79,12 @@ impl PlayerFunds {
         self.total_expenses += cost;
         self.transactions.push(transaction);
         true
+    }
+    
+    /// Spend money without a specific transaction type (used by random events)
+    pub fn spend(&mut self, amount: i32) {
+        self.balance -= amount;
+        self.total_expenses += amount;
     }
     
     /// Check if player is bankrupt

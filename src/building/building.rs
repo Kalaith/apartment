@@ -1,11 +1,13 @@
 use serde::{Deserialize, Serialize};
 use super::{Apartment, ApartmentSize, NoiseLevel};
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, Default)]
 pub struct Building {
     pub name: String,
     pub apartments: Vec<Apartment>,
     pub hallway_condition: i32,  // 0-100, affects building appeal
+    pub rent_multiplier: f32,    // 0.5 - 2.0 default 1.0
+    pub has_laundry: bool,       // Amenity
 }
 
 impl Building {
@@ -42,9 +44,30 @@ impl Building {
             name: name.to_string(),
             apartments,
             hallway_condition: 60,  // Start slightly worn
+            rent_multiplier: 1.0,
+            has_laundry: false,
         }
     }
     
+    /// Set the rent multiplier and update all apartment prices
+    pub fn set_rent_multiplier(&mut self, multiplier: f32) {
+        self.rent_multiplier = multiplier.clamp(0.5, 3.0);
+        self.recalculate_rents();
+    }
+    
+    /// Recalculate rent prices for all apartments
+    pub fn recalculate_rents(&mut self) {
+        for apt in &mut self.apartments {
+            let base = apt.size.base_rent() as f32;
+            apt.rent_price = (base * self.rent_multiplier) as i32;
+        }
+    }
+    
+    /// Install laundry amenity
+    pub fn install_laundry(&mut self) {
+        self.has_laundry = true;
+    }
+
     /// Create the default MVP building (6 units, 3 floors, 2 per floor)
     pub fn default_mvp() -> Self {
         Self::new("Sunset Apartments", 3, 2)
@@ -91,7 +114,13 @@ impl Building {
         };
         let avg_factor = avg_condition / 2;  // 0-50
         
-        hallway_factor + avg_factor
+        let mut score = hallway_factor + avg_factor;
+        
+        if self.has_laundry {
+            score += 10;
+        }
+        
+        score.min(100)
     }
     
     /// Repair hallway

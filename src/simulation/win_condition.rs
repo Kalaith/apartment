@@ -7,11 +7,13 @@ use crate::economy::PlayerFunds;
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum GameOutcome {
     Victory {
+        score: i32,
+        months: u32,
         total_income: i32,
-        months_played: u32,
-        final_happiness_avg: i32,
     },
-    Bankruptcy,
+    Bankruptcy {
+        debt: i32,
+    },
     AllTenantsLeft,
 }
 
@@ -36,7 +38,7 @@ pub fn check_win_condition(
 ) -> Option<GameOutcome> {
     // Check for bankruptcy
     if funds.is_bankrupt() {
-        return Some(GameOutcome::Bankruptcy);
+        return Some(GameOutcome::Bankruptcy { debt: funds.balance.abs() });
     }
     
     // Check if all tenants left (after having some)
@@ -72,8 +74,8 @@ pub fn check_win_condition(
     if avg_happiness >= thresholds::MIN_HAPPINESS {
         return Some(GameOutcome::Victory {
             total_income: funds.total_income,
-            months_played: current_tick,
-            final_happiness_avg: avg_happiness,
+            months: current_tick,
+            score: ((avg_happiness as f32) * 10.0 + (funds.total_income as f32 / 100.0)) as i32,
         });
     }
     

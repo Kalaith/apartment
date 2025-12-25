@@ -94,9 +94,17 @@ fn generate_random_name(archetype: &TenantArchetype) -> String {
             "Lisa", "James", "Amanda", "William", "Elizabeth"
         ],
         TenantArchetype::Artist => vec![
-            "Luna", "River", "Sage", "Phoenix", "Indigo",
-            "Willow", "Ash", "Sky", "Ocean", "Storm"
+            "Luna", "River", "Sky", "Echo", "Rain", "Ash",
+            "Sage", "Raven", "Nova", "Orion", "Willow", "Jasper"
         ],
+        TenantArchetype::Family => vec![
+            "The Smiths", "The Garcias", "The Kims", "The Patels",
+            "The Joneses", "The Wangs", "The Johnsons", "The Millers"
+        ],
+        TenantArchetype::Elderly => vec![
+            "Mrs. Higgins", "Mr. Abernathy", "Betty", "Harold",
+            "Martha", "Walter", "Ethel", "Arthur"
+        ]
     };
     
     let last_initials = vec!["A", "B", "C", "D", "E", "F", "G", "H", "J", "K", "L", "M", "N", "P", "R", "S", "T", "W"];

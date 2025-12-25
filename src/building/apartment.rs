@@ -76,6 +76,7 @@ pub struct Apartment {
     pub size: ApartmentSize,
     pub base_noise: NoiseLevel,     // Inherent noise (street-facing, etc.)
     pub has_soundproofing: bool,
+    pub kitchen_level: i32,         // 0=Basic, 1=Renovated, 2=Luxury
     pub rent_price: i32,
     
     // Occupancy
@@ -94,6 +95,7 @@ impl Apartment {
             size,
             base_noise,
             has_soundproofing: false,
+            kitchen_level: 0,
             rent_price,
             tenant_id: None,
         }
@@ -119,8 +121,9 @@ impl Apartment {
         let design_bonus = self.design.appeal_score();
         let noise_mod = self.effective_noise().noise_penalty();
         let space_bonus = self.size.space_score();
+        let kitchen_bonus = self.kitchen_level * 15;
         
-        (base + design_bonus + noise_mod + space_bonus).clamp(0, 100)
+        (base + design_bonus + noise_mod + space_bonus + kitchen_bonus).clamp(0, 100)
     }
     
     /// Apply condition decay (called each tick)
@@ -137,6 +140,16 @@ impl Apartment {
     pub fn upgrade_design(&mut self) -> bool {
         if let Some(next) = self.design.next_upgrade() {
             self.design = next;
+            true
+        } else {
+            false
+        }
+    }
+    
+    /// Upgrade kitchen
+    pub fn upgrade_kitchen(&mut self) -> bool {
+        if self.kitchen_level < 2 {
+            self.kitchen_level += 1;
             true
         } else {
             false

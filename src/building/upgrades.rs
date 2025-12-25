@@ -7,6 +7,8 @@ pub mod costs {
     pub const UPGRADE_TO_COZY: i32 = 1000;
     pub const SOUNDPROOFING: i32 = 300;
     pub const HALLWAY_REPAIR_PER_POINT: i32 = 15;
+    pub const KITCHEN_RENOVATION: i32 = 800;
+    pub const INSTALL_LAUNDRY: i32 = 2000;
 }
 
 #[derive(Clone, Debug)]
@@ -14,7 +16,9 @@ pub enum UpgradeAction {
     RepairApartment { apartment_id: u32, amount: i32 },
     UpgradeDesign { apartment_id: u32 },
     AddSoundproofing { apartment_id: u32 },
+    RenovateKitchen { apartment_id: u32 },
     RepairHallway { amount: i32 },
+    InstallLaundry,
 }
 
 impl UpgradeAction {
@@ -40,8 +44,23 @@ impl UpgradeAction {
                     Some(costs::SOUNDPROOFING)
                 }
             }
+            UpgradeAction::RenovateKitchen { apartment_id } => {
+                let apt = building.get_apartment(*apartment_id)?;
+                if apt.kitchen_level >= 2 {
+                    None
+                } else {
+                    Some(costs::KITCHEN_RENOVATION)
+                }
+            }
             UpgradeAction::RepairHallway { amount } => {
                 Some(amount * costs::HALLWAY_REPAIR_PER_POINT)
+            }
+            UpgradeAction::InstallLaundry => {
+                if building.has_laundry {
+                    None
+                } else {
+                    Some(costs::INSTALL_LAUNDRY)
+                }
             }
         }
     }
@@ -68,12 +87,21 @@ pub fn apply_upgrade(building: &mut Building, action: &UpgradeAction) -> Option<
                 return None;
             }
         }
+        UpgradeAction::RenovateKitchen { apartment_id } => {
+            let apt = building.get_apartment_mut(*apartment_id)?;
+            if !apt.upgrade_kitchen() {
+                return None;
+            }
+        }
         UpgradeAction::AddSoundproofing { apartment_id } => {
             let apt = building.get_apartment_mut(*apartment_id)?;
             apt.install_soundproofing();
         }
         UpgradeAction::RepairHallway { amount } => {
             building.repair_hallway(*amount);
+        }
+        UpgradeAction::InstallLaundry => {
+            building.install_laundry();
         }
     }
     
@@ -100,6 +128,13 @@ pub fn available_apartment_upgrades(apt: &Apartment) -> Vec<UpgradeAction> {
         });
     }
     
+    // Kitchen upgrade if not at max
+    if apt.kitchen_level < 2 {
+        upgrades.push(UpgradeAction::RenovateKitchen {
+            apartment_id: apt.id,
+        });
+    }
+    
     // Soundproofing if not installed
     if !apt.has_soundproofing {
         upgrades.push(UpgradeAction::AddSoundproofing {
@@ -119,6 +154,10 @@ pub fn available_building_upgrades(building: &Building) -> Vec<UpgradeAction> {
         upgrades.push(UpgradeAction::RepairHallway {
             amount: repair_amount,
         });
+    }
+    
+    if !building.has_laundry {
+        upgrades.push(UpgradeAction::InstallLaundry);
     }
     
     upgrades

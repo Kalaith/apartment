@@ -1,12 +1,14 @@
 use serde::{Deserialize, Serialize};
 use super::GameOutcome;
 
-/// All possible game events
+/// Significant events that happen during simulation
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum GameEvent {
-    // Rent events
+    // Economy
     RentPaid { tenant_name: String, amount: i32 },
-    RentMissed { tenant_name: String, reason: String },
+    RentMissed { tenant_name: String, amount: i32 },
+    UpgradeCompleted { description: String, cost: i32 },
+    InsufficientFunds { action: String, needed: i32, available: i32 },
     
     // Tenant events
     TenantUnhappy { tenant_name: String, happiness: i32 },
@@ -23,15 +25,17 @@ pub enum GameEvent {
     CriticalCondition { apartment_unit: String, condition: i32 },
     HallwayDeteriorating { condition: i32 },
     
-    // Economy events
-    UpgradeCompleted { description: String, cost: i32 },
-    InsufficientFunds { action: String, needed: i32, available: i32 },
-    
     // Time events
     MonthEnd { tick: u32, income: i32, expenses: i32, balance: i32 },
     
     // Game state events
     GameEnded { outcome: GameOutcome },
+    
+    // Random Events
+    Heatwave { tick_duration: u32 },
+    PipeBurst { apartment_unit: String, damage: i32 },
+    Gentrification { tick_duration: u32, effect_desc: String },
+    Inspection { result: String, fine: i32 },
 }
 
 impl GameEvent {
@@ -81,8 +85,24 @@ impl GameEvent {
             GameEvent::GameEnded { outcome } => {
                 match outcome {
                     GameOutcome::Victory { .. } => "🎉 Victory!".to_string(),
-                    GameOutcome::Bankruptcy => "💸 Bankrupt!".to_string(),
+                    GameOutcome::Bankruptcy { .. } => "💸 Bankrupt!".to_string(),
                     GameOutcome::AllTenantsLeft => "🚪 All tenants left!".to_string(),
+                }
+            }
+            GameEvent::Heatwave { tick_duration } => {
+                format!("☀️ Heatwave! (Duration: {} months)", tick_duration)
+            }
+            GameEvent::PipeBurst { apartment_unit, damage } => {
+                format!("💧 Pipe Burst in Unit {}! (-{} condition)", apartment_unit, damage)
+            }
+            GameEvent::Gentrification { tick_duration, effect_desc } => {
+                format!("📈 Neighborhood improving! {} (Duration: {})", effect_desc, tick_duration)
+            }
+            GameEvent::Inspection { result, fine } => {
+                if *fine > 0 {
+                    format!("📋 Inspection Failed: {} (Fine: -${})", result, fine)
+                } else {
+                    format!("📋 Inspection Passed: {}", result)
                 }
             }
         }
@@ -109,11 +129,21 @@ impl GameEvent {
                 GameOutcome::Victory { .. } => EventSeverity::Positive,
                 _ => EventSeverity::Negative,
             },
+            GameEvent::Heatwave { .. } => EventSeverity::Warning,
+            GameEvent::PipeBurst { .. } => EventSeverity::Negative,
+            GameEvent::Gentrification { .. } => EventSeverity::Positive,
+            GameEvent::Inspection { fine, .. } => {
+                if *fine > 0 {
+                    EventSeverity::Negative
+                } else {
+                    EventSeverity::Positive
+                }
+            }
         }
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum EventSeverity {
     Positive,
     Info,
@@ -122,7 +152,7 @@ pub enum EventSeverity {
 }
 
 /// Log of all game events
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct EventLog {
     events: Vec<(u32, GameEvent)>,  // (tick, event)
 }

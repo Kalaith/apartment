@@ -1,9 +1,10 @@
-use macroquad::rand::{ChooseRandom, gen_range};
+use macroquad::rand::gen_range;
 use super::{Tenant, TenantArchetype, matching::MatchResult};
 use crate::building::Building;
+use serde::{Deserialize, Serialize};
 
 /// A tenant application for a specific apartment
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TenantApplication {
     pub tenant: Tenant,
     pub apartment_id: u32,
@@ -85,12 +86,16 @@ fn pick_random_archetype() -> TenantArchetype {
     let roll = gen_range(0, 100);
     
     // Weighted distribution
-    if roll < 40 {
-        TenantArchetype::Student      // 40% - most common
+    if roll < 35 {
+        TenantArchetype::Student      // 35% - Budget option
+    } else if roll < 60 {
+        TenantArchetype::Professional // 25% - Standard
     } else if roll < 75 {
-        TenantArchetype::Professional // 35% - common
+        TenantArchetype::Family       // 15% - Needs space
+    } else if roll < 85 {
+        TenantArchetype::Elderly      // 10% - Needs quiet
     } else {
-        TenantArchetype::Artist       // 25% - less common
+        TenantArchetype::Artist       // 15% - Niche
     }
 }
 

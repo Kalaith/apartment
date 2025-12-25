@@ -8,6 +8,7 @@ pub mod colors {
     pub const PANEL: Color = Color::new(0.18, 0.18, 0.22, 1.0);
     pub const PANEL_HEADER: Color = Color::new(0.22, 0.22, 0.28, 1.0);
     pub const TEXT: Color = Color::new(0.9, 0.9, 0.9, 1.0);
+    pub const TEXT_BRIGHT: Color = Color::new(1.0, 1.0, 1.0, 1.0);  // Pure white
     pub const TEXT_DIM: Color = Color::new(0.6, 0.6, 0.6, 1.0);
     pub const ACCENT: Color = Color::new(0.3, 0.6, 0.9, 1.0);
     pub const POSITIVE: Color = Color::new(0.3, 0.8, 0.4, 1.0);
@@ -18,6 +19,36 @@ pub mod colors {
     pub const OCCUPIED: Color = Color::new(0.25, 0.35, 0.45, 1.0);
     pub const SELECTED: Color = Color::new(0.35, 0.5, 0.7, 1.0);
     pub const HOVERED: Color = Color::new(0.3, 0.4, 0.55, 1.0);
+    
+    // Archetype colors
+    pub const STUDENT: Color = Color::new(0.8, 0.5, 0.3, 1.0);      // Orange-ish
+    pub const PROFESSIONAL: Color = Color::new(0.3, 0.5, 0.8, 1.0); // Blue-ish
+    pub const ARTIST: Color = Color::new(0.8, 0.3, 0.7, 1.0);       // Purple-ish
+}
+
+use crate::tenant::TenantArchetype;
+
+/// Get color for tenant archetype
+pub fn archetype_color(archetype: &TenantArchetype) -> macroquad::prelude::Color {
+    match archetype {
+        TenantArchetype::Student => colors::STUDENT,
+        TenantArchetype::Professional => colors::PROFESSIONAL,
+        TenantArchetype::Artist => colors::ARTIST,
+        TenantArchetype::Family => Color::new(0.4, 0.8, 0.4, 1.0),   // Green-ish
+        TenantArchetype::Elderly => Color::new(0.7, 0.7, 0.7, 1.0),  // Grey-ish
+    }
+}
+
+/// Get icon for happiness level
+pub fn happiness_icon(happiness: i32) -> &'static str {
+    match happiness {
+        85..=100 => "😃", // Ecstatic
+        70..=84 => "🙂",  // Happy
+        50..=69 => "😐",  // Neutral
+        30..=49 => "☹️",  // Unhappy
+        0..=29 => "😭",   // Miserable
+        _ => "😶",
+    }
 }
 
 /// Layout constants
@@ -39,21 +70,29 @@ pub fn button(x: f32, y: f32, w: f32, h: f32, text: &str, enabled: bool) -> bool
     let hovered = rect.contains(Vec2::new(mouse.0, mouse.1));
     let clicked = hovered && is_mouse_button_pressed(MouseButton::Left) && enabled;
     
+    let is_pressed = hovered && is_mouse_button_down(MouseButton::Left) && enabled;
+    
     let bg_color = if !enabled {
         Color::new(0.2, 0.2, 0.2, 1.0)
+    } else if is_pressed {
+        Color::new(0.25, 0.35, 0.5, 1.0) // Darker when pressed
     } else if hovered {
         colors::HOVERED
     } else {
         colors::PANEL
     };
     
+    // Draw background
     draw_rectangle(x, y, w, h, bg_color);
     draw_rectangle_lines(x, y, w, h, 2.0, colors::ACCENT);
+    
+    // Text offset
+    let y_offset = if is_pressed { 2.0 } else { 0.0 };
     
     let text_color = if enabled { colors::TEXT } else { colors::TEXT_DIM };
     let text_size = 20.0;
     let text_width = measure_text(text, None, text_size as u16, 1.0).width;
-    draw_text(text, x + (w - text_width) / 2.0, y + h / 2.0 + 6.0, text_size, text_color);
+    draw_text(text, x + (w - text_width) / 2.0, y + h / 2.0 + 6.0 + y_offset, text_size, text_color);
     
     clicked
 }

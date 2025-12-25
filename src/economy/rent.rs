@@ -22,6 +22,7 @@ pub struct RentPayment {
 pub struct MissedPayment {
     pub tenant_name: String,
     pub apartment_unit: String,
+    pub amount: i32,
     pub reason: String,
 }
 
@@ -46,6 +47,7 @@ pub fn collect_rent(
                     collection.missed_payments.push(MissedPayment {
                         tenant_name: tenant.name.clone(),
                         apartment_unit: apartment.unit_number.clone(),
+                        amount: apartment.rent_price,
                         reason: "Tenant too unhappy".to_string(),
                     });
                     continue;

@@ -1,8 +1,9 @@
 use macroquad::prelude::*;
-use crate::simulation::{GameEvent, EventSeverity, EventLog};
+use crate::simulation::{EventLog, EventSeverity};
 use super::common::*;
+use crate::assets::AssetManager;
 
-pub fn draw_notifications(event_log: &EventLog, _current_tick: u32) {
+pub fn draw_notifications(event_log: &EventLog, _current_tick: u32, _assets: &AssetManager) {
     let y = screen_height() - layout::FOOTER_HEIGHT;
     let w = screen_width();
     let h = layout::FOOTER_HEIGHT;

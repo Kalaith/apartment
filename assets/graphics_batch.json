@@ -1,0 +1,368 @@
+{
+    "image_prompts": [
+        {
+            "id": "tenant_student",
+            "title": "Tenant Student",
+            "description": "2D pixel art portrait of a young college student tenant, casual clothes (hoodie, t-shirt), holding books or laptop, friendly approachable expression, warm muted colors, apartment management game style, upper body shot, cozy illustration style, transparent or simple flat background",
+            "Width": 512,
+            "Height": 512
+        },
+        {
+            "id": "tenant_professional",
+            "title": "Tenant Professional",
+            "description": "2D pixel art portrait of a young professional office worker tenant, smart business casual attire, confident organized expression, holding coffee or briefcase, warm muted colors, apartment management game style, upper body shot, cozy illustration style, transparent or simple flat background",
+            "Width": 512,
+            "Height": 512
+        },
+        {
+            "id": "tenant_artist",
+            "title": "Tenant Artist",
+            "description": "2D pixel art portrait of a creative artist tenant, colorful bohemian clothes, paint-stained apron or holding paintbrush, dreamy creative expression, warm muted colors, apartment management game style, upper body shot, cozy illustration style, transparent or simple flat background",
+            "Width": 512,
+            "Height": 512
+        },
+        {
+            "id": "tenant_family",
+            "title": "Tenant Family",
+            "description": "2D pixel art portrait of a parent representing a family tenant, warm caring expression, holding child's toy or with small child peeking behind, cozy domestic feel, warm muted colors, apartment management game style, upper body shot, cozy illustration style, transparent or simple flat background",
+            "Width": 512,
+            "Height": 512
+        },
+        {
+            "id": "tenant_elderly",
+            "title": "Tenant Elderly",
+            "description": "2D pixel art portrait of an elderly retired tenant, kind wise expression, comfortable cardigan or sweater, reading glasses, perhaps holding knitting or book, warm muted colors, apartment management game style, upper body shot, cozy illustration style, transparent or simple flat background",
+            "Width": 512,
+            "Height": 512
+        },
+        {
+            "id": "design_bare",
+            "title": "Design Bare",
+            "description": "2D pixel art side-view cross-section of a bare unfurnished apartment interior, empty room with plain walls, minimal furniture, exposed pipes or wires showing wear, dusty feel, dull muted colors suggesting neglect, apartment management game style, cozy illustration style",
+            "Width": 512,
+            "Height": 256
+        },
+        {
+            "id": "design_practical",
+            "title": "Design Practical",
+            "description": "2D pixel art side-view cross-section of a practical furnished apartment interior, basic furniture (bed, desk, sofa), functional kitchen area, clean but not decorated, neutral colors, organized and livable space, apartment management game style, cozy illustration style",
+            "Width": 512,
+            "Height": 256
+        },
+        {
+            "id": "design_cozy",
+            "title": "Design Cozy",
+            "description": "2D pixel art side-view cross-section of a cozy well-decorated apartment interior, comfortable furniture with cushions and throws, plants, warm lighting, artwork on walls, rugs, homey welcoming atmosphere, warm inviting colors, apartment management game style, cozy illustration style",
+            "Width": 512,
+            "Height": 256
+        },
+        {
+            "id": "building_exterior",
+            "title": "Building Exterior",
+            "description": "2D pixel art front view of a 3-story apartment building exterior, slightly worn brick facade, multiple windows showing different apartments, fire escape, entrance door, street-level view, urban setting, warm muted colors, apartment management game style, cozy illustration style",
+            "Width": 512,
+            "Height": 512
+        },
+        {
+            "id": "hallway",
+            "title": "Hallway",
+            "description": "2D pixel art apartment hallway interior view, doors to units on both sides, overhead lighting, worn carpet, mailbox area, slightly dated decor, warm muted colors suggesting age and character, apartment management game style, cozy illustration style",
+            "Width": 512,
+            "Height": 256
+        },
+        {
+            "id": "apartment_door",
+            "title": "Apartment Door",
+            "description": "2D pixel art apartment door icon, wooden door with number plate, peephole, slightly worn paint, warm muted colors, apartment management game style, cozy illustration style, simple background",
+            "Width": 256,
+            "Height": 256
+        },
+        {
+            "id": "window_street",
+            "title": "Window Street",
+            "description": "2D pixel art window view looking out to street, urban view with buildings and street, suggesting noise and activity, warm muted colors, apartment management game style, cozy illustration style",
+            "Width": 256,
+            "Height": 256
+        },
+        {
+            "id": "window_quiet",
+            "title": "Window Quiet",
+            "description": "2D pixel art window view looking out to courtyard or back alley, peaceful green view with tree or plants, suggesting quiet and calm, warm muted colors, apartment management game style, cozy illustration style",
+            "Width": 256,
+            "Height": 256
+        },
+        {
+            "id": "neighborhood_downtown",
+            "title": "Neighborhood Downtown",
+            "description": "2D pixel art downtown city neighborhood panorama, tall office buildings, busy streets, coffee shops, transit station, professional urban atmosphere, modern and somewhat sterile, warm muted colors, apartment management game style, cozy illustration style",
+            "Width": 1024,
+            "Height": 512
+        },
+        {
+            "id": "neighborhood_suburbs",
+            "title": "Neighborhood Suburbs",
+            "description": "2D pixel art suburban neighborhood panorama, tree-lined streets, family-friendly parks, school building in distance, quiet residential atmosphere, green spaces, warm muted colors, apartment management game style, cozy illustration style",
+            "Width": 1024,
+            "Height": 512
+        },
+        {
+            "id": "neighborhood_industrial",
+            "title": "Neighborhood Industrial",
+            "description": "2D pixel art industrial neighborhood panorama, converted warehouses and lofts, old factories becoming art studios, gritty but trendy gentrifying area, street art, exposed brick buildings, warm muted colors, apartment management game style, cozy illustration style",
+            "Width": 1024,
+            "Height": 512
+        },
+        {
+            "id": "neighborhood_historic",
+            "title": "Neighborhood Historic",
+            "description": "2D pixel art historic neighborhood panorama, ornate Victorian or brownstone buildings, preserved architecture, mature trees, quiet dignified atmosphere, antique street lamps, warm muted colors, apartment management game style, cozy illustration style",
+            "Width": 1024,
+            "Height": 512
+        },
+        {
+            "id": "icon_money",
+            "title": "Icon Money",
+            "description": "2D pixel art golden coin or dollar symbol icon, simple clean design, warm muted colors, apartment management game style, transparent background",
+            "Width": 64,
+            "Height": 64
+        },
+        {
+            "id": "icon_repair",
+            "title": "Icon Repair",
+            "description": "2D pixel art wrench and hammer crossed icon, repair and maintenance symbol, simple clean design, warm muted colors, apartment management game style, transparent background",
+            "Width": 64,
+            "Height": 64
+        },
+        {
+            "id": "icon_upgrade",
+            "title": "Icon Upgrade",
+            "description": "2D pixel art upward arrow with sparkles icon, upgrade or improvement symbol, simple clean design, warm muted colors, apartment management game style, transparent background",
+            "Width": 64,
+            "Height": 64
+        },
+        {
+            "id": "icon_soundproofing",
+            "title": "Icon Soundproofing",
+            "description": "2D pixel art sound wave with mute symbol icon, noise reduction symbol, simple clean design, warm muted colors, apartment management game style, transparent background",
+            "Width": 64,
+            "Height": 64
+        },
+        {
+            "id": "icon_noise",
+            "title": "Icon Noise",
+            "description": "2D pixel art loud speaker or sound wave icon, indicating noise, simple clean design, warm yellow warning colors, apartment management game style, transparent background",
+            "Width": 64,
+            "Height": 64
+        },
+        {
+            "id": "icon_rent",
+            "title": "Icon Rent",
+            "description": "2D pixel art house with dollar sign or envelope with money icon, rent payment symbol, simple clean design, warm muted colors, apartment management game style, transparent background",
+            "Width": 64,
+            "Height": 64
+        },
+        {
+            "id": "icon_application",
+            "title": "Icon Application",
+            "description": "2D pixel art clipboard or document with person silhouette icon, tenant application symbol, simple clean design, warm muted colors, apartment management game style, transparent background",
+            "Width": 64,
+            "Height": 64
+        },
+        {
+            "id": "icon_key",
+            "title": "Icon Key",
+            "description": "2D pixel art house key icon, moving in or vacancy symbol, simple clean design, warm golden colors, apartment management game style, transparent background",
+            "Width": 64,
+            "Height": 64
+        },
+        {
+            "id": "icon_condition_good",
+            "title": "Icon Condition Good",
+            "description": "2D pixel art checkmark or sparkle icon, good condition indicator, simple clean design, green positive colors, apartment management game style, transparent background",
+            "Width": 64,
+            "Height": 64
+        },
+        {
+            "id": "icon_condition_poor",
+            "title": "Icon Condition Poor",
+            "description": "2D pixel art warning triangle or cracked wall icon, poor condition indicator, simple clean design, red warning colors, apartment management game style, transparent background",
+            "Width": 64,
+            "Height": 64
+        },
+        {
+            "id": "icon_calendar",
+            "title": "Icon Calendar",
+            "description": "2D pixel art calendar or monthly page icon, time and month passage symbol, simple clean design, warm muted colors, apartment management game style, transparent background",
+            "Width": 64,
+            "Height": 64
+        },
+        {
+            "id": "icon_mail",
+            "title": "Icon Mail",
+            "description": "2D pixel art mailbox or envelope icon, correspondence and mail system symbol, simple clean design, warm muted colors, apartment management game style, transparent background",
+            "Width": 64,
+            "Height": 64
+        },
+        {
+            "id": "icon_inspection",
+            "title": "Icon Inspection",
+            "description": "2D pixel art clipboard with magnifying glass icon, building inspection symbol, simple clean design, warm muted colors, apartment management game style, transparent background",
+            "Width": 64,
+            "Height": 64
+        },
+        {
+            "id": "icon_market",
+            "title": "Icon Market",
+            "description": "2D pixel art for-sale sign or building with price tag icon, property market symbol, simple clean design, warm muted colors, apartment management game style, transparent background",
+            "Width": 64,
+            "Height": 64
+        },
+        {
+            "id": "happiness_ecstatic",
+            "title": "Happiness Ecstatic",
+            "description": "2D pixel art happy smiling face icon, ecstatic joyful expression with wide smile, simple clean design, bright green positive colors, apartment management game style, transparent background",
+            "Width": 64,
+            "Height": 64
+        },
+        {
+            "id": "happiness_happy",
+            "title": "Happiness Happy",
+            "description": "2D pixel art content smiling face icon, happy pleasant expression with smile, simple clean design, green positive colors, apartment management game style, transparent background",
+            "Width": 64,
+            "Height": 64
+        },
+        {
+            "id": "happiness_neutral",
+            "title": "Happiness Neutral",
+            "description": "2D pixel art neutral face icon, flat mouth neither happy nor sad, simple clean design, yellow neutral colors, apartment management game style, transparent background",
+            "Width": 64,
+            "Height": 64
+        },
+        {
+            "id": "happiness_unhappy",
+            "title": "Happiness Unhappy",
+            "description": "2D pixel art slightly frowning face icon, unhappy concerned expression, simple clean design, orange warning colors, apartment management game style, transparent background",
+            "Width": 64,
+            "Height": 64
+        },
+        {
+            "id": "happiness_miserable",
+            "title": "Happiness Miserable",
+            "description": "2D pixel art very sad crying face icon, miserable distressed expression, simple clean design, red negative colors, apartment management game style, transparent background",
+            "Width": 64,
+            "Height": 64
+        },
+        {
+            "id": "event_rent_collected",
+            "title": "Event Rent Collected",
+            "description": "2D pixel art illustration of coins and money being collected, rent payment received theme, positive green tones, simple clean design, apartment management game style, transparent background",
+            "Width": 128,
+            "Height": 128
+        },
+        {
+            "id": "event_tenant_moved_in",
+            "title": "Event Tenant Moved In",
+            "description": "2D pixel art illustration of moving boxes and open door, new tenant arrival theme, warm welcoming tones, simple clean design, apartment management game style, transparent background",
+            "Width": 128,
+            "Height": 128
+        },
+        {
+            "id": "event_tenant_moved_out",
+            "title": "Event Tenant Moved Out",
+            "description": "2D pixel art illustration of moving boxes and closed door with goodbye note, tenant departure theme, slightly sad blue tones, simple clean design, apartment management game style, transparent background",
+            "Width": 128,
+            "Height": 128
+        },
+        {
+            "id": "event_noise_complaint",
+            "title": "Event Noise Complaint",
+            "description": "2D pixel art illustration of annoyed person covering ears with sound waves, noise complaint theme, warm warning tones, simple clean design, apartment management game style, transparent background",
+            "Width": 128,
+            "Height": 128
+        },
+        {
+            "id": "event_pipe_burst",
+            "title": "Event Pipe Burst",
+            "description": "2D pixel art illustration of broken pipe with water spraying, plumbing emergency theme, blue and brown colors, simple clean design, apartment management game style, transparent background",
+            "Width": 128,
+            "Height": 128
+        },
+        {
+            "id": "event_inspection",
+            "title": "Event Inspection",
+            "description": "2D pixel art illustration of inspector with clipboard examining building, building inspection theme, official neutral tones, simple clean design, apartment management game style, transparent background",
+            "Width": 128,
+            "Height": 128
+        },
+        {
+            "id": "event_heatwave",
+            "title": "Event Heatwave",
+            "description": "2D pixel art illustration of hot sun with heat waves and sweating thermometer, summer heatwave theme, warm orange and red tones, simple clean design, apartment management game style, transparent background",
+            "Width": 128,
+            "Height": 128
+        },
+        {
+            "id": "event_new_business",
+            "title": "Event New Business",
+            "description": "2D pixel art illustration of small shop or cafe with grand opening banner, neighborhood improvement theme, warm welcoming tones, simple clean design, apartment management game style, transparent background",
+            "Width": 128,
+            "Height": 128
+        },
+        {
+            "id": "event_developer_offer",
+            "title": "Event Developer Offer",
+            "description": "2D pixel art illustration of businessman in suit with briefcase and money bag, developer buyout offer theme, cool professional tones, simple clean design, apartment management game style, transparent background",
+            "Width": 128,
+            "Height": 128
+        },
+        {
+            "id": "title_background",
+            "title": "Title Background",
+            "description": "2D pixel art title screen background for apartment management game, view of slightly worn but charming apartment building at sunset, warm cozy lighting from windows, urban neighborhood setting, nostalgic hopeful atmosphere, warm muted colors, apartment management game style",
+            "Width": 1920,
+            "Height": 1080
+        },
+        {
+            "id": "title_logo",
+            "title": "Title Logo",
+            "description": "2D pixel art game title logo reading 'APARTMENT' or just stylized apartment building silhouette, cozy management game feel, warm muted earth tones with slight glow, apartment management game style, transparent background",
+            "Width": 512,
+            "Height": 256
+        },
+        {
+            "id": "menu_button_bg",
+            "title": "Menu Button Bg",
+            "description": "2D pixel art button background, worn wooden or vintage metal panel, subtle texture, warm muted colors, apartment management game style, suitable for text overlay",
+            "Width": 256,
+            "Height": 64
+        },
+        {
+            "id": "decoration_plant",
+            "title": "Decoration Plant",
+            "description": "2D pixel art potted houseplant, cozy indoor plant in terracotta pot, warm muted green colors, apartment management game style, transparent background",
+            "Width": 128,
+            "Height": 128
+        },
+        {
+            "id": "decoration_lamp",
+            "title": "Decoration Lamp",
+            "description": "2D pixel art desk lamp or floor lamp with warm glow, cozy lighting element, warm orange and yellow tones, apartment management game style, transparent background",
+            "Width": 128,
+            "Height": 128
+        },
+        {
+            "id": "decoration_books",
+            "title": "Decoration Books",
+            "description": "2D pixel art stack of books, various sizes and colors, cozy reading element, warm muted colors, apartment management game style, transparent background",
+            "Width": 128,
+            "Height": 128
+        },
+        {
+            "id": "decoration_coffee",
+            "title": "Decoration Coffee",
+            "description": "2D pixel art coffee cup with steam rising, cozy beverage element, warm brown and cream colors, apartment management game style, transparent background",
+            "Width": 128,
+            "Height": 128
+        }
+    ]
+}

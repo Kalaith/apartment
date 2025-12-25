@@ -1,21 +1,27 @@
-use crate::state::{GameState, GameplayState, MenuState, ResultsState, StateTransition};
+use crate::state::{GameState, MenuState, StateTransition};
+use crate::assets::AssetManager;
 
 pub struct Game {
     pub state: GameState,
+    pub assets: AssetManager,
 }
 
 impl Game {
     pub async fn new() -> Self {
+        let mut assets = AssetManager::new();
+        assets.load_assets().await;
+        
         Self {
             state: GameState::Menu(MenuState::new()),
+            assets,
         }
     }
 
     pub fn update(&mut self) {
         let transition = match &mut self.state {
-            GameState::Menu(s) => s.update(),
-            GameState::Gameplay(s) => s.update(),
-            GameState::Results(s) => s.update(),
+            GameState::Menu(s) => s.update(&self.assets),
+            GameState::Gameplay(s) => s.update(&self.assets),
+            GameState::Results(s) => s.update(&self.assets),
         };
 
         if let Some(t) = transition {
@@ -25,9 +31,9 @@ impl Game {
 
     pub fn draw(&mut self) {
         match &mut self.state {
-            GameState::Menu(s) => s.draw(),
-            GameState::Gameplay(s) => s.draw(),
-            GameState::Results(s) => s.draw(),
+            GameState::Menu(s) => s.draw(&self.assets),
+            GameState::Gameplay(s) => s.draw(&self.assets),
+            GameState::Results(s) => s.draw(&self.assets),
         }
     }
 
@@ -39,3 +45,4 @@ impl Game {
         };
     }
 }
+

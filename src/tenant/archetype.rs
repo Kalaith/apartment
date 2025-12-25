@@ -1,10 +1,12 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum TenantArchetype {
     Student,
     Professional,
     Artist,
+    Family,
+    Elderly,
 }
 
 impl TenantArchetype {
@@ -13,6 +15,8 @@ impl TenantArchetype {
             TenantArchetype::Student => "Student",
             TenantArchetype::Professional => "Professional",
             TenantArchetype::Artist => "Artist",
+            TenantArchetype::Family => "Family",
+            TenantArchetype::Elderly => "Elderly",
         }
     }
     
@@ -21,6 +25,8 @@ impl TenantArchetype {
             TenantArchetype::Student => "Budget-conscious, tolerates some issues",
             TenantArchetype::Professional => "Values quality and quiet",
             TenantArchetype::Artist => "Seeks creative, cozy spaces",
+            TenantArchetype::Family => "Needs space, sensitive to noise",
+            TenantArchetype::Elderly => "Needs low floor, quiet/stable",
         }
     }
     
@@ -62,6 +68,30 @@ impl TenantArchetype {
                 prefers_quiet: false,
                 preferred_design: Some(crate::building::DesignType::Cozy),
                 hates_design: Some(crate::building::DesignType::Bare),
+            },
+            TenantArchetype::Family => ArchetypePreferences {
+                rent_sensitivity: 0.7,      // Moderate-High (kids are expensive)
+                condition_sensitivity: 0.7, // Needs decent condition
+                noise_sensitivity: 1.0,     // Hates noise (kids sleeping)
+                design_sensitivity: 0.4,    // Moderate
+                
+                ideal_rent_max: 1100,
+                min_acceptable_condition: 50,
+                prefers_quiet: true,
+                preferred_design: Some(crate::building::DesignType::Practical),
+                hates_design: None,
+            },
+            TenantArchetype::Elderly => ArchetypePreferences {
+                rent_sensitivity: 0.8,      // Fixed income
+                condition_sensitivity: 0.6, // Moderate
+                noise_sensitivity: 0.9,     // Hates noise
+                design_sensitivity: 0.3,    // Low
+                
+                ideal_rent_max: 800,
+                min_acceptable_condition: 45,
+                prefers_quiet: true,
+                preferred_design: None,
+                hates_design: Some(crate::building::DesignType::Bare), // Wants some comfort
             },
         }
     }

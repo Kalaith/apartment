@@ -1,0 +1,130 @@
+{
+    "image_prompts": [
+        {
+            "id": "shield_wall",
+            "title": "Shield Wall",
+            "description": "Dark fantasy card art, a knight raising a massive tower shield, golden shield wall blocking all attacks, defensive stance, medieval battlefield, dramatic lighting, isolated on dark background, game card illustration",
+            "Width": 512,
+            "Height": 512
+        },
+        {
+            "id": "heavy_strike",
+            "title": "Heavy Strike",
+            "description": "Dark fantasy card art, armored warrior bringing down a massive two-handed sword with tremendous force, powerful strike, motion blur, sparks flying, medieval combat, isolated on dark background, game card illustration",
+            "Width": 512,
+            "Height": 512
+        },
+        {
+            "id": "quick_slash",
+            "title": "Quick Slash",
+            "description": "Dark fantasy card art, agile rogue performing a lightning-fast dagger slash, blur of motion, acrobatic pose, dual daggers, speed lines, isolated on dark background, game card illustration",
+            "Width": 512,
+            "Height": 512
+        },
+        {
+            "id": "backstab",
+            "title": "Backstab",
+            "description": "Dark fantasy card art, assassin striking from the shadows, poisoned blade aimed at vulnerable target, sneaky attack, dark cloak, sinister mood, isolated on dark background, game card illustration",
+            "Width": 512,
+            "Height": 512
+        },
+        {
+            "id": "evasion",
+            "title": "Evasion",
+            "description": "Dark fantasy card art, nimble scout dodging and rolling away from attacks, acrobatic evasive maneuver, arrows flying past, agile movement, isolated on dark background, game card illustration",
+            "Width": 512,
+            "Height": 512
+        },
+        {
+            "id": "poison_blade",
+            "title": "Poison Blade",
+            "description": "Dark fantasy card art, wicked curved dagger dripping with sickly green poison, toxic venom, deadly blade, dark alchemical poison, isolated on dark background, game card illustration",
+            "Width": 512,
+            "Height": 512
+        },
+        {
+            "id": "heal",
+            "title": "Heal",
+            "description": "Dark fantasy card art, holy priest channeling warm golden healing light, divine restoration magic, wounds closing, gentle radiance, peaceful expression, isolated on dark background, game card illustration",
+            "Width": 512,
+            "Height": 512
+        },
+        {
+            "id": "greater_heal",
+            "title": "Greater Heal",
+            "description": "Dark fantasy card art, powerful healer surrounded by intense golden holy light, major restoration spell, divine energy waves, angelic presence, miraculous healing, isolated on dark background, game card illustration",
+            "Width": 512,
+            "Height": 512
+        },
+        {
+            "id": "purify",
+            "title": "Purify",
+            "description": "Dark fantasy card art, holy priest cleansing dark corruption with pure white light, removing curses and poisons, purification ritual, dark smoke dissipating, isolated on dark background, game card illustration",
+            "Width": 512,
+            "Height": 512
+        },
+        {
+            "id": "calming_light",
+            "title": "Calming Light",
+            "description": "Dark fantasy card art, serene priest emanating soft blue calming aura, peaceful meditation, stress relief, tranquil energy, soothing presence, isolated on dark background, game card illustration",
+            "Width": 512,
+            "Height": 512
+        },
+        {
+            "id": "holy_shield",
+            "title": "Holy Shield",
+            "description": "Dark fantasy card art, divine barrier of golden light protecting the faithful, holy shield spell, sacred protection, radiant defense, cross symbol, isolated on dark background, game card illustration",
+            "Width": 512,
+            "Height": 512
+        },
+        {
+            "id": "smite",
+            "title": "Smite",
+            "description": "Dark fantasy card art, holy warrior channeling divine wrath, beam of holy light striking an enemy, righteous smite, zealous attack, golden lightning, isolated on dark background, game card illustration",
+            "Width": 512,
+            "Height": 512
+        },
+        {
+            "id": "arcane_bolt",
+            "title": "Arcane Bolt",
+            "description": "Dark fantasy card art, mystic wizard casting a crackling purple arcane energy bolt, magical projectile, arcane symbols, mystical power, isolated on dark background, game card illustration",
+            "Width": 512,
+            "Height": 512
+        },
+        {
+            "id": "fireball",
+            "title": "Fireball",
+            "description": "Dark fantasy card art, powerful mage conjuring massive fireball, intense orange flames, explosive fire magic, dramatic spell casting, isolated on dark background, game card illustration",
+            "Width": 512,
+            "Height": 512
+        },
+        {
+            "id": "frost_shield",
+            "title": "Frost Shield",
+            "description": "Dark fantasy card art, ice mage creating frozen barrier of ice crystals, defensive frost magic, blue ice shield, cold mist, frozen protection, isolated on dark background, game card illustration",
+            "Width": 512,
+            "Height": 512
+        },
+        {
+            "id": "channel_energy",
+            "title": "Channel Energy",
+            "description": "Dark fantasy card art, mystic in deep concentration drawing magical energy from the ether, glowing energy streams, meditation pose, magical gathering, isolated on dark background, game card illustration",
+            "Width": 512,
+            "Height": 512
+        },
+        {
+            "id": "mind_blast",
+            "title": "Mind Blast",
+            "description": "Dark fantasy card art, psychic mage unleashing devastating mental attack, purple psionic energy waves, mind assault, screaming victim, psychic power, isolated on dark background, game card illustration",
+            "Width": 512,
+            "Height": 512
+        },
+        {
+            "id": "arcane_shield",
+            "title": "Arcane Shield",
+            "description": "Dark fantasy card art, wizard protected by shimmering purple arcane barrier, magical defense spell, geometric magical symbols, mystical protection, isolated on dark background, game card illustration",
+            "Width": 512,
+            "Height": 512
+        }
+    ]
+}

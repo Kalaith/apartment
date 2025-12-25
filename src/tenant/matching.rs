@@ -2,7 +2,10 @@ use crate::building::Apartment;
 use super::{Tenant, happiness};
 
 /// Result of matching a tenant to an apartment
-#[derive(Clone, Debug)]
+use serde::{Deserialize, Serialize};
+
+/// Result of matching a tenant to an apartment
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MatchResult {
     pub score: i32,              // 0-100, higher = better match
     pub meets_minimum: bool,     // Would tenant even consider this?

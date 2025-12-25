@@ -3,7 +3,7 @@ mod gameplay;
 mod results;
 
 pub use menu::MenuState;
-pub use gameplay::GameplayState;
+pub use gameplay::{GameplayState, ViewMode};
 pub use results::ResultsState;
 
 pub enum GameState {

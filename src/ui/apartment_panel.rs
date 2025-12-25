@@ -3,18 +3,26 @@ use crate::building::{Apartment, Building, DesignType, ApartmentSize, NoiseLevel
 use crate::tenant::Tenant;
 use crate::economy::UpgradeCosts;
 use super::{common::*, UiAction};
+use crate::assets::AssetManager;
 
 pub fn draw_apartment_panel(
     apt: &Apartment,
-    building: &Building,
+    _building: &Building,
     tenants: &[Tenant],
     money: i32,
+    offset_x: f32,
+    assets: &AssetManager,
 ) -> Option<UiAction> {
     let mut action = None;
     
-    let panel_x = screen_width() * layout::PANEL_SPLIT + layout::PADDING;
+    let panel_x = screen_width() * layout::PANEL_SPLIT + layout::PADDING + offset_x;
     let panel_y = layout::HEADER_HEIGHT + layout::PADDING;
     let panel_w = screen_width() * (1.0 - layout::PANEL_SPLIT) - layout::PADDING * 2.0;
+
+    if panel_x > screen_width() {
+        return None;
+    }
+    
     let panel_h = screen_height() - layout::HEADER_HEIGHT - layout::FOOTER_HEIGHT - layout::PADDING * 2.0;
     
     panel(panel_x, panel_y, panel_w, panel_h, &format!("Unit {}", apt.unit_number));
@@ -27,7 +35,15 @@ pub fn draw_apartment_panel(
     y += 5.0;
     let cond_color = condition_color(apt.condition);
     progress_bar(content_x, y, panel_w - 30.0, 20.0, apt.condition as f32, 100.0, cond_color);
-    draw_text(&format!("{}%", apt.condition), content_x + panel_w - 70.0, y + 15.0, 16.0, colors::TEXT);
+    // Condition Icon
+    if let Some(icon) = if apt.condition > 50 { assets.get_texture("icon_condition_good") } else { assets.get_texture("icon_condition_poor") } {
+        draw_texture_ex(icon, content_x + panel_w - 60.0, y - 2.0, WHITE, DrawTextureParams {
+            dest_size: Some(Vec2::new(24.0, 24.0)),
+            ..Default::default()
+        });
+    }
+
+    draw_text(&format!("{}%", apt.condition), content_x + panel_w - 110.0, y + 15.0, 16.0, colors::TEXT);
     y += 35.0;
     
     // Design
@@ -58,16 +74,34 @@ pub fn draw_apartment_panel(
         colors::POSITIVE
     };
     draw_text(&format!("Noise: {}", noise_text), content_x, y, 18.0, noise_color);
+    if let Some(icon) = assets.get_texture("icon_noise") {
+        draw_texture_ex(icon, content_x + 120.0, y - 15.0, WHITE, DrawTextureParams {
+            dest_size: Some(Vec2::new(24.0, 24.0)),
+            ..Default::default()
+        });
+    }
     y += 25.0;
     
     // Soundproofing
     if apt.has_soundproofing {
         draw_text("Soundproofed", content_x, y, 16.0, colors::POSITIVE);
+        if let Some(icon) = assets.get_texture("icon_soundproofing") {
+             draw_texture_ex(icon, content_x + 110.0, y - 15.0, WHITE, DrawTextureParams {
+                dest_size: Some(Vec2::new(24.0, 24.0)),
+                ..Default::default()
+            });
+        }
         y += 25.0;
     }
     
     // Rent
     draw_text(&format!("Rent: ${}/mo", apt.rent_price), content_x, y, 20.0, colors::ACCENT);
+    if let Some(icon) = assets.get_texture("icon_rent") {
+         draw_texture_ex(icon, content_x + 150.0, y - 18.0, WHITE, DrawTextureParams {
+            dest_size: Some(Vec2::new(24.0, 24.0)),
+            ..Default::default()
+        });
+    }
     y += 35.0;
     
     // Quality score
@@ -84,16 +118,58 @@ pub fn draw_apartment_panel(
             draw_text("TENANT", content_x, y, 14.0, colors::TEXT_DIM);
             y += 20.0;
             
-            draw_text(&tenant.name, content_x, y, 20.0, colors::TEXT);
-            y += 25.0;
+            // Portrait
+            let portrait_id = format!("tenant_{}", format!("{:?}", tenant.archetype).to_lowercase());
+            let has_portrait = if let Some(tex) = assets.get_texture(&portrait_id) {
+                draw_texture_ex(tex, content_x, y, WHITE, DrawTextureParams {
+                    dest_size: Some(Vec2::new(80.0, 80.0)),
+                    ..Default::default()
+                });
+                true
+            } else {
+                false
+            };
             
-            draw_text(&format!("{:?}", tenant.archetype), content_x, y, 16.0, colors::TEXT_DIM);
-            y += 25.0;
+            let text_x = if has_portrait { content_x + 90.0 } else { content_x + 10.0 };
+
+            // Colored strip for archetype (keep it even with portrait as a backup or accent)
+            if !has_portrait {
+                 draw_rectangle(content_x, y, 4.0, 20.0, archetype_color(&tenant.archetype));
+            }
             
+            draw_text(&tenant.name, text_x, y + 16.0, 20.0, colors::TEXT);
+            draw_text(&format!("{:?}", tenant.archetype), text_x, y + 36.0, 16.0, colors::TEXT_DIM);
+            
+            let months_y = if has_portrait { y + 85.0 } else { y + 60.0 };
+             // Use original y increment if no portrait
+             if has_portrait {
+                 y += 85.0; 
+             } else {
+                 y += 60.0;
+             }
+
             draw_text("Happiness", content_x, y, 14.0, colors::TEXT_DIM);
             y += 5.0;
             let happy_color = happiness_color(tenant.happiness);
-            progress_bar(content_x, y, panel_w - 30.0, 16.0, tenant.happiness as f32, 100.0, happy_color);
+            progress_bar(content_x, y, panel_w - 60.0, 16.0, tenant.happiness as f32, 100.0, happy_color);
+            
+            // Icon next to bar
+            let happiness_level = if tenant.happiness >= 90 { "happiness_ecstatic" }
+            else if tenant.happiness >= 70 { "happiness_happy" }
+            else if tenant.happiness >= 40 { "happiness_neutral" }
+            else if tenant.happiness >= 20 { "happiness_unhappy" }
+            else { "happiness_miserable" };
+            
+            if let Some(icon) = assets.get_texture(happiness_level) {
+                draw_texture_ex(icon, content_x + panel_w - 55.0, y - 4.0, WHITE, DrawTextureParams {
+                    dest_size: Some(Vec2::new(24.0, 24.0)),
+                    ..Default::default()
+                });
+            } else {
+                 let icon_char = happiness_icon(tenant.happiness);
+                 draw_text(icon_char, content_x + panel_w - 50.0, y + 14.0, 20.0, colors::TEXT);
+            }
+
             y += 25.0;
             
             draw_text(&format!("Months: {}", tenant.months_residing), content_x, y, 14.0, colors::TEXT_DIM);
@@ -101,7 +177,13 @@ pub fn draw_apartment_panel(
         }
     } else {
         draw_text("VACANT", content_x, y, 18.0, colors::WARNING);
-        y += 30.0;
+        y += 25.0;
+        
+        // Button to jump to applications
+        if button(content_x, y, panel_w - 30.0, 30.0, "View Applications", true) {
+            action = Some(UiAction::SelectApplications);
+        }
+        y += 40.0;
     }
     
     // === Upgrade Buttons (mouse-clickable) ===
@@ -119,6 +201,9 @@ pub fn draw_apartment_panel(
         let repair_amount = (100 - apt.condition).min(25);
         let repair_cost = UpgradeCosts::repair_cost(repair_amount);
         let can_afford = money >= repair_cost;
+        
+        // We can draw icon inside button if we write a custom button function or just overlay it.
+        // For now sticking to text button but adding icon next to it if we want.
         
         let label = format!("Repair +{} (${})", repair_amount, repair_cost);
         if button(content_x, y, btn_w, btn_h, &label, can_afford) {
@@ -157,12 +242,17 @@ pub fn draw_apartment_panel(
     action
 }
 
-pub fn draw_hallway_panel(building: &Building, money: i32) -> Option<UiAction> {
+pub fn draw_hallway_panel(building: &Building, money: i32, offset_x: f32, assets: &AssetManager) -> Option<UiAction> {
     let mut action = None;
     
-    let panel_x = screen_width() * layout::PANEL_SPLIT + layout::PADDING;
+    let panel_x = screen_width() * layout::PANEL_SPLIT + layout::PADDING + offset_x;
     let panel_y = layout::HEADER_HEIGHT + layout::PADDING;
     let panel_w = screen_width() * (1.0 - layout::PANEL_SPLIT) - layout::PADDING * 2.0;
+
+    if panel_x > screen_width() {
+        return None;
+    }
+
     let panel_h = screen_height() - layout::HEADER_HEIGHT - layout::FOOTER_HEIGHT - layout::PADDING * 2.0;
     
     panel(panel_x, panel_y, panel_w, panel_h, "Hallway");
@@ -174,7 +264,14 @@ pub fn draw_hallway_panel(building: &Building, money: i32) -> Option<UiAction> {
     y += 5.0;
     let cond_color = condition_color(building.hallway_condition);
     progress_bar(content_x, y, panel_w - 30.0, 20.0, building.hallway_condition as f32, 100.0, cond_color);
-    draw_text(&format!("{}%", building.hallway_condition), content_x + panel_w - 70.0, y + 15.0, 16.0, colors::TEXT);
+     if let Some(icon) = if building.hallway_condition > 50 { assets.get_texture("icon_condition_good") } else { assets.get_texture("icon_condition_poor") } {
+        draw_texture_ex(icon, content_x + panel_w - 60.0, y - 2.0, WHITE, DrawTextureParams {
+            dest_size: Some(Vec2::new(24.0, 24.0)),
+            ..Default::default()
+        });
+    }
+
+    draw_text(&format!("{}%", building.hallway_condition), content_x + panel_w - 110.0, y + 15.0, 16.0, colors::TEXT);
     y += 45.0;
     
     draw_text("Affects overall building appeal", content_x, y, 14.0, colors::TEXT_DIM);

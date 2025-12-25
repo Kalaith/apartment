@@ -8,7 +8,13 @@ mod economy;
 mod simulation;
 mod ui;
 mod data;
+mod assets;
 mod save;
+
+// Phase 3 modules
+mod city;
+mod consequences;
+mod narrative;
 
 use game::Game;
 

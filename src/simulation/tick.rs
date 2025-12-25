@@ -1,10 +1,13 @@
 use crate::building::Building;
 use crate::tenant::{Tenant, TenantApplication, calculate_happiness, generate_applications, process_departures};
 use crate::economy::{PlayerFunds, FinancialLedger, collect_rent};
-use super::{GameEvent, EventLog, decay, win_condition, GameOutcome};
+use super::{GameEvent, EventLog, decay, win_condition, GameOutcome, EventSystem};
+
+
+use serde::{Deserialize, Serialize};
 
 /// Result of processing a game tick
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TickResult {
     pub events: Vec<GameEvent>,
     pub rent_collected: i32,
@@ -48,11 +51,16 @@ impl GameTick {
         }
         
         for missed in &rent_result.missed_payments {
-            result.events.push(GameEvent::RentMissed {
+            result.events.push(            GameEvent::RentMissed {
                 tenant_name: missed.tenant_name.clone(),
-                reason: missed.reason.clone(),
+                amount: missed.amount,
             });
         }
+        
+        // === Phase 1.5: Random Events ===
+        let mut event_system = EventSystem::new();
+        let random_events = event_system.check_events(building, funds, current_tick);
+        result.events.extend(random_events);
         
         // === Phase 2: Apply Decay ===
         let decay_events = decay::apply_decay(building);

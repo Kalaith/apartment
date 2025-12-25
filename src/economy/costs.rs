@@ -78,6 +78,8 @@ pub fn process_upgrade(
             }
             UpgradeCosts::hallway_repair_cost(*amount)
         }
+        UpgradeAction::RenovateKitchen { .. } => 500, // Placeholder
+        UpgradeAction::InstallLaundry => 1000,        // Placeholder
     };
     
     // Check funds
@@ -108,6 +110,12 @@ pub fn process_upgrade(
         UpgradeAction::RepairHallway { amount } => {
             format!("Hallway repair (+{} condition)", amount)
         }
+        UpgradeAction::RenovateKitchen { apartment_id } => {
+            format!("Renovated Kitchen Apt {}", apartment_id)
+        }
+        UpgradeAction::InstallLaundry => {
+             "Installed Laundry".to_string()
+        }
     };
     
     let transaction = Transaction::expense(
@@ -116,6 +124,8 @@ pub fn process_upgrade(
             UpgradeAction::UpgradeDesign { .. } => TransactionType::UpgradeCost,
             UpgradeAction::AddSoundproofing { .. } => TransactionType::UpgradeCost,
             UpgradeAction::RepairHallway { .. } => TransactionType::HallwayRepair,
+            UpgradeAction::RenovateKitchen { .. } => TransactionType::UpgradeCost,
+            UpgradeAction::InstallLaundry => TransactionType::UpgradeCost,
         },
         cost,
         &description,

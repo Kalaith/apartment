@@ -1,7 +1,8 @@
 use super::{Transaction, TransactionType};
+use serde::{Deserialize, Serialize};
 
 /// Monthly financial summary
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MonthlyReport {
     pub tick: u32,
     pub rent_income: i32,
@@ -12,7 +13,7 @@ pub struct MonthlyReport {
 }
 
 /// Financial tracking across the game
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct FinancialLedger {
     pub reports: Vec<MonthlyReport>,
 }
@@ -42,6 +43,7 @@ impl FinancialLedger {
                     repair_costs += t.amount.abs();
                 }
                 TransactionType::UpgradeCost => upgrade_costs += t.amount.abs(),
+                TransactionType::BuildingPurchase => upgrade_costs += t.amount.abs(), // Count as capital upgrade for now
             }
         }
         

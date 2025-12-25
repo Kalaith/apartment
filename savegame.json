@@ -1,0 +1,916 @@
+{
+  "building": {
+    "name": "Sunset Apartments",
+    "apartments": [
+      {
+        "id": 0,
+        "unit_number": "1A",
+        "floor": 1,
+        "condition": 98,
+        "design": "Practical",
+        "size": "Medium",
+        "base_noise": "High",
+        "has_soundproofing": true,
+        "kitchen_level": 0,
+        "rent_price": 900,
+        "tenant_id": null
+      },
+      {
+        "id": 1,
+        "unit_number": "1B",
+        "floor": 1,
+        "condition": 98,
+        "design": "Bare",
+        "size": "Small",
+        "base_noise": "High",
+        "has_soundproofing": true,
+        "kitchen_level": 0,
+        "rent_price": 600,
+        "tenant_id": null
+      },
+      {
+        "id": 2,
+        "unit_number": "2A",
+        "floor": 2,
+        "condition": 98,
+        "design": "Practical",
+        "size": "Small",
+        "base_noise": "High",
+        "has_soundproofing": false,
+        "kitchen_level": 0,
+        "rent_price": 600,
+        "tenant_id": 7
+      },
+      {
+        "id": 3,
+        "unit_number": "2B",
+        "floor": 2,
+        "condition": 98,
+        "design": "Practical",
+        "size": "Medium",
+        "base_noise": "Low",
+        "has_soundproofing": true,
+        "kitchen_level": 0,
+        "rent_price": 900,
+        "tenant_id": null
+      },
+      {
+        "id": 4,
+        "unit_number": "3A",
+        "floor": 3,
+        "condition": 96,
+        "design": "Cozy",
+        "size": "Medium",
+        "base_noise": "High",
+        "has_soundproofing": true,
+        "kitchen_level": 0,
+        "rent_price": 900,
+        "tenant_id": 9
+      },
+      {
+        "id": 5,
+        "unit_number": "3B",
+        "floor": 3,
+        "condition": 98,
+        "design": "Practical",
+        "size": "Small",
+        "base_noise": "Low",
+        "has_soundproofing": false,
+        "kitchen_level": 0,
+        "rent_price": 600,
+        "tenant_id": 1
+      }
+    ],
+    "hallway_condition": 57,
+    "rent_multiplier": 1.0,
+    "has_laundry": false
+  },
+  "tenants": [
+    {
+      "id": 2,
+      "name": "The Johnsons G.",
+      "archetype": "Family",
+      "happiness": 89,
+      "months_residing": 3,
+      "apartment_id": 5,
+      "rent_tolerance": 968,
+      "noise_tolerance": 29
+    },
+    {
+      "id": 1,
+      "name": "Riley T.",
+      "archetype": "Student",
+      "happiness": 60,
+      "months_residing": 3,
+      "apartment_id": 5,
+      "rent_tolerance": 696,
+      "noise_tolerance": 70
+    },
+    {
+      "id": 7,
+      "name": "Taylor J.",
+      "archetype": "Student",
+      "happiness": 57,
+      "months_residing": 2,
+      "apartment_id": 2,
+      "rent_tolerance": 633,
+      "noise_tolerance": 64
+    },
+    {
+      "id": 9,
+      "name": "Robert P.",
+      "archetype": "Professional",
+      "happiness": 74,
+      "months_residing": 1,
+      "apartment_id": 4,
+      "rent_tolerance": 1197,
+      "noise_tolerance": 30
+    }
+  ],
+  "applications": [
+    {
+      "tenant": {
+        "id": 12,
+        "name": "Casey W.",
+        "archetype": "Student",
+        "happiness": 70,
+        "months_residing": 0,
+        "apartment_id": null,
+        "rent_tolerance": 718,
+        "noise_tolerance": 69
+      },
+      "apartment_id": 1,
+      "match_result": {
+        "score": 62,
+        "meets_minimum": true,
+        "reasons": [
+          "Fair price",
+          "Excellent condition"
+        ]
+      },
+      "tick_created": 3
+    }
+  ],
+  "next_tenant_id": 15,
+  "funds": {
+    "balance": 2780,
+    "total_income": 5700,
+    "total_expenses": 7920,
+    "transactions": [
+      {
+        "transaction_type": "RentIncome",
+        "amount": 600,
+        "description": "Rent from The Johnsons G. (Unit 3B)",
+        "tick": 1
+      },
+      {
+        "transaction_type": "RentIncome",
+        "amount": 600,
+        "description": "Rent from Riley T. (Unit 3B)",
+        "tick": 1
+      },
+      {
+        "transaction_type": "UpgradeCost",
+        "amount": -500,
+        "description": "Upgrade Unit 3A to Practical",
+        "tick": 1
+      },
+      {
+        "transaction_type": "UpgradeCost",
+        "amount": -1000,
+        "description": "Upgrade Unit 3A to Cozy",
+        "tick": 1
+      },
+      {
+        "transaction_type": "UpgradeCost",
+        "amount": -300,
+        "description": "Soundproofing Unit 3A",
+        "tick": 1
+      },
+      {
+        "transaction_type": "RepairCost",
+        "amount": -250,
+        "description": "Repair Unit 3A (+25 condition)",
+        "tick": 1
+      },
+      {
+        "transaction_type": "RepairCost",
+        "amount": -250,
+        "description": "Repair Unit 3A (+25 condition)",
+        "tick": 1
+      },
+      {
+        "transaction_type": "RepairCost",
+        "amount": -20,
+        "description": "Repair Unit 3A (+2 condition)",
+        "tick": 1
+      },
+      {
+        "transaction_type": "RentIncome",
+        "amount": 600,
+        "description": "Rent from The Johnsons G. (Unit 3B)",
+        "tick": 2
+      },
+      {
+        "transaction_type": "RentIncome",
+        "amount": 600,
+        "description": "Rent from Riley T. (Unit 3B)",
+        "tick": 2
+      },
+      {
+        "transaction_type": "RentIncome",
+        "amount": 600,
+        "description": "Rent from Taylor J. (Unit 2A)",
+        "tick": 2
+      },
+      {
+        "transaction_type": "RepairCost",
+        "amount": -250,
+        "description": "Repair Unit 2A (+25 condition)",
+        "tick": 2
+      },
+      {
+        "transaction_type": "RepairCost",
+        "amount": -250,
+        "description": "Repair Unit 2A (+25 condition)",
+        "tick": 2
+      },
+      {
+        "transaction_type": "RepairCost",
+        "amount": -40,
+        "description": "Repair Unit 2A (+4 condition)",
+        "tick": 2
+      },
+      {
+        "transaction_type": "UpgradeCost",
+        "amount": -500,
+        "description": "Upgrade Unit 2A to Practical",
+        "tick": 2
+      },
+      {
+        "transaction_type": "RepairCost",
+        "amount": -250,
+        "description": "Repair Unit 3B (+25 condition)",
+        "tick": 2
+      },
+      {
+        "transaction_type": "RepairCost",
+        "amount": -250,
+        "description": "Repair Unit 3B (+25 condition)",
+        "tick": 2
+      },
+      {
+        "transaction_type": "RepairCost",
+        "amount": -40,
+        "description": "Repair Unit 3B (+4 condition)",
+        "tick": 2
+      },
+      {
+        "transaction_type": "UpgradeCost",
+        "amount": -500,
+        "description": "Upgrade Unit 3B to Practical",
+        "tick": 2
+      },
+      {
+        "transaction_type": "RepairCost",
+        "amount": -250,
+        "description": "Repair Unit 2B (+25 condition)",
+        "tick": 2
+      },
+      {
+        "transaction_type": "RepairCost",
+        "amount": -250,
+        "description": "Repair Unit 2B (+25 condition)",
+        "tick": 2
+      },
+      {
+        "transaction_type": "RepairCost",
+        "amount": -40,
+        "description": "Repair Unit 2B (+4 condition)",
+        "tick": 2
+      },
+      {
+        "transaction_type": "RepairCost",
+        "amount": -250,
+        "description": "Repair Unit 1A (+25 condition)",
+        "tick": 2
+      },
+      {
+        "transaction_type": "RepairCost",
+        "amount": -250,
+        "description": "Repair Unit 1A (+25 condition)",
+        "tick": 2
+      },
+      {
+        "transaction_type": "RepairCost",
+        "amount": -40,
+        "description": "Repair Unit 1A (+4 condition)",
+        "tick": 2
+      },
+      {
+        "transaction_type": "RepairCost",
+        "amount": -250,
+        "description": "Repair Unit 1B (+25 condition)",
+        "tick": 2
+      },
+      {
+        "transaction_type": "RepairCost",
+        "amount": -250,
+        "description": "Repair Unit 1B (+25 condition)",
+        "tick": 2
+      },
+      {
+        "transaction_type": "RepairCost",
+        "amount": -40,
+        "description": "Repair Unit 1B (+4 condition)",
+        "tick": 2
+      },
+      {
+        "transaction_type": "UpgradeCost",
+        "amount": -300,
+        "description": "Soundproofing Unit 2B",
+        "tick": 2
+      },
+      {
+        "transaction_type": "UpgradeCost",
+        "amount": -300,
+        "description": "Soundproofing Unit 1A",
+        "tick": 2
+      },
+      {
+        "transaction_type": "UpgradeCost",
+        "amount": -300,
+        "description": "Soundproofing Unit 1B",
+        "tick": 2
+      },
+      {
+        "transaction_type": "UpgradeCost",
+        "amount": -500,
+        "description": "Upgrade Unit 2B to Practical",
+        "tick": 2
+      },
+      {
+        "transaction_type": "UpgradeCost",
+        "amount": -500,
+        "description": "Upgrade Unit 1A to Practical",
+        "tick": 2
+      },
+      {
+        "transaction_type": "RentIncome",
+        "amount": 600,
+        "description": "Rent from The Johnsons G. (Unit 3B)",
+        "tick": 3
+      },
+      {
+        "transaction_type": "RentIncome",
+        "amount": 600,
+        "description": "Rent from Riley T. (Unit 3B)",
+        "tick": 3
+      },
+      {
+        "transaction_type": "RentIncome",
+        "amount": 600,
+        "description": "Rent from Taylor J. (Unit 2A)",
+        "tick": 3
+      },
+      {
+        "transaction_type": "RentIncome",
+        "amount": 900,
+        "description": "Rent from Robert P. (Unit 3A)",
+        "tick": 3
+      }
+    ]
+  },
+  "ledger": {
+    "reports": [
+      {
+        "tick": 1,
+        "rent_income": 1200,
+        "repair_costs": 0,
+        "upgrade_costs": 0,
+        "net": 1200,
+        "ending_balance": 6200
+      },
+      {
+        "tick": 2,
+        "rent_income": 1800,
+        "repair_costs": 0,
+        "upgrade_costs": 0,
+        "net": 1800,
+        "ending_balance": 5680
+      },
+      {
+        "tick": 3,
+        "rent_income": 2700,
+        "repair_costs": 0,
+        "upgrade_costs": 0,
+        "net": 2700,
+        "ending_balance": 2780
+      }
+    ]
+  },
+  "event_log": {
+    "events": [
+      [
+        0,
+        {
+          "TenantMovedIn": {
+            "tenant_name": "The Johnsons G.",
+            "apartment_unit": "3B"
+          }
+        }
+      ],
+      [
+        0,
+        {
+          "TenantMovedIn": {
+            "tenant_name": "Riley T.",
+            "apartment_unit": "3B"
+          }
+        }
+      ],
+      [
+        1,
+        {
+          "RentPaid": {
+            "tenant_name": "The Johnsons G.",
+            "amount": 600
+          }
+        }
+      ],
+      [
+        1,
+        {
+          "RentPaid": {
+            "tenant_name": "Riley T.",
+            "amount": 600
+          }
+        }
+      ],
+      [
+        1,
+        {
+          "Heatwave": {
+            "tick_duration": 3
+          }
+        }
+      ],
+      [
+        1,
+        {
+          "NewApplication": {
+            "tenant_name": "Taylor J.",
+            "archetype": "Student",
+            "apartment_unit": "2A"
+          }
+        }
+      ],
+      [
+        1,
+        {
+          "MonthEnd": {
+            "tick": 1,
+            "income": 1200,
+            "expenses": 0,
+            "balance": 6200
+          }
+        }
+      ],
+      [
+        1,
+        {
+          "TenantMovedIn": {
+            "tenant_name": "Taylor J.",
+            "apartment_unit": "2A"
+          }
+        }
+      ],
+      [
+        1,
+        {
+          "UpgradeCompleted": {
+            "description": "Upgraded design",
+            "cost": 500
+          }
+        }
+      ],
+      [
+        1,
+        {
+          "UpgradeCompleted": {
+            "description": "Upgraded design",
+            "cost": 1000
+          }
+        }
+      ],
+      [
+        1,
+        {
+          "UpgradeCompleted": {
+            "description": "Added soundproofing",
+            "cost": 300
+          }
+        }
+      ],
+      [
+        1,
+        {
+          "UpgradeCompleted": {
+            "description": "Repaired apartment +25",
+            "cost": 250
+          }
+        }
+      ],
+      [
+        1,
+        {
+          "UpgradeCompleted": {
+            "description": "Repaired apartment +25",
+            "cost": 250
+          }
+        }
+      ],
+      [
+        1,
+        {
+          "UpgradeCompleted": {
+            "description": "Repaired apartment +2",
+            "cost": 20
+          }
+        }
+      ],
+      [
+        2,
+        {
+          "RentPaid": {
+            "tenant_name": "The Johnsons G.",
+            "amount": 600
+          }
+        }
+      ],
+      [
+        2,
+        {
+          "RentPaid": {
+            "tenant_name": "Riley T.",
+            "amount": 600
+          }
+        }
+      ],
+      [
+        2,
+        {
+          "RentPaid": {
+            "tenant_name": "Taylor J.",
+            "amount": 600
+          }
+        }
+      ],
+      [
+        2,
+        {
+          "NewApplication": {
+            "tenant_name": "Robert P.",
+            "archetype": "Professional",
+            "apartment_unit": "3A"
+          }
+        }
+      ],
+      [
+        2,
+        {
+          "NewApplication": {
+            "tenant_name": "Sage M.",
+            "archetype": "Artist",
+            "apartment_unit": "3A"
+          }
+        }
+      ],
+      [
+        2,
+        {
+          "MonthEnd": {
+            "tick": 2,
+            "income": 1800,
+            "expenses": 0,
+            "balance": 5680
+          }
+        }
+      ],
+      [
+        2,
+        {
+          "TenantMovedIn": {
+            "tenant_name": "Robert P.",
+            "apartment_unit": "3A"
+          }
+        }
+      ],
+      [
+        2,
+        {
+          "UpgradeCompleted": {
+            "description": "Repaired apartment +25",
+            "cost": 250
+          }
+        }
+      ],
+      [
+        2,
+        {
+          "UpgradeCompleted": {
+            "description": "Repaired apartment +25",
+            "cost": 250
+          }
+        }
+      ],
+      [
+        2,
+        {
+          "UpgradeCompleted": {
+            "description": "Repaired apartment +4",
+            "cost": 40
+          }
+        }
+      ],
+      [
+        2,
+        {
+          "UpgradeCompleted": {
+            "description": "Upgraded design",
+            "cost": 500
+          }
+        }
+      ],
+      [
+        2,
+        {
+          "UpgradeCompleted": {
+            "description": "Repaired apartment +25",
+            "cost": 250
+          }
+        }
+      ],
+      [
+        2,
+        {
+          "UpgradeCompleted": {
+            "description": "Repaired apartment +25",
+            "cost": 250
+          }
+        }
+      ],
+      [
+        2,
+        {
+          "UpgradeCompleted": {
+            "description": "Repaired apartment +4",
+            "cost": 40
+          }
+        }
+      ],
+      [
+        2,
+        {
+          "UpgradeCompleted": {
+            "description": "Upgraded design",
+            "cost": 500
+          }
+        }
+      ],
+      [
+        2,
+        {
+          "UpgradeCompleted": {
+            "description": "Repaired apartment +25",
+            "cost": 250
+          }
+        }
+      ],
+      [
+        2,
+        {
+          "UpgradeCompleted": {
+            "description": "Repaired apartment +25",
+            "cost": 250
+          }
+        }
+      ],
+      [
+        2,
+        {
+          "UpgradeCompleted": {
+            "description": "Repaired apartment +4",
+            "cost": 40
+          }
+        }
+      ],
+      [
+        2,
+        {
+          "UpgradeCompleted": {
+            "description": "Repaired apartment +25",
+            "cost": 250
+          }
+        }
+      ],
+      [
+        2,
+        {
+          "UpgradeCompleted": {
+            "description": "Repaired apartment +25",
+            "cost": 250
+          }
+        }
+      ],
+      [
+        2,
+        {
+          "UpgradeCompleted": {
+            "description": "Repaired apartment +4",
+            "cost": 40
+          }
+        }
+      ],
+      [
+        2,
+        {
+          "UpgradeCompleted": {
+            "description": "Repaired apartment +25",
+            "cost": 250
+          }
+        }
+      ],
+      [
+        2,
+        {
+          "UpgradeCompleted": {
+            "description": "Repaired apartment +25",
+            "cost": 250
+          }
+        }
+      ],
+      [
+        2,
+        {
+          "UpgradeCompleted": {
+            "description": "Repaired apartment +4",
+            "cost": 40
+          }
+        }
+      ],
+      [
+        2,
+        {
+          "UpgradeCompleted": {
+            "description": "Added soundproofing",
+            "cost": 300
+          }
+        }
+      ],
+      [
+        2,
+        {
+          "UpgradeCompleted": {
+            "description": "Added soundproofing",
+            "cost": 300
+          }
+        }
+      ],
+      [
+        2,
+        {
+          "UpgradeCompleted": {
+            "description": "Added soundproofing",
+            "cost": 300
+          }
+        }
+      ],
+      [
+        2,
+        {
+          "UpgradeCompleted": {
+            "description": "Upgraded design",
+            "cost": 500
+          }
+        }
+      ],
+      [
+        2,
+        {
+          "UpgradeCompleted": {
+            "description": "Upgraded design",
+            "cost": 500
+          }
+        }
+      ],
+      [
+        3,
+        {
+          "RentPaid": {
+            "tenant_name": "The Johnsons G.",
+            "amount": 600
+          }
+        }
+      ],
+      [
+        3,
+        {
+          "RentPaid": {
+            "tenant_name": "Riley T.",
+            "amount": 600
+          }
+        }
+      ],
+      [
+        3,
+        {
+          "RentPaid": {
+            "tenant_name": "Taylor J.",
+            "amount": 600
+          }
+        }
+      ],
+      [
+        3,
+        {
+          "RentPaid": {
+            "tenant_name": "Robert P.",
+            "amount": 900
+          }
+        }
+      ],
+      [
+        3,
+        {
+          "NewApplication": {
+            "tenant_name": "Casey W.",
+            "archetype": "Student",
+            "apartment_unit": "1B"
+          }
+        }
+      ],
+      [
+        3,
+        {
+          "MonthEnd": {
+            "tick": 3,
+            "income": 2700,
+            "expenses": 0,
+            "balance": 2780
+          }
+        }
+      ]
+    ]
+  },
+  "current_tick": 3,
+  "game_outcome": null,
+  "last_tick_result": {
+    "events": [
+      {
+        "RentPaid": {
+          "tenant_name": "The Johnsons G.",
+          "amount": 600
+        }
+      },
+      {
+        "RentPaid": {
+          "tenant_name": "Riley T.",
+          "amount": 600
+        }
+      },
+      {
+        "RentPaid": {
+          "tenant_name": "Taylor J.",
+          "amount": 600
+        }
+      },
+      {
+        "NewApplication": {
+          "tenant_name": "Robert P.",
+          "archetype": "Professional",
+          "apartment_unit": "3A"
+        }
+      },
+      {
+        "NewApplication": {
+          "tenant_name": "Sage M.",
+          "archetype": "Artist",
+          "apartment_unit": "3A"
+        }
+      },
+      {
+        "MonthEnd": {
+          "tick": 2,
+          "income": 1800,
+          "expenses": 0,
+          "balance": 5680
+        }
+      }
+    ],
+    "rent_collected": 1800,
+    "tenants_moved_out": [],
+    "new_applications": 2,
+    "outcome": null
+  }
+}

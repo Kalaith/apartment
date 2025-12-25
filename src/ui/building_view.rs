@@ -2,11 +2,13 @@ use macroquad::prelude::*;
 use crate::building::{Building, Apartment, DesignType, NoiseLevel, ApartmentSize};
 use crate::tenant::Tenant;
 use super::{common::*, Selection, UiAction};
+use crate::assets::AssetManager;
 
 pub fn draw_building_view(
     building: &Building,
     tenants: &[Tenant],
     selection: &Selection,
+    assets: &AssetManager,
 ) -> Option<UiAction> {
     let mut action = None;
     
@@ -15,8 +17,16 @@ pub fn draw_building_view(
     let view_x = 0.0;
     let view_y = layout::HEADER_HEIGHT;
     
-    // Background
-    draw_rectangle(view_x, view_y, view_width, view_height, colors::BACKGROUND);
+    // Background - Building Exterior
+    if let Some(tex) = assets.get_texture("building_exterior") {
+         draw_texture_ex(tex, view_x, view_y, WHITE, DrawTextureParams {
+            dest_size: Some(Vec2::new(view_width, view_height)),
+            ..Default::default()
+        });
+    } else {
+        draw_rectangle(view_x, view_y, view_width, view_height, colors::BACKGROUND);
+    }
+
     
     // Calculate layout
     let max_floor = building.apartments.iter().map(|a| a.floor).max().unwrap_or(1);
@@ -57,6 +67,7 @@ pub fn draw_building_view(
                 apt_x,
                 apt_y,
                 selection,
+                assets,
             ) {
                 action = Some(apt_action);
             }
@@ -78,8 +89,22 @@ pub fn draw_building_view(
         colors::PANEL
     };
     
-    draw_rectangle(start_x, hallway_y, hallway_width, 40.0, hallway_color);
-    draw_rectangle_lines(start_x, hallway_y, hallway_width, 40.0, 2.0, colors::ACCENT);
+    // Use texture for hallway if available
+    let drawn_texture = if let Some(tex) = assets.get_texture("hallway") {
+        draw_texture_ex(tex, start_x, hallway_y, WHITE, DrawTextureParams {
+            dest_size: Some(Vec2::new(hallway_width, 40.0)),
+            ..Default::default()
+        });
+        true
+    } else {
+        draw_rectangle(start_x, hallway_y, hallway_width, 40.0, hallway_color);
+        false
+    };
+    
+    if !drawn_texture || hallway_selected {
+        draw_rectangle_lines(start_x, hallway_y, hallway_width, 40.0, 2.0, colors::ACCENT);
+    }
+
     
     // Hallway label and condition
     draw_text("HALLWAY", start_x + 10.0, hallway_y + 25.0, 18.0, colors::TEXT);
@@ -94,14 +119,22 @@ pub fn draw_building_view(
         100.0,
         cond_color,
     );
+     // Condition Icon for Hallway
+    if let Some(icon) = if building.hallway_condition > 50 { assets.get_texture("icon_condition_good") } else { assets.get_texture("icon_condition_poor") } {
+        draw_texture_ex(icon, start_x + hallway_width - 130.0, hallway_y + 8.0, WHITE, DrawTextureParams {
+            dest_size: Some(Vec2::new(24.0, 24.0)),
+            ..Default::default()
+        });
+    }
+
     
     if was_clicked(start_x, hallway_y, hallway_width, 40.0) {
         action = Some(UiAction::SelectHallway);
     }
     
-    // Applications button (mouse-clickable)
+    // Applications button (mouse-clickable) - Move to top
     let apps_btn_x = start_x;
-    let apps_btn_y = start_y + 70.0;
+    let apps_btn_y = view_y + 10.0; // Top of the panel
     if button(apps_btn_x, apps_btn_y, 150.0, 35.0, "Applications", true) {
         action = Some(UiAction::SelectApplications);
     }
@@ -115,6 +148,7 @@ fn draw_apartment_unit(
     x: f32,
     y: f32,
     selection: &Selection,
+    assets: &AssetManager,
 ) -> Option<UiAction> {
     let w = layout::UNIT_WIDTH;
     let h = layout::UNIT_HEIGHT;
@@ -122,7 +156,7 @@ fn draw_apartment_unit(
     let is_selected = matches!(selection, Selection::Apartment(id) if *id == apt.id);
     let unit_hovered = is_hovered(x, y, w, h);
     
-    // Background color
+    // Background color (fallback)
     let bg_color = if is_selected {
         colors::SELECTED
     } else if unit_hovered {
@@ -133,7 +167,29 @@ fn draw_apartment_unit(
         colors::OCCUPIED
     };
     
-    draw_rectangle(x, y, w, h, bg_color);
+    // Draw Design Texture as background
+    let design_id = match apt.design {
+        DesignType::Bare => "design_bare",
+        DesignType::Practical => "design_practical",
+        DesignType::Cozy => "design_cozy",
+    };
+    
+    if let Some(tex) = assets.get_texture(design_id) {
+         draw_texture_ex(tex, x, y, WHITE, DrawTextureParams {
+            dest_size: Some(Vec2::new(w, h)),
+            ..Default::default()
+        });
+        
+        // Overlay selection/hover tint
+        if is_selected {
+            draw_rectangle(x, y, w, h, Color::new(1.0, 1.0, 0.0, 0.2));
+        } else if unit_hovered {
+            draw_rectangle(x, y, w, h, Color::new(1.0, 1.0, 1.0, 0.1));
+        }
+    } else {
+        draw_rectangle(x, y, w, h, bg_color);
+    }
+
     
     // Border (thicker if selected)
     let border_width = if is_selected { 3.0 } else { 1.0 };
@@ -154,40 +210,86 @@ fn draw_apartment_unit(
     let cond_color = condition_color(apt.condition);
     progress_bar(x + 5.0, y + 25.0, w - 10.0, 8.0, apt.condition as f32, 100.0, cond_color);
     
-    // Design indicator
-    let design_char = match apt.design {
-        DesignType::Bare => "B",
-        DesignType::Practical => "P",
-        DesignType::Cozy => "C",
-    };
-    draw_text(design_char, x + 5.0, y + 50.0, 16.0, colors::TEXT_DIM);
+    // Design indicator (text fallback if texture fails, or always showing)
+    // Maybe hide design text since we have visual? Or keep small?
+    // KEEP for now.
+    // let design_char = match apt.design { ... };
+    // draw_text(design_char, x + 5.0, y + 50.0, 16.0, colors::TEXT_DIM);
     
     // Noise indicator (if high)
     if matches!(apt.effective_noise(), NoiseLevel::High) {
-        draw_text("!", x + 25.0, y + 50.0, 14.0, colors::WARNING);
+        if let Some(icon) = assets.get_texture("icon_noise") {
+            draw_texture_ex(icon, x + 25.0, y + 35.0, WHITE, DrawTextureParams {
+                dest_size: Some(Vec2::new(20.0, 20.0)),
+                ..Default::default()
+            });
+        } else {
+            draw_text("!", x + 25.0, y + 50.0, 14.0, colors::WARNING);
+        }
     }
     
     // Soundproofing indicator
     if apt.has_soundproofing {
-        draw_text("S", x + 45.0, y + 50.0, 14.0, colors::POSITIVE);
+        if let Some(icon) = assets.get_texture("icon_soundproofing") {
+            draw_texture_ex(icon, x + 50.0, y + 35.0, WHITE, DrawTextureParams {
+                dest_size: Some(Vec2::new(20.0, 20.0)),
+                ..Default::default()
+            });
+        } else {
+            draw_text("S", x + 45.0, y + 50.0, 14.0, colors::POSITIVE);
+        }
     }
     
     // Tenant name or VACANT
     if let Some(tenant_id) = apt.tenant_id {
         if let Some(tenant) = tenants.iter().find(|t| t.id == tenant_id) {
-            // Truncate name to fit
-            let name = if tenant.name.len() > 12 {
-                format!("{}...", &tenant.name[..10])
-            } else {
-                tenant.name.clone()
-            };
-            draw_text(&name, x + 5.0, y + 68.0, 14.0, colors::TEXT);
             
-            // Happiness indicator
-            let happy_color = happiness_color(tenant.happiness);
-            draw_circle(x + w - 12.0, y + h - 12.0, 6.0, happy_color);
+            // Draw Tenant Sprite in the room
+             let portrait_id = format!("tenant_{}", format!("{:?}", tenant.archetype).to_lowercase());
+            if let Some(tex) = assets.get_texture(&portrait_id) {
+                // Draw sprite scaled down
+                draw_texture_ex(tex, x + 35.0, y + 40.0, WHITE, DrawTextureParams {
+                    dest_size: Some(Vec2::new(40.0, 40.0)),
+                     // Maybe flip? No.
+                    ..Default::default()
+                });
+            } else {
+                 // Colored strip for archetype
+                draw_rectangle(x + 5.0, y + 68.0, 3.0, 14.0, archetype_color(&tenant.archetype));
+            }
+
+            // Truncate name to fit (maybe smaller now?)
+            // draw_text(&name, x + 12.0, y + 80.0, 14.0, colors::TEXT);
+            
+            // Happiness icon
+             let happiness_level = if tenant.happiness >= 90 { "happiness_ecstatic" }
+            else if tenant.happiness >= 70 { "happiness_happy" }
+            else if tenant.happiness >= 40 { "happiness_neutral" }
+            else if tenant.happiness >= 20 { "happiness_unhappy" }
+            else { "happiness_miserable" };
+            
+            if let Some(icon) = assets.get_texture(happiness_level) {
+                draw_texture_ex(icon, x + w - 24.0, y + h - 24.0, WHITE, DrawTextureParams {
+                    dest_size: Some(Vec2::new(20.0, 20.0)),
+                    ..Default::default()
+                });
+            } else {
+                 let icon_char = happiness_icon(tenant.happiness);
+                 draw_text(icon_char, x + w - 24.0, y + 80.0, 16.0, colors::TEXT);
+            }
+
         }
     } else {
+        // Draw window texture if vacant (street or quiet based on noise)
+        let window_tex = if matches!(apt.effective_noise(), NoiseLevel::High) { "window_street" } else { "window_quiet" };
+         if let Some(tex) = assets.get_texture(window_tex) {
+             // Draw window in the middle
+            draw_texture_ex(tex, x + 35.0, y + 40.0, WHITE, DrawTextureParams {
+                dest_size: Some(Vec2::new(40.0, 40.0)),
+                ..Default::default()
+            });
+        }
+
         draw_text("VACANT", x + 5.0, y + 68.0, 14.0, colors::TEXT_DIM);
         
         // Rent

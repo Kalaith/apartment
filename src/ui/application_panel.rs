@@ -2,16 +2,24 @@ use macroquad::prelude::*;
 use crate::tenant::TenantApplication;
 use crate::building::Building;
 use super::{common::*, UiAction};
+use crate::assets::AssetManager;
 
 pub fn draw_application_panel(
     applications: &[TenantApplication],
     building: &Building,
+    offset_x: f32,
+    assets: &AssetManager,
 ) -> Option<UiAction> {
     let mut action = None;
     
-    let panel_x = screen_width() * layout::PANEL_SPLIT + layout::PADDING;
+    let panel_x = screen_width() * layout::PANEL_SPLIT + layout::PADDING + offset_x;
     let panel_y = layout::HEADER_HEIGHT + layout::PADDING;
     let panel_w = screen_width() * (1.0 - layout::PANEL_SPLIT) - layout::PADDING * 2.0;
+
+    if panel_x > screen_width() {
+        return None;
+    }
+
     let panel_h = screen_height() - layout::HEADER_HEIGHT - layout::FOOTER_HEIGHT - layout::PADDING * 2.0;
     
     panel(panel_x, panel_y, panel_w, panel_h, "Applications");
@@ -39,11 +47,25 @@ pub fn draw_application_panel(
         draw_rectangle(content_x, y, panel_w - 30.0, card_h, colors::PANEL_HEADER);
         draw_rectangle_lines(content_x, y, panel_w - 30.0, card_h, 1.0, colors::TEXT_DIM);
         
+        // Tenant Portrait
+        let portrait_id = format!("tenant_{}", format!("{:?}", app.tenant.archetype).to_lowercase());
+        let has_portrait = if let Some(tex) = assets.get_texture(&portrait_id) {
+            draw_texture_ex(tex, content_x + 5.0, y + 5.0, WHITE, DrawTextureParams {
+                dest_size: Some(Vec2::new(80.0, 80.0)),
+                ..Default::default()
+            });
+            true
+        } else {
+            false
+        };
+
+        let text_x = if has_portrait { content_x + 95.0 } else { content_x + 10.0 };
+        
         // Tenant info
-        draw_text(&app.tenant.name, content_x + 10.0, y + 22.0, 18.0, colors::TEXT);
+        draw_text(&app.tenant.name, text_x, y + 22.0, 18.0, colors::TEXT);
         draw_text(
             &format!("{:?}", app.tenant.archetype),
-            content_x + 10.0,
+            text_x,
             y + 42.0,
             14.0,
             colors::TEXT_DIM,
@@ -53,7 +75,7 @@ pub fn draw_application_panel(
         if let Some(apt) = building.get_apartment(app.apartment_id) {
             draw_text(
                 &format!("-> Unit {}", apt.unit_number),
-                content_x + 150.0,
+                text_x + 140.0,
                 y + 22.0,
                 16.0,
                 colors::ACCENT,
@@ -70,7 +92,7 @@ pub fn draw_application_panel(
         };
         draw_text(
             &format!("Match: {}%", app.match_result.score),
-            content_x + 150.0,
+            text_x + 140.0,
             y + 42.0,
             14.0,
             score_color,
@@ -80,11 +102,11 @@ pub fn draw_application_panel(
         let btn_y = y + 58.0;
         let btn_w = 80.0;
         
-        if button(content_x + 10.0, btn_y, btn_w, 28.0, "Accept", true) {
+        if button(text_x, btn_y, btn_w, 28.0, "Accept", true) {
             action = Some(UiAction::AcceptApplication { application_index: i });
         }
         
-        if button(content_x + 100.0, btn_y, btn_w, 28.0, "Reject", true) {
+        if button(text_x + 90.0, btn_y, btn_w, 28.0, "Reject", true) {
             action = Some(UiAction::RejectApplication { application_index: i });
         }
         

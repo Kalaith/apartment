@@ -1,5 +1,6 @@
 use macroquad::prelude::*;
 use super::StateTransition;
+use crate::assets::AssetManager;
 
 pub struct ResultsState {
     pub total_income: i32,
@@ -20,7 +21,7 @@ impl ResultsState {
         }
     }
 
-    pub fn update(&mut self) -> Option<StateTransition> {
+    pub fn update(&mut self, _assets: &AssetManager) -> Option<StateTransition> {
         // Check for Return to Menu click
         let button_x = screen_width() / 2.0 - 100.0;
         let button_y = screen_height() / 2.0 + 100.0;
@@ -39,7 +40,7 @@ impl ResultsState {
         None
     }
 
-    pub fn draw(&self) {
+    pub fn draw(&self, _assets: &AssetManager) {
         let title = if self.won { "SUCCESS!" } else { "BANKRUPT" };
         let title_color = if self.won { GREEN } else { RED };
         let title_size = 60.0;
