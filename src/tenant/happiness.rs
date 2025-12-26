@@ -164,3 +164,20 @@ pub fn apartment_meets_minimum(tenant: &Tenant, apartment: &Apartment) -> bool {
     
     true
 }
+
+/// Calculate happiness modifier from tenant relationships
+pub fn calculate_relationship_happiness(
+    tenant_id: u32,
+    network: &crate::consequences::TenantNetwork,
+) -> i32 {
+    let mut bonus = 0;
+    
+    for relationship in &network.relationships {
+        if relationship.tenant_a_id == tenant_id || relationship.tenant_b_id == tenant_id {
+            bonus += relationship.relationship_type.happiness_modifier();
+        }
+    }
+    
+    // Cap the relationship bonus
+    bonus.clamp(-20, 20)
+}

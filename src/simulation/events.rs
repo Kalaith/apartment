@@ -5,6 +5,9 @@ use super::GameOutcome;
 /// Significant events that happen during simulation
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum GameEvent {
+    // Generic
+    Notification { message: String, level: NotificationLevel },
+    
     // Economy
     RentPaid { tenant_name: String, amount: i32 },
     RentMissed { tenant_name: String, amount: i32 },
@@ -37,6 +40,13 @@ pub enum GameEvent {
     PipeBurst { apartment_unit: String, damage: i32 },
     Gentrification { tick_duration: u32, effect_desc: String },
     Inspection { result: String, fine: i32 },
+    
+    // Critical Failures
+    BoilerFailure { cost: i32 },
+    StructuralIssue { cost: i32, description: String },
+    
+    // Staff Events
+    StaffAction { role: String, action: String },
 }
 
 impl GameEvent {
@@ -106,12 +116,27 @@ impl GameEvent {
                     format!("📋 Inspection Passed: {}", result)
                 }
             }
+            GameEvent::BoilerFailure { cost } => {
+                format!("🔥 Boiler Failure! (-${} repair)", cost)
+            }
+            GameEvent::StructuralIssue { cost, description } => {
+                format!("🏗️ Structural Issue: {} (-${})", description, cost)
+            }
+            GameEvent::StaffAction { role, action } => {
+                format!("👔 {}: {}", role, action)
+            }
+            GameEvent::Notification { message, .. } => message.clone(),
         }
     }
     
     /// Get event severity for UI coloring
     pub fn severity(&self) -> EventSeverity {
         match self {
+            GameEvent::Notification { level, .. } => match level {
+                NotificationLevel::Info => EventSeverity::Info,
+                NotificationLevel::Warning => EventSeverity::Warning,
+                NotificationLevel::Critical => EventSeverity::Negative,
+            },
             GameEvent::RentPaid { .. } => EventSeverity::Positive,
             GameEvent::TenantMovedIn { .. } => EventSeverity::Positive,
             GameEvent::UpgradeCompleted { .. } => EventSeverity::Positive,
@@ -140,8 +165,19 @@ impl GameEvent {
                     EventSeverity::Positive
                 }
             }
+            GameEvent::BoilerFailure { .. } => EventSeverity::Negative,
+            GameEvent::StructuralIssue { .. } => EventSeverity::Negative,
+            GameEvent::StaffAction { .. } => EventSeverity::Info,
         }
     }
+}
+
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub enum NotificationLevel {
+    Info,
+    Warning,
+    Critical,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]

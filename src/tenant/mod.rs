@@ -1,8 +1,9 @@
 mod tenant;
 mod archetype;
-mod happiness;
-mod matching;
+pub mod happiness;
+pub mod matching;
 mod application;
+pub mod vetting;
 
 pub use tenant::Tenant;
 pub use archetype::{TenantArchetype, ArchetypePreferences};

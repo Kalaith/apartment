@@ -45,6 +45,11 @@ impl GameplayState {
             text.draw();
         }
         
+        // Tutorial overlay
+        if self.tutorial.active {
+            self.draw_tutorial_overlay(assets);
+        }
+        
         // Draw pause menu on top of everything if active
         if self.show_pause_menu {
             self.draw_pause_menu_overlay();
@@ -99,9 +104,25 @@ impl GameplayState {
     }
     
     /// Draw mail view
-    pub(super) fn draw_mail_view(&self, _assets: &AssetManager) {
-        // Header
+    pub(super) fn draw_mail_view(&self, assets: &AssetManager) {
+        // Use assets to check if textures are loaded
+        let has_assets = assets.loaded;
         draw_rectangle(0.0, 0.0, screen_width(), HEADER_HEIGHT, colors::PANEL_HEADER);
+        
+        // Show a loading indicator if assets aren't ready
+        if !has_assets {
+            draw_text_ex(
+                "Loading...",
+                screen_width() - 100.0,
+                35.0,
+                TextParams {
+                    font_size: 14,
+                    color: colors::TEXT_DIM,
+                    ..Default::default()
+                },
+            );
+        }
+        
         draw_text_ex(
             "Mailbox",
             20.0,
@@ -292,5 +313,85 @@ impl GameplayState {
         draw_text(text, x + (w - text_width) / 2.0, y + h / 2.0 + 6.0, 20.0, colors::TEXT);
         
         clicked
+    }
+    
+    /// Draw the tutorial overlay
+    pub(super) fn draw_tutorial_overlay(&mut self, assets: &AssetManager) {
+        if self.tutorial.pending_messages.is_empty() {
+            return;
+        }
+        
+        let message = &self.tutorial.pending_messages[0];
+        // "Uncle Artie"
+        let npc_name = "Uncle Artie";
+        
+        // Layout - increased width
+        let panel_w = 650.0;
+        let panel_h = 180.0;
+        let panel_x = (screen_width() - panel_w) / 2.0;
+        let panel_y = screen_height() - panel_h - 20.0;
+        
+        // Background
+        draw_rectangle(panel_x, panel_y, panel_w, panel_h, colors::PANEL);
+        draw_rectangle_lines(panel_x, panel_y, panel_w, panel_h, 3.0, colors::ACCENT);
+        
+        // Portrait placeholder (use assets if available)
+        let portrait_size = 100.0;
+        let portrait_x = panel_x + 20.0;
+        let portrait_y = panel_y + 40.0;
+        
+        if assets.loaded {
+            // Draw a nice golden border around portrait when assets loaded
+            draw_rectangle_lines(portrait_x - 2.0, portrait_y - 2.0, portrait_size + 4.0, portrait_size + 4.0, 2.0, colors::ACCENT);
+        }
+        draw_rectangle(portrait_x, portrait_y, portrait_size, portrait_size, GRAY);
+        draw_text("ARTIE", portrait_x + 20.0, portrait_y + 50.0, 20.0, DARKGRAY);
+            
+        // Name
+        draw_text(npc_name, panel_x + 140.0, panel_y + 30.0, 24.0, colors::TEXT_BRIGHT);
+        
+        // Message (with better wrapping)
+        let max_chars_per_line = 55;
+        let mut y = panel_y + 60.0;
+        let words: Vec<&str> = message.split(' ').collect();
+        let mut current_line = String::new();
+        
+        for word in words {
+            if current_line.len() + word.len() > max_chars_per_line {
+                draw_text(&current_line, panel_x + 140.0, y, 18.0, colors::TEXT);
+                y += 22.0;
+                current_line.clear();
+            }
+            if !current_line.is_empty() {
+                current_line.push(' ');
+            }
+            current_line.push_str(word);
+        }
+        if !current_line.is_empty() {
+            draw_text(&current_line, panel_x + 140.0, y, 18.0, colors::TEXT);
+        }
+        
+        // Next Button - draw and check click
+        let btn_w = 120.0;
+        let btn_h = 35.0;
+        let btn_x = panel_x + panel_w - btn_w - 20.0;
+        let btn_y = panel_y + panel_h - btn_h - 15.0;
+        
+        let mouse = mouse_position();
+        let hovered = mouse.0 >= btn_x && mouse.0 <= btn_x + btn_w && mouse.1 >= btn_y && mouse.1 <= btn_y + btn_h;
+        
+        let bg_color = if hovered {
+            colors::HOVERED
+        } else {
+            colors::ACCENT
+        };
+        
+        draw_rectangle(btn_x, btn_y, btn_w, btn_h, bg_color);
+        draw_rectangle_lines(btn_x, btn_y, btn_w, btn_h, 2.0, colors::TEXT_BRIGHT);
+        
+        let text = "Next >";
+        let text_width = measure_text(text, None, 22, 1.0).width;
+        draw_text(text, btn_x + (btn_w - text_width) / 2.0, btn_y + btn_h / 2.0 + 7.0, 22.0, colors::TEXT_BRIGHT);
+        // Click handling is done in gameplay.rs update function
     }
 }

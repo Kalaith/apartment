@@ -13,7 +13,7 @@ use crate::ui::layout::HEADER_HEIGHT;
 // Phase 3 imports
 use crate::city::{City, NeighborhoodType};
 use crate::consequences::{TenantNetwork, ComplianceSystem, GentrificationTracker};
-use crate::narrative::{TenantStory, NarrativeEventSystem, Mailbox};
+use crate::narrative::{TenantStory, NarrativeEventSystem, Mailbox, TutorialManager, MissionManager};
 
 use serde::{Deserialize, Serialize};
 
@@ -60,6 +60,11 @@ pub struct GameplayState {
     pub narrative_events: NarrativeEventSystem,
     pub mailbox: Mailbox,
     pub tenant_stories: HashMap<u32, TenantStory>,
+    pub dialogue_system: crate::narrative::DialogueSystem,
+    
+    // Phase 4: Tutorial & Missions
+    pub tutorial: TutorialManager,
+    pub missions: MissionManager,
     
     // UI state - skipped from serialization
     #[serde(skip)]
@@ -123,6 +128,11 @@ impl GameplayState {
             narrative_events: NarrativeEventSystem::new(),
             mailbox: Mailbox::new(),
             tenant_stories: HashMap::new(),
+            dialogue_system: crate::narrative::DialogueSystem::new(),
+            
+            // Phase 4: Tutorial & Missions
+            tutorial: TutorialManager::new(),
+            missions: MissionManager::new(),
             
             // UI state
             view_mode: ViewMode::Building,
@@ -144,6 +154,10 @@ impl GameplayState {
             &mut state.next_tenant_id
         );
         
+        // Generate starter missions
+        state.missions.generate_starter_missions();
+        
+        
         state
     }
     
@@ -162,7 +176,12 @@ impl GameplayState {
     }
 
     /// Main update function - handles game logic and input
-    pub fn update(&mut self, _assets: &AssetManager) -> Option<StateTransition> {
+    pub fn update(&mut self, assets: &AssetManager) -> Option<StateTransition> {
+        // Ensure assets are loaded before processing
+        if !assets.loaded {
+            return None;
+        }
+        
         // Process pending UI actions from previous frame
         let actions: Vec<UiAction> = self.pending_actions.drain(..).collect();
         for action in actions {
@@ -177,6 +196,10 @@ impl GameplayState {
         }
         self.floating_texts.retain(|t| !t.is_dead());
         
+        // Dialogue generation happens in end_turn() via gameplay_actions.rs
+        // Update Dialogue System timeouts
+        self.dialogue_system.tick(self.current_tick);
+        
         // Update panel animation
         if matches!(self.selection, Selection::None) {
             self.panel_tween.target(0.0);
@@ -188,12 +211,40 @@ impl GameplayState {
         // Check if game has ended
         if let Some(ref outcome) = self.game_outcome {
             let won = matches!(outcome, GameOutcome::Victory { .. });
-            return Some(StateTransition::ToResults(ResultsState::new(
+            return Some(StateTransition::ToResults(ResultsState::career_summary(
                 self.funds.total_income,
                 self.tenants.len() as u32,
-                0,
+                0, // tenants_left (placeholder)
                 won,
+                self.current_tick,
+                self.missions.completed_missions().len() as u32,
+                self.missions.legacy_events.clone(),
+                self.missions.awards.clone(),
             )));
+        }
+        
+        
+        // Update tutorial
+        self.update_tutorial();
+        
+        // Handle tutorial "Next" button click
+        if self.tutorial.active && !self.tutorial.pending_messages.is_empty() {
+            // Button layout must match draw_tutorial_overlay
+            let panel_w = 650.0;
+            let panel_h = 180.0;
+            let panel_x = (screen_width() - panel_w) / 2.0;
+            let panel_y = screen_height() - panel_h - 20.0;
+            let btn_w = 120.0;
+            let btn_h = 35.0;
+            let btn_x = panel_x + panel_w - btn_w - 20.0;
+            let btn_y = panel_y + panel_h - btn_h - 15.0;
+            
+            let mouse = mouse_position();
+            if mouse.0 >= btn_x && mouse.0 <= btn_x + btn_w && 
+               mouse.1 >= btn_y && mouse.1 <= btn_y + btn_h &&
+               is_mouse_button_pressed(MouseButton::Left) {
+                self.tutorial.pending_messages.remove(0);
+            }
         }
         
         // Handle keyboard input for ending turn (Space)

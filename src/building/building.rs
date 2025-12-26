@@ -1,8 +1,37 @@
 
-
 use serde::{Deserialize, Serialize};
 use super::{Apartment, ApartmentSize, NoiseLevel};
 use super::ownership::OwnershipType;
+
+/// Marketing campaign types with different costs and target demographics
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
+pub enum MarketingType {
+    #[default]
+    None,              // No active marketing
+    SocialMedia,       // $50/month - High volume, attracts Students/Artists
+    LocalNewspaper,    // $150/month - Moderate volume, attracts Elderly/Families
+    PremiumAgency,     // $500/month - Low volume, high quality, attracts Professionals
+}
+
+impl MarketingType {
+    pub fn monthly_cost(&self) -> i32 {
+        match self {
+            MarketingType::None => 0,
+            MarketingType::SocialMedia => 50,
+            MarketingType::LocalNewspaper => 150,
+            MarketingType::PremiumAgency => 500,
+        }
+    }
+    
+    pub fn name(&self) -> &'static str {
+        match self {
+            MarketingType::None => "None",
+            MarketingType::SocialMedia => "Social Media",
+            MarketingType::LocalNewspaper => "Local Newspaper",
+            MarketingType::PremiumAgency => "Premium Agency",
+        }
+    }
+}
 
 #[derive(Clone, Debug, Serialize, Deserialize, Default)]
 pub struct Building {
@@ -12,6 +41,17 @@ pub struct Building {
     pub rent_multiplier: f32,    // 0.5 - 2.0 default 1.0
     pub has_laundry: bool,       // Amenity
     pub ownership_model: OwnershipType,
+    
+    // Operating flags
+    pub staff_janitor: bool,
+    pub staff_security: bool,
+    pub staff_manager: bool,
+    pub utilities_included: bool,
+    pub insurance_active: bool,
+    
+    // Marketing & Tenant Acquisition
+    pub marketing_strategy: MarketingType,  // Current marketing approach
+    pub open_house_remaining: u32,          // Months of open house bonus remaining
 }
 
 impl Building {
@@ -51,6 +91,15 @@ impl Building {
             rent_multiplier: 1.0,
             has_laundry: false,
             ownership_model: OwnershipType::FullRental,
+            
+            // Defaults
+            staff_janitor: false,
+            staff_security: false,
+            staff_manager: false,
+            utilities_included: false,
+            insurance_active: false,
+            marketing_strategy: MarketingType::None,
+            open_house_remaining: 0,
         }
     }
     

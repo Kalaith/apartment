@@ -83,4 +83,11 @@ pub enum UiAction {
     SellUnitAsCondo { apartment_id: u32 },
     BuybackCondo { apartment_id: u32 },
     VoteOnProposal { proposal_index: usize, vote_yes: bool },
+    
+    // Phase 4: Dialogue system
+    ResolveDialogue { dialogue_id: u32, choice_index: usize },
+    
+    // Phase 4: Tenant vetting
+    CreditCheck { application_index: usize },
+    BackgroundCheck { application_index: usize },
 }

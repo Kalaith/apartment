@@ -39,13 +39,21 @@ impl FinancialLedger {
         
         for t in transactions {
             match t.transaction_type {
-                TransactionType::RentIncome => rent_income += t.amount.abs(),
+                TransactionType::RentIncome | TransactionType::Grant => rent_income += t.amount.abs(),
                 TransactionType::RepairCost | TransactionType::HallwayRepair => {
                     repair_costs += t.amount.abs();
                 }
                 TransactionType::UpgradeCost => upgrade_costs += t.amount.abs(),
                 TransactionType::BuildingPurchase => upgrade_costs += t.amount.abs(), // Count as capital upgrade for now
                 TransactionType::AssetSale => rent_income += t.amount.abs(), // Count condo sales as income
+                TransactionType::PropertyTax 
+                | TransactionType::Utilities 
+                | TransactionType::Insurance 
+                | TransactionType::StaffSalary 
+                | TransactionType::CriticalFailure => {
+                    // These are all operating expenses, count them in repair_costs for simplicity
+                    repair_costs += t.amount.abs();
+                }
             }
         }
         

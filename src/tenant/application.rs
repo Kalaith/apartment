@@ -10,6 +10,10 @@ pub struct TenantApplication {
     pub apartment_id: u32,
     pub match_result: MatchResult,
     pub tick_created: u32,  // When this application was generated
+    
+    // Vetting state (hidden stats revealed after checks)
+    pub revealed_reliability: bool,  // Credit check done?
+    pub revealed_behavior: bool,     // Background check done?
 }
 
 impl TenantApplication {
@@ -19,6 +23,8 @@ impl TenantApplication {
             apartment_id,
             match_result,
             tick_created: tick,
+            revealed_reliability: false,
+            revealed_behavior: false,
         }
     }
     
@@ -47,11 +53,24 @@ pub fn generate_applications(
     // Number of applications based on building appeal and vacancies
     let base_apps = (vacant.len() as f32 * 0.5).ceil() as usize;
     let appeal_bonus = (building_appeal as f32 / 50.0) as usize;
-    let num_applications = (base_apps + appeal_bonus).min(vacant.len()).max(1);
+    
+    // Apply marketing strategy multipliers
+    let marketing_multiplier = match building.marketing_strategy {
+        crate::building::MarketingType::None => 1.0,
+        crate::building::MarketingType::SocialMedia => 2.0, // High volume
+        crate::building::MarketingType::LocalNewspaper => 1.5, // Moderate volume
+        crate::building::MarketingType::PremiumAgency => 0.8, // Low volume, high quality
+    };
+    
+    // Open house bonus (doubles volume)
+    let open_house_multiplier = if building.open_house_remaining > 0 { 2.0 } else { 1.0 };
+    
+    let raw_num_applications = (base_apps + appeal_bonus) as f32 * marketing_multiplier * open_house_multiplier;
+    let num_applications = (raw_num_applications as usize).min(vacant.len() * 2).max(1);
     
     for _ in 0..num_applications {
-        // Pick a random archetype (weighted)
-        let archetype = pick_random_archetype();
+        // Pick a random archetype (weighted by marketing)
+        let archetype = pick_random_archetype(&building.marketing_strategy);
         
         // Generate a tenant
         let tenant = Tenant::generate(*next_tenant_id, archetype);
@@ -82,20 +101,42 @@ pub fn generate_applications(
     new_applications
 }
 
-fn pick_random_archetype() -> TenantArchetype {
+fn pick_random_archetype(marketing: &crate::building::MarketingType) -> TenantArchetype {
     let roll = gen_range(0, 100);
     
-    // Weighted distribution
-    if roll < 35 {
-        TenantArchetype::Student      // 35% - Budget option
-    } else if roll < 60 {
-        TenantArchetype::Professional // 25% - Standard
-    } else if roll < 75 {
-        TenantArchetype::Family       // 15% - Needs space
-    } else if roll < 85 {
-        TenantArchetype::Elderly      // 10% - Needs quiet
-    } else {
-        TenantArchetype::Artist       // 15% - Niche
+    // Adjust weights based on marketing
+    match marketing {
+        crate::building::MarketingType::SocialMedia => {
+            // Heavily favors Students and Artists
+            if roll < 50 { TenantArchetype::Student }
+            else if roll < 80 { TenantArchetype::Artist }
+            else if roll < 90 { TenantArchetype::Professional }
+            else { TenantArchetype::Family }
+        },
+        crate::building::MarketingType::LocalNewspaper => {
+            // Favors Elderly and Families
+            if roll < 15 { TenantArchetype::Student }
+            else if roll < 30 { TenantArchetype::Professional }
+            else if roll < 60 { TenantArchetype::Family }
+            else if roll < 90 { TenantArchetype::Elderly }
+            else { TenantArchetype::Artist }
+        },
+        crate::building::MarketingType::PremiumAgency => {
+            // Heavily favors Professionals, filters out Students
+            if roll < 5 { TenantArchetype::Student }
+            else if roll < 65 { TenantArchetype::Professional }
+            else if roll < 85 { TenantArchetype::Family }
+            else if roll < 95 { TenantArchetype::Elderly }
+            else { TenantArchetype::Artist }
+        },
+        crate::building::MarketingType::None => {
+            // Default distribution
+            if roll < 35 { TenantArchetype::Student }
+            else if roll < 60 { TenantArchetype::Professional }
+            else if roll < 75 { TenantArchetype::Family }
+            else if roll < 85 { TenantArchetype::Elderly }
+            else { TenantArchetype::Artist }
+        }
     }
 }
 

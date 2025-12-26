@@ -248,3 +248,8 @@ Phase 3 is complete when:
 - [ ] Session length extends to 2-3 hours with multiple playstyles viable
 
 **If Phase 3 succeeds**, the game transitions from a focused simulation to a strategic sandbox with emotional resonance.
+
+---
+
+## Next Steps: Phase 4
+See [PHASE_4_GUIDE.md](file:///h:/WebHatchery/games/apartment/dev_plan/PHASE_4_GUIDE.md) for the next stage of development, focusing on economic depth, active management, and narrative soul.

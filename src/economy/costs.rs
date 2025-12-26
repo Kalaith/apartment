@@ -20,6 +20,15 @@ impl UpgradeCosts {
     /// Cost per condition point for hallway repair
     pub const HALLWAY_PER_POINT: i32 = 15;
     
+    /// Monthly cost for Janitor
+    pub const STAFF_JANITOR_COST: i32 = 200;
+    
+    /// Monthly cost for Security
+    pub const STAFF_SECURITY_COST: i32 = 400;
+    
+    /// Monthly cost for Property Manager
+    pub const STAFF_MANAGER_COST: i32 = 600;
+    
     /// Get cost for a repair action
     pub fn repair_cost(points: i32) -> i32 {
         points * Self::REPAIR_PER_POINT
@@ -37,6 +46,50 @@ impl UpgradeCosts {
     /// Get cost for hallway repair
     pub fn hallway_repair_cost(points: i32) -> i32 {
         points * Self::HALLWAY_PER_POINT
+    }
+}
+
+/// Calculate operating costs
+pub struct OperatingCosts;
+
+impl OperatingCosts {
+    /// Calculate monthly property tax based on building value/income
+    pub fn calculate_property_tax(_building: &Building, rent_income: i32) -> i32 {
+        // Simplified: 10% of gross rent income
+        (rent_income as f32 * 0.10) as i32
+    }
+    
+    /// Calculate monthly utilities
+    pub fn calculate_utilities(building: &Building) -> i32 {
+        if !building.utilities_included {
+            return 0;
+        }
+        
+        // Base cost per occupied unit
+        let occupied = building.occupancy_count() as i32;
+        occupied * 50 // $50 per unit
+    }
+    
+    /// Calculate monthly insurance
+    pub fn calculate_insurance(building: &Building) -> i32 {
+        if !building.insurance_active {
+            return 0;
+        }
+        
+        let base_rate = 150;
+        // Discount for good condition
+        let discount = if building.hallway_condition > 80 { 50 } else { 0 };
+        
+        base_rate - discount
+    }
+    
+    /// Calculate monthly staff salaries
+    pub fn calculate_staff_salaries(building: &Building) -> i32 {
+        let mut total = 0;
+        if building.staff_janitor { total += UpgradeCosts::STAFF_JANITOR_COST; }
+        if building.staff_security { total += UpgradeCosts::STAFF_SECURITY_COST; }
+        if building.staff_manager { total += UpgradeCosts::STAFF_MANAGER_COST; }
+        total
     }
 }
 

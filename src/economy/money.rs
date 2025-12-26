@@ -9,6 +9,12 @@ pub enum TransactionType {
     HallwayRepair,
     BuildingPurchase,
     AssetSale,
+    PropertyTax,
+    Utilities,
+    Insurance,
+    StaffSalary,
+    CriticalFailure,
+    Grant,  // Mission rewards, grants, bonuses
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -84,9 +90,14 @@ impl PlayerFunds {
     }
     
     /// Spend money without a specific transaction type (used by random events)
-    pub fn spend(&mut self, amount: i32) {
+    /// Returns true if successful, false if insufficient funds
+    pub fn spend(&mut self, amount: i32) -> bool {
+        if self.balance < amount {
+            return false;
+        }
         self.balance -= amount;
         self.total_expenses += amount;
+        true
     }
     
     /// Check if player is bankrupt

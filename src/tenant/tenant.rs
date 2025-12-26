@@ -17,11 +17,27 @@ pub struct Tenant {
     // Tolerances (derived from archetype but can vary slightly)
     pub rent_tolerance: i32,    // Max rent they'll accept
     pub noise_tolerance: i32,   // 0-100, higher = more tolerant
+    
+    // Hidden stats (revealed via vetting)
+    pub rent_reliability: i32,  // 0-100, higher = more reliable rent payment
+    pub behavior_score: i32,    // 0-100, higher = better neighbor behavior
+    
+    // Relationship with landlord
+    pub landlord_opinion: i32,  // -100 to 100, affects negotiations
 }
 
 impl Tenant {
     pub fn new(id: u32, name: &str, archetype: TenantArchetype) -> Self {
         let prefs = archetype.preferences();
+        
+        // Base reliability/behavior by archetype
+        let (base_reliability, base_behavior) = match archetype {
+            TenantArchetype::Student => (55, 50),      // Lower reliability, average behavior
+            TenantArchetype::Professional => (90, 85), // Very reliable, good behavior
+            TenantArchetype::Artist => (60, 70),       // Moderate reliability, decent behavior
+            TenantArchetype::Family => (80, 75),       // Reliable, good behavior
+            TenantArchetype::Elderly => (95, 90),      // Very reliable, excellent behavior
+        };
         
         Self {
             id,
@@ -32,6 +48,9 @@ impl Tenant {
             apartment_id: None,
             rent_tolerance: prefs.ideal_rent_max,
             noise_tolerance: if prefs.prefers_quiet { 30 } else { 70 },
+            landlord_opinion: 0,
+            rent_reliability: base_reliability,
+            behavior_score: base_behavior,
         }
     }
     
@@ -47,6 +66,16 @@ impl Tenant {
         
         let noise_var = (tenant.noise_tolerance as f32 * variance) as i32;
         tenant.noise_tolerance = (tenant.noise_tolerance + gen_range(-noise_var, noise_var)).clamp(0, 100);
+        
+        // Random initial opinion slight variance
+        tenant.landlord_opinion = gen_range(-5, 6);
+        
+        // Add variance to hidden stats (±20%)
+        let reliability_var = (tenant.rent_reliability as f32 * 0.2) as i32;
+        tenant.rent_reliability = (tenant.rent_reliability + gen_range(-reliability_var, reliability_var)).clamp(0, 100);
+        
+        let behavior_var = (tenant.behavior_score as f32 * 0.2) as i32;
+        tenant.behavior_score = (tenant.behavior_score + gen_range(-behavior_var, behavior_var)).clamp(0, 100);
         
         tenant
     }
@@ -69,6 +98,12 @@ impl Tenant {
     /// Increment months residing
     pub fn add_month(&mut self) {
         self.months_residing += 1;
+        
+        // Long-term tenants slowly trust landlord more (if not hated)
+        if self.months_residing > 12 && self.landlord_opinion > -50 {
+             // Slowly drift towards 0 or positive from neutral
+             // (logic handled in systems, just basic state update here)
+        }
     }
     
     /// Move into an apartment
@@ -80,6 +115,19 @@ impl Tenant {
     /// Move out of current apartment
     pub fn move_out(&mut self) {
         self.apartment_id = None;
+    }
+
+    /// Calculate negotiation leverage (0-100)
+    pub fn negotiation_leverage(&self) -> i32 {
+        // Loyalty bonus: up to 24 points for 2 years
+        let loyalty_bonus = (self.months_residing as i32).min(24);
+        
+        // Opinion factor: High opinion reduces leverage (they trust you), 
+        // low opinion increases it (they are defensive)
+        // Map -100..100 -> 20..-20
+        let opinion_factor = -self.landlord_opinion / 5;
+        
+        (loyalty_bonus + opinion_factor).clamp(0, 100)
     }
 }
 

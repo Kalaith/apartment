@@ -16,7 +16,17 @@ pub enum RelationshipType {
     Family,
 }
 
-impl RelationshipType {}
+impl RelationshipType {
+    pub fn happiness_modifier(&self) -> i32 {
+        match self {
+            RelationshipType::Friendly => 5,
+            RelationshipType::Neutral => 0,
+            RelationshipType::Hostile => -10,
+            RelationshipType::Romantic => 8,
+            RelationshipType::Family => 10,
+        }
+    }
+}
 
 /// A relationship between two tenants
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -30,6 +40,19 @@ pub struct TenantRelationship {
     pub duration_months: u32,
     /// Recent interactions that affected the relationship
     pub recent_events: Vec<String>,
+    
+    // Phase 4C: Landlord opinions
+    pub landlord_opinion_a: i32,  // How tenant A views landlord (-100 to 100)
+    pub landlord_opinion_b: i32,  // How tenant B views landlord
+}
+
+/// Dynamic tension between apartments (e.g., noise complaints)
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct SocialTension {
+    pub apartment_a: u32,
+    pub apartment_b: u32,
+    pub tension_level: i32,  // 0-100
+    pub cause: String,
 }
 
 impl TenantRelationship {
@@ -41,6 +64,8 @@ impl TenantRelationship {
             strength: 50,
             duration_months: 0,
             recent_events: Vec::new(),
+            landlord_opinion_a: 0,
+            landlord_opinion_b: 0,
         }
     }
 
@@ -81,6 +106,9 @@ pub struct TenantNetwork {
     pub relationships: Vec<TenantRelationship>,
     /// Track tenant history for displacement detection
     pub long_term_tenants: Vec<LongTermTenantRecord>,
+    
+    // Phase 4C: Social Tension
+    pub tensions: Vec<SocialTension>,
 }
 
 /// Record of a long-term tenant's history
@@ -101,6 +129,7 @@ impl TenantNetwork {
         Self {
             relationships: Vec::new(),
             long_term_tenants: Vec::new(),
+            tensions: Vec::new(),
         }
     }
 
@@ -195,6 +224,53 @@ impl TenantNetwork {
 
         // Default to neutral
         RelationshipType::Neutral
+    }
+    
+    /// Calculate community cohesion bonus based on matching archetypes
+    pub fn calculate_cohesion(&self, tenants: &[crate::tenant::Tenant]) -> i32 {
+        if tenants.is_empty() { return 0; }
+        
+        let mut archetype_counts = std::collections::HashMap::new();
+        for tenant in tenants {
+            *archetype_counts.entry(tenant.archetype.clone()).or_insert(0) += 1;
+        }
+        
+        let mut bonus = 0;
+        
+        // Bonus for having significant groups of same archetype
+        for (_, count) in archetype_counts {
+            if count >= 3 {
+                bonus += 5 + (count - 3) * 2;
+            }
+        }
+        
+        // Bonus for friendly relationships
+        let friendly_count = self.relationships.iter()
+            .filter(|r| matches!(r.relationship_type, RelationshipType::Friendly | RelationshipType::Family))
+            .count() as i32;
+            
+        bonus += friendly_count * 2;
+        
+        // Penalty for tensions/hostility
+        let hostile_count = self.relationships.iter()
+            .filter(|r| matches!(r.relationship_type, RelationshipType::Hostile))
+            .count() as i32;
+            
+        bonus -= hostile_count * 5;
+        bonus -= (self.tensions.len() as i32) * 8;
+        
+        bonus.clamp(-50, 50)
+    }
+    
+    /// Check if tenants are unhappy enough to form a council
+    pub fn should_form_council(&self, tenants: &[crate::tenant::Tenant]) -> bool {
+        if tenants.len() < 4 { return false; }
+        
+        let unhappy_count = tenants.iter().filter(|t| t.is_unhappy()).count();
+        let relative_unhappiness = unhappy_count as f32 / tenants.len() as f32;
+        
+        // Formation threshold: 40% of tenants unhappy
+        relative_unhappiness >= 0.4
     }
 }
 
