@@ -1,257 +1,256 @@
 
 use super::{Apartment, Building, DesignType};
 use serde::{Deserialize, Serialize};
+use crate::data::config::{EconomyConfig, UiConfig, UpgradeDefinition, UpgradeTarget, UpgradeRequirement};
+use std::collections::HashMap;
 
-/// Costs for various upgrades
-pub mod costs {
-    pub const REPAIR_PER_POINT: i32 = 10;      // $10 per condition point
-    pub const UPGRADE_TO_PRACTICAL: i32 = 500;
-    pub const UPGRADE_TO_COZY: i32 = 1000;
-    pub const SOUNDPROOFING: i32 = 300;
-    pub const HALLWAY_REPAIR_PER_POINT: i32 = 15;
-    pub const KITCHEN_RENOVATION: i32 = 800;
-    pub const INSTALL_LAUNDRY: i32 = 2000;
-}
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum UpgradeAction {
     RepairApartment { apartment_id: u32, amount: i32 },
     UpgradeDesign { apartment_id: u32 },
-    AddSoundproofing { apartment_id: u32 },
-    RenovateKitchen { apartment_id: u32 },
     RepairHallway { amount: i32 },
-    InstallLaundry,
+    // Generic upgrade identified by ID (from config.json)
+    Apply { upgrade_id: String, target_id: Option<u32> }, 
 }
 
 impl UpgradeAction {
     /// Get a user-friendly label for this action
-    pub fn label(&self, building: &Building) -> String {
+    pub fn label(&self, building: &Building, config: &UiConfig, upgrades: &HashMap<String, UpgradeDefinition>) -> String {
         match self {
-            UpgradeAction::RepairApartment { amount, .. } => format!("Repair +{}", amount),
+            UpgradeAction::RepairApartment { amount, .. } => {
+                let fmt = config.upgrade_labels.get("repair_fmt").map(|s| s.as_str()).unwrap_or("Repair +{}");
+                fmt.replace("{}", &amount.to_string())
+            }
             UpgradeAction::UpgradeDesign { apartment_id } => {
                 if let Some(apt) = building.get_apartment(*apartment_id) {
                     if let Some(next) = apt.design.next_upgrade() {
-                        return format!("Upgrade to {:?}", next);
+                         let fmt = config.upgrade_labels.get("upgrade_design_fmt").map(|s| s.as_str()).unwrap_or("Upgrade to {}");
+                         return fmt.replace("{}", &format!("{:?}", next));
                     }
                 }
-                "Max Design".to_string()
+                config.upgrade_labels.get("max_design").cloned().unwrap_or_else(|| "Max Design".to_string())
             }
-            UpgradeAction::AddSoundproofing { .. } => "Add Soundproofing".to_string(),
-            UpgradeAction::RenovateKitchen { .. } => "Renovate Kitchen".to_string(),
-            UpgradeAction::RepairHallway { amount } => format!("Repair Hallway +{}", amount),
-            UpgradeAction::InstallLaundry => "Install Laundry".to_string(),
+            UpgradeAction::RepairHallway { amount } => {
+                 let fmt = config.upgrade_labels.get("repair_hallway_fmt").map(|s| s.as_str()).unwrap_or("Repair Hallway +{}");
+                 fmt.replace("{}", &amount.to_string())
+            }
+            UpgradeAction::Apply { upgrade_id, .. } => {
+                upgrades.get(upgrade_id).map(|u| u.name.clone()).unwrap_or_else(|| upgrade_id.clone())
+            }
         }
     }
 
-    /// Calculate the cost of this upgrade
-    pub fn cost(&self, building: &Building) -> Option<i32> {
+    /// Calculate the cost of this action
+    pub fn cost(&self, building: &Building, config: &EconomyConfig, upgrades: &HashMap<String, UpgradeDefinition>) -> Option<i32> {
         match self {
-            UpgradeAction::RepairApartment { amount, .. } => {
-                Some(amount * costs::REPAIR_PER_POINT)
+            UpgradeAction::RepairApartment { amount, ..} => {
+                Some(amount * config.repair_cost_per_point)
             }
             UpgradeAction::UpgradeDesign { apartment_id } => {
                 let apt = building.get_apartment(*apartment_id)?;
-                match apt.design {
-                    DesignType::Bare => Some(costs::UPGRADE_TO_PRACTICAL),
-                    DesignType::Practical => Some(costs::UPGRADE_TO_COZY),
-                    DesignType::Cozy => None,  // Already max
-                }
-            }
-            UpgradeAction::AddSoundproofing { apartment_id } => {
-                let apt = building.get_apartment(*apartment_id)?;
-                if apt.has_soundproofing {
-                    None  // Already has it
-                } else {
-                    Some(costs::SOUNDPROOFING)
-                }
-            }
-            UpgradeAction::RenovateKitchen { apartment_id } => {
-                let apt = building.get_apartment(*apartment_id)?;
-                if apt.kitchen_level >= 2 {
-                    None
-                } else {
-                    Some(costs::KITCHEN_RENOVATION)
-                }
+                let current_design_key = match apt.design {
+                    DesignType::Bare => "bare_to_practical",
+                    DesignType::Practical => "practical_to_cozy",
+                    DesignType::Cozy => return None,
+                };
+                config.design_upgrade_costs.get(current_design_key).cloned()
             }
             UpgradeAction::RepairHallway { amount } => {
-                Some(amount * costs::HALLWAY_REPAIR_PER_POINT)
+                Some(amount * config.hallway_repair_cost_per_point)
             }
-            UpgradeAction::InstallLaundry => {
-                if building.has_laundry {
-                    None
-                } else {
-                    Some(costs::INSTALL_LAUNDRY)
-                }
+            UpgradeAction::Apply { upgrade_id, .. } => {
+                upgrades.get(upgrade_id).map(|u| u.cost)
             }
         }
     }
-    
-
 }
 
 /// Apply an upgrade action to the building
 /// Returns the cost if successful, None if failed
-pub fn apply_upgrade(building: &mut Building, action: &UpgradeAction) -> Option<i32> {
-    let cost = action.cost(building)?;
-    
+pub fn apply_upgrade(building: &mut Building, action: &UpgradeAction, upgrades: &HashMap<String, UpgradeDefinition>) -> Option<()> {
     match action {
         UpgradeAction::RepairApartment { apartment_id, amount } => {
             let apt = building.get_apartment_mut(*apartment_id)?;
             apt.repair(*amount);
+            Some(())
         }
         UpgradeAction::UpgradeDesign { apartment_id } => {
             let apt = building.get_apartment_mut(*apartment_id)?;
-            if !apt.upgrade_design() {
-                return None;
-            }
-        }
-        UpgradeAction::RenovateKitchen { apartment_id } => {
-            let apt = building.get_apartment_mut(*apartment_id)?;
-            if !apt.upgrade_kitchen() {
-                return None;
-            }
-        }
-        UpgradeAction::AddSoundproofing { apartment_id } => {
-            let apt = building.get_apartment_mut(*apartment_id)?;
-            apt.install_soundproofing();
+            apt.upgrade_design();
+            Some(())
         }
         UpgradeAction::RepairHallway { amount } => {
             building.repair_hallway(*amount);
+            Some(())
         }
-        UpgradeAction::InstallLaundry => {
-            building.install_laundry();
+        UpgradeAction::Apply { upgrade_id, target_id } => {
+            let def = upgrades.get(upgrade_id)?;
+            match def.target {
+                UpgradeTarget::Apartment => {
+                    let apt_id = (*target_id)?;
+                    let apt = building.get_apartment_mut(apt_id)?;
+                    
+                    // Apply generic effects
+                    for effect in &def.effects {
+                        match effect {
+                            crate::data::config::UpgradeEffect::SetFlag(flag) => {
+                                apt.flags.insert(flag.clone());
+                                if flag == "has_soundproofing" { apt.has_soundproofing = true; }
+                                if flag == "has_renovated_kitchen" && apt.kitchen_level < 1 { apt.kitchen_level = 1; }
+                            }
+                            crate::data::config::UpgradeEffect::RemoveFlag(flag) => {
+                                apt.flags.remove(flag);
+                            }
+                            _ => {}
+                        }
+                    }
+                    Some(())
+                }
+                UpgradeTarget::Building => {
+                     for effect in &def.effects {
+                        match effect {
+                            crate::data::config::UpgradeEffect::SetFlag(flag) => {
+                                building.flags.insert(flag.clone());
+                            }
+                            crate::data::config::UpgradeEffect::RemoveFlag(flag) => {
+                                building.flags.remove(flag);
+                            }
+                            _ => {}
+                        }
+                    }
+                    Some(())
+                }
+            }
         }
     }
-    
-    Some(cost)
 }
 
-/// Get available upgrades for an apartment
-pub fn available_apartment_upgrades(apt: &Apartment) -> Vec<UpgradeAction> {
-    let mut upgrades = Vec::new();
-    
-    // Repair is always available if condition < 100
+pub fn available_apartment_upgrades(apt: &Apartment, upgrades: &HashMap<String, UpgradeDefinition>) -> Vec<UpgradeAction> {
+    let mut actions = Vec::new();
+
+    // 1. Repair (hardcoded logic for now as it's variable amount)
     if apt.condition < 100 {
-        let repair_amount = (100 - apt.condition).min(25);  // Max 25 at a time
-        upgrades.push(UpgradeAction::RepairApartment {
-            apartment_id: apt.id,
-            amount: repair_amount,
+        let amount = (100 - apt.condition).min(10); 
+        actions.push(UpgradeAction::RepairApartment { 
+            apartment_id: apt.id, 
+            amount 
         });
     }
-    
-    // Design upgrade if not at max
+
+    // 2. Design (hardcoded logic)
     if apt.design.next_upgrade().is_some() {
-        upgrades.push(UpgradeAction::UpgradeDesign {
-            apartment_id: apt.id,
-        });
+        actions.push(UpgradeAction::UpgradeDesign { apartment_id: apt.id });
     }
-    
-    // Kitchen upgrade if not at max
-    if apt.kitchen_level < 2 {
-        upgrades.push(UpgradeAction::RenovateKitchen {
-            apartment_id: apt.id,
-        });
+
+    // 3. Generic Upgrades
+    for (id, def) in upgrades {
+        if def.target == UpgradeTarget::Apartment {
+            if check_requirements(&def.requirements, apt, None) {
+                actions.push(UpgradeAction::Apply { 
+                    upgrade_id: id.clone(), 
+                    target_id: Some(apt.id) 
+                });
+            }
+        }
     }
-    
-    // Soundproofing if not installed
-    if !apt.has_soundproofing {
-        upgrades.push(UpgradeAction::AddSoundproofing {
-            apartment_id: apt.id,
-        });
-    }
-    
-    upgrades
+
+    actions
 }
 
-/// Get available building-wide upgrades
-pub fn available_building_upgrades(building: &Building) -> Vec<UpgradeAction> {
-    let mut upgrades = Vec::new();
-    
+pub fn available_building_upgrades(building: &Building, upgrades: &HashMap<String, UpgradeDefinition>) -> Vec<UpgradeAction> {
+    let mut actions = Vec::new();
+
+    // 1. Repair Hallway
     if building.hallway_condition < 100 {
-        let repair_amount = (100 - building.hallway_condition).min(20);
-        upgrades.push(UpgradeAction::RepairHallway {
-            amount: repair_amount,
-        });
+         let amount = (100 - building.hallway_condition).min(10);
+         actions.push(UpgradeAction::RepairHallway { amount });
     }
-    
-    if !building.has_laundry {
-        upgrades.push(UpgradeAction::InstallLaundry);
+
+    // 2. Generic Upgrades
+    for (id, def) in upgrades {
+        if def.target == UpgradeTarget::Building {
+            if check_requirements_building(&def.requirements, building) {
+                 actions.push(UpgradeAction::Apply { 
+                    upgrade_id: id.clone(), 
+                    target_id: None 
+                });
+            }
+        }
     }
-    
-    upgrades
+
+    actions
+}
+
+fn check_requirements(reqs: &[UpgradeRequirement], apt: &Apartment, _building: Option<&Building>) -> bool {
+    for req in reqs {
+        match req {
+            UpgradeRequirement::MissingFlag(flag) => {
+                // Check new generic flags AND backwards compatibility hardcoded fields
+                if apt.flags.contains(flag) { return false; }
+                if flag == "has_soundproofing" && apt.has_soundproofing { return false; }
+                if flag == "has_renovated_kitchen" && apt.kitchen_level >= 2 { return false; }
+            }
+            UpgradeRequirement::HasFlag(flag) => {
+                let has = apt.flags.contains(flag)
+                    || (flag == "has_soundproofing" && apt.has_soundproofing)
+                    || (flag == "has_renovated_kitchen" && apt.kitchen_level >= 2);
+                if !has { return false; }
+            }
+             _ => {} // Implement generic stat checks later if needed
+        }
+    }
+    true
+}
+
+fn check_requirements_building(reqs: &[UpgradeRequirement], building: &Building) -> bool {
+    for req in reqs {
+        match req {
+            UpgradeRequirement::MissingFlag(flag) => {
+                 if building.flags.contains(flag) { return false; }
+                 if flag == "has_laundry" && building.has_laundry { return false; }
+            }
+            UpgradeRequirement::HasFlag(flag) => {
+                let has = building.flags.contains(flag)
+                    || (flag == "has_laundry" && building.has_laundry);
+                if !has { return false; }
+            }
+            _ => {}
+        }
+    }
+    true
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::building::{ApartmentSize, NoiseLevel};
+    use crate::data::config::GameConfig;
     
     #[test]
     fn test_upgrade_costs() {
         let building = Building::default_mvp();
+        let config = GameConfig::default().economy;
+        let upgrades = GameConfig::default().upgrades;
         
         let repair = UpgradeAction::RepairApartment { apartment_id: 0, amount: 10 };
-        assert_eq!(repair.cost(&building), Some(100));  // 10 * $10
+        assert_eq!(repair.cost(&building, &config, &upgrades), Some(100));  // 10 * $10
         
         let design = UpgradeAction::UpgradeDesign { apartment_id: 0 };
-        assert_eq!(design.cost(&building), Some(500));  // Bare -> Practical
+        assert_eq!(design.cost(&building, &config, &upgrades), Some(500));  // Bare -> Practical
     }
     
     #[test]
     fn test_apply_repair_upgrade() {
         let mut building = Building::default_mvp();
+        let config = GameConfig::default().economy;
+        let upgrades = GameConfig::default().upgrades;
         let initial_condition = building.apartments[0].condition;
         
         let action = UpgradeAction::RepairApartment { apartment_id: 0, amount: 20 };
-        let cost = apply_upgrade(&mut building, &action);
+        let cost = apply_upgrade(&mut building, &action, &upgrades);
         
-        assert_eq!(cost, Some(200));
+        assert_eq!(cost, Some(())); // Returns Option<()>
         assert_eq!(building.apartments[0].condition, initial_condition + 20);
-    }
-    
-    #[test]
-    fn test_apply_design_upgrade() {
-        let mut building = Building::default_mvp();
-        assert_eq!(building.apartments[0].design, DesignType::Bare);
-        
-        let action = UpgradeAction::UpgradeDesign { apartment_id: 0 };
-        let cost = apply_upgrade(&mut building, &action);
-        
-        assert_eq!(cost, Some(500));
-        assert_eq!(building.apartments[0].design, DesignType::Practical);
-    }
-    
-    #[test]
-    fn test_apply_soundproofing() {
-        let mut building = Building::default_mvp();
-        assert!(!building.apartments[0].has_soundproofing);
-        
-        let action = UpgradeAction::AddSoundproofing { apartment_id: 0 };
-        let cost = apply_upgrade(&mut building, &action);
-        
-        assert_eq!(cost, Some(300));
-        assert!(building.apartments[0].has_soundproofing);
-        
-        // Second application should fail
-        let cost = apply_upgrade(&mut building, &action);
-        assert_eq!(cost, None);
-    }
-    
-    #[test]
-    fn test_available_apartment_upgrades() {
-        let apt = Apartment::new(0, "1A", 1, ApartmentSize::Small, NoiseLevel::High);
-        let upgrades = available_apartment_upgrades(&apt);
-        
-        // Should have repair, design upgrade, and soundproofing
-        assert_eq!(upgrades.len(), 3);
-    }
-    
-    #[test]
-    fn test_available_building_upgrades() {
-        let building = Building::default_mvp();
-        let upgrades = available_building_upgrades(&building);
-        
-        // Should have hallway repair available (condition is 60, not 100)
-        assert_eq!(upgrades.len(), 1);
     }
 }

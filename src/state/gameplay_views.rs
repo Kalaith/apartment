@@ -77,7 +77,7 @@ impl GameplayState {
         match self.selection {
             Selection::Apartment(id) => {
                  if let Some(apt) = self.building.get_apartment(id) {
-                     let (action, new_scroll) = draw_apartment_panel(apt, &self.building, &self.tenants, self.funds.balance, 0.0, self.panel_scroll_offset, assets);
+                     let (action, new_scroll) = draw_apartment_panel(apt, &self.building, &self.tenants, self.funds.balance, 0.0, self.panel_scroll_offset, assets, &self.config);
                      self.panel_scroll_offset = new_scroll;
                      if let Some(action) = action {
                          self.pending_actions.push(action);
@@ -85,7 +85,9 @@ impl GameplayState {
                  }
             }
             Selection::Hallway => {
-                if let Some(action) = draw_hallway_panel(&self.building, self.funds.balance, 0.0, assets) {
+                let (action, new_scroll) = draw_hallway_panel(&self.building, self.funds.balance, 0.0, self.panel_scroll_offset, assets, &self.config);
+                self.panel_scroll_offset = new_scroll;
+                if let Some(action) = action {
                     self.pending_actions.push(action);
                 }
             }

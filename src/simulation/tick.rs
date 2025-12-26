@@ -30,6 +30,7 @@ impl GameTick {
         event_log: &mut EventLog,
         current_tick: u32,
         next_tenant_id: &mut u32,
+        config: &crate::data::config::GameConfig,
     ) -> TickResult {
         let mut result = TickResult {
             events: Vec::new(),
@@ -43,8 +44,8 @@ impl GameTick {
         Self::collect_rent(building, tenants, funds, current_tick, &mut result);
         
         // 2. Operating Costs & Staff
-        Self::process_operating_costs(building, funds, current_tick, &mut result);
-        Self::process_staff_effects(building);
+        Self::process_operating_costs(building, funds, current_tick, &mut result, config);
+        Self::process_staff_effects(building, tenants);
         Self::process_critical_failures(building, tenants, funds, current_tick, &mut result);
 
         // 3. Random Events
@@ -155,6 +156,7 @@ impl GameTick {
         funds: &mut PlayerFunds,
         current_tick: u32,
         result: &mut TickResult,
+        config: &crate::data::config::GameConfig,
     ) {
         // Marketing
         let marketing_cost = building.marketing_strategy.monthly_cost();
@@ -194,15 +196,16 @@ impl GameTick {
             funds.deduct_expense(Transaction::expense(TransactionType::Insurance, insurance, "Property Insurance", current_tick));
         }
         
-        let salaries = OperatingCosts::calculate_staff_salaries(building);
+        // Staff Salaries - Data Driven
+        let salaries = OperatingCosts::calculate_staff_salaries(building, &config.economy);
         if salaries > 0 {
             funds.deduct_expense(Transaction::expense(TransactionType::StaffSalary, salaries, "Staff Salaries", current_tick));
         }
     }
 
-    fn process_staff_effects(building: &mut Building) {
-        if building.staff_janitor {
-             // Auto-repair small decay
+    fn process_staff_effects(building: &mut Building, tenants: &mut Vec<Tenant>) {
+        // Janitor: Auto-repair small decay
+        if building.flags.contains("staff_janitor") {
              for apt in &mut building.apartments {
                  if apt.condition < 90 && apt.condition > 50 {
                      apt.condition += 1;
@@ -211,6 +214,20 @@ impl GameTick {
              if building.hallway_condition < 90 && building.hallway_condition > 50 {
                  building.hallway_condition += 1;
              }
+        }
+
+        // Security: Boost happiness
+        if building.flags.contains("staff_security") {
+            for t in tenants.iter_mut() {
+                t.happiness = (t.happiness + 2).min(100);
+            }
+        }
+        
+        // Manager: Bonus happiness (simplification of "handles issues")
+        if building.flags.contains("staff_manager") {
+             for t in tenants.iter_mut() {
+                t.happiness = (t.happiness + 1).min(100);
+            }
         }
     }
 
@@ -224,8 +241,14 @@ impl GameTick {
         use rand::Rng;
         let mut rng = rand::thread_rng();
         
+        let mut prob = 0.005;
+        // Security reduces failure probability
+        if building.flags.contains("staff_security") {
+            prob *= 0.5;
+        }
+        
         // Boiler Failure
-        if rng.gen_bool(0.005) {
+        if rng.gen_bool(prob) {
             let cost = 1500;
             if funds.can_afford(cost) {
                 funds.deduct_expense(Transaction::expense(TransactionType::CriticalFailure, cost, "Boiler Emergency Repair", current_tick));
@@ -236,11 +259,11 @@ impl GameTick {
                      t.happiness = (t.happiness - 30).max(0);
                  }
                  result.events.push(GameEvent::InsufficientFunds { action: "Fix Boiler".to_string(), needed: cost, available: funds.balance });
-            }
+             }
         }
         
         // Structural Issue
-        if rng.gen_bool(0.005) {
+        if rng.gen_bool(prob) {
              let cost = 2500;
              let tx = Transaction::expense(TransactionType::CriticalFailure, cost, "Structural Reinforcement", current_tick);
              if funds.deduct_expense(tx) {
@@ -297,6 +320,7 @@ pub fn advance_tick(
     event_log: &mut EventLog,
     current_tick: &mut u32,
     next_tenant_id: &mut u32,
+    config: &crate::data::config::GameConfig,
 ) -> TickResult {
     *current_tick += 1;
     
@@ -309,5 +333,6 @@ pub fn advance_tick(
         event_log,
         *current_tick,
         next_tenant_id,
+        config,
     )
 }

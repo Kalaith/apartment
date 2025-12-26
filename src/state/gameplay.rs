@@ -3,6 +3,7 @@ use macroquad::prelude::*;
 use std::collections::HashMap;
 use super::{StateTransition, ResultsState};
 use crate::building::Building;
+use crate::data::config::GameConfig;
 use crate::tenant::{Tenant, TenantApplication};
 use crate::economy::{PlayerFunds, FinancialLedger};
 use crate::simulation::{EventLog, GameOutcome, TickResult};
@@ -35,6 +36,8 @@ pub struct GameplayState {
     // Legacy field for backwards compatibility - now derived from city
     #[serde(skip)]
     pub building: Building,
+
+    pub config: GameConfig,
     
     // Tenants
     pub tenants: Vec<Tenant>,
@@ -89,12 +92,12 @@ pub struct GameplayState {
 
 impl GameplayState {
     /// Create a new game with a starter building in the default neighborhood (Suburbs)
-    pub fn new() -> Self {
-        Self::new_in_neighborhood(1) // Default to Suburbs (index 1)
+    pub fn new(config: GameConfig) -> Self {
+        Self::new_in_neighborhood(1, config) // Default to Suburbs (index 1)
     }
     
     /// Create a new game with a starter building in a specific neighborhood
-    pub fn new_in_neighborhood(neighborhood_index: usize) -> Self {
+    pub fn new_in_neighborhood(neighborhood_index: usize, config: GameConfig) -> Self {
         // Create city with starter building
         let city = City::with_starter_building("Metropolis", neighborhood_index);
         
@@ -111,6 +114,7 @@ impl GameplayState {
         let mut state = Self {
             city,
             building,
+            config,
             tenants: Vec::new(),
             applications: Vec::new(),
             next_tenant_id: 1,

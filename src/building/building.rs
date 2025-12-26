@@ -1,5 +1,6 @@
 
 use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
 use super::{Apartment, ApartmentSize, NoiseLevel};
 use super::ownership::OwnershipType;
 
@@ -43,15 +44,13 @@ pub struct Building {
     pub ownership_model: OwnershipType,
     
     // Operating flags
-    pub staff_janitor: bool,
-    pub staff_security: bool,
-    pub staff_manager: bool,
     pub utilities_included: bool,
     pub insurance_active: bool,
     
     // Marketing & Tenant Acquisition
     pub marketing_strategy: MarketingType,  // Current marketing approach
     pub open_house_remaining: u32,          // Months of open house bonus remaining
+    pub flags: HashSet<String>,
 }
 
 impl Building {
@@ -93,21 +92,15 @@ impl Building {
             ownership_model: OwnershipType::FullRental,
             
             // Defaults
-            staff_janitor: false,
-            staff_security: false,
-            staff_manager: false,
             utilities_included: false,
             insurance_active: false,
             marketing_strategy: MarketingType::None,
             open_house_remaining: 0,
+            flags: HashSet::new(),
         }
     }
     
-    
-    /// Install laundry amenity
-    pub fn install_laundry(&mut self) {
-        self.has_laundry = true;
-    }
+
 
     /// Create the default MVP building (6 units, 3 floors, 2 per floor)
     pub fn default_mvp() -> Self {

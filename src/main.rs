@@ -7,6 +7,7 @@ mod tenant;
 mod economy;
 mod simulation;
 mod ui;
+mod data;
 
 mod assets;
 mod save;

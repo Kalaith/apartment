@@ -130,14 +130,7 @@ impl TutorialManager {
         }
     }
     
-    /// Get the next mentor message, if any
-    pub fn pop_message(&mut self) -> Option<String> {
-        if self.pending_messages.is_empty() {
-            None
-        } else {
-            Some(self.pending_messages.remove(0))
-        }
-    }
+
     
     /// Check if tutorial is complete
     pub fn is_complete(&self) -> bool {

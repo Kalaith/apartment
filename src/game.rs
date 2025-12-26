@@ -1,8 +1,10 @@
 use crate::state::{GameState, MenuState, StateTransition};
+use crate::data::config::{GameConfig, load_config};
 use crate::assets::AssetManager;
 
 pub struct Game {
     pub state: GameState,
+    pub config: GameConfig,
     pub assets: AssetManager,
 }
 
@@ -11,17 +13,20 @@ impl Game {
         let mut assets = AssetManager::new();
         assets.load_assets().await;
         
+        let config = load_config();
+        
         Self {
             state: GameState::Menu(MenuState::new()),
+            config,
             assets,
         }
     }
 
     pub fn update(&mut self) {
         let transition = match &mut self.state {
-            GameState::Menu(s) => s.update(&self.assets),
+            GameState::Menu(s) => s.update(&self.assets, &self.config),
             GameState::Gameplay(s) => s.update(&self.assets),
-            GameState::Results(s) => s.update(&self.assets),
+            GameState::Results(s) => s.update(&self.assets, &self.config),
         };
 
         if let Some(t) = transition {

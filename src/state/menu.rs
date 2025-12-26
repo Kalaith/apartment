@@ -14,7 +14,7 @@ impl MenuState {
         }
     }
 
-    pub fn update(&mut self, _assets: &AssetManager) -> Option<StateTransition> {
+    pub fn update(&mut self, _assets: &AssetManager, _config: &crate::data::config::GameConfig) -> Option<StateTransition> {
         let button_w = 200.0;
         let button_h = 50.0;
         let center_x = screen_width() / 2.0 - button_w / 2.0;
@@ -45,7 +45,7 @@ impl MenuState {
             if mx >= center_x && mx <= center_x + button_w
                 && my >= start_y && my <= start_y + button_h
             {
-                return Some(StateTransition::ToGameplay(GameplayState::new()));
+                return Some(StateTransition::ToGameplay(GameplayState::new(_config.clone())));
             }
         }
 

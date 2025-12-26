@@ -39,7 +39,7 @@ impl ResultsState {
         }
     }
 
-    pub fn update(&mut self, assets: &AssetManager) -> Option<StateTransition> {
+    pub fn update(&mut self, assets: &AssetManager, _config: &crate::data::config::GameConfig) -> Option<StateTransition> {
         // Wait for assets if needed
         if !assets.loaded {
             return None;

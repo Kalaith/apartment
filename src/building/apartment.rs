@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub enum DesignType {
@@ -81,6 +82,7 @@ pub struct Apartment {
     
     // Occupancy
     pub tenant_id: Option<u32>,
+    pub flags: HashSet<String>,
 }
 
 impl Apartment {
@@ -98,6 +100,7 @@ impl Apartment {
             kitchen_level: 0,
             rent_price,
             tenant_id: None,
+            flags: HashSet::new(),
         }
     }
     
@@ -145,21 +148,7 @@ impl Apartment {
             false
         }
     }
-    
-    /// Upgrade kitchen
-    pub fn upgrade_kitchen(&mut self) -> bool {
-        if self.kitchen_level < 2 {
-            self.kitchen_level += 1;
-            true
-        } else {
-            false
-        }
-    }
-    
-    /// Install soundproofing
-    pub fn install_soundproofing(&mut self) {
-        self.has_soundproofing = true;
-    }
+
     
     /// Move a tenant in
     pub fn move_in(&mut self, tenant_id: u32) {
@@ -237,7 +226,7 @@ mod tests {
         let mut apt = Apartment::new(0, "1A", 1, ApartmentSize::Small, NoiseLevel::High);
         assert_eq!(apt.effective_noise(), NoiseLevel::High);
         
-        apt.install_soundproofing();
+        apt.has_soundproofing = true;
         assert_eq!(apt.effective_noise(), NoiseLevel::Low);
     }
     

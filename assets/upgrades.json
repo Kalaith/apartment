@@ -1,0 +1,200 @@
+{
+    "soundproofing": {
+        "id": "soundproofing",
+        "name": "Install Soundproofing",
+        "cost": 300,
+        "target": "apartment",
+        "effects": [
+            {
+                "type": "set_flag",
+                "value": "has_soundproofing"
+            }
+        ],
+        "requirements": [
+            {
+                "type": "missing_flag",
+                "value": "has_soundproofing"
+            }
+        ]
+    },
+    "kitchen_renovation": {
+        "id": "kitchen_renovation",
+        "name": "Renovate Kitchen",
+        "cost": 800,
+        "target": "apartment",
+        "effects": [
+            {
+                "type": "set_flag",
+                "value": "has_renovated_kitchen"
+            }
+        ],
+        "requirements": [
+            {
+                "type": "missing_flag",
+                "value": "has_renovated_kitchen"
+            }
+        ]
+    },
+    "install_laundry": {
+        "id": "install_laundry",
+        "name": "Install Laundry Room",
+        "cost": 2000,
+        "target": "building",
+        "effects": [
+            {
+                "type": "set_flag",
+                "value": "has_laundry"
+            }
+        ],
+        "requirements": [
+            {
+                "type": "missing_flag",
+                "value": "has_laundry"
+            }
+        ]
+    },
+    "hire_janitor": {
+        "id": "hire_janitor",
+        "name": "Hire Janitor",
+        "cost": 0,
+        "target": "building",
+        "effects": [
+            {
+                "type": "set_flag",
+                "value": "staff_janitor"
+            }
+        ],
+        "requirements": [
+            {
+                "type": "missing_flag",
+                "value": "staff_janitor"
+            }
+        ]
+    },
+    "fire_janitor": {
+        "id": "fire_janitor",
+        "name": "Fire Janitor",
+        "cost": 0,
+        "target": "building",
+        "effects": [
+            {
+                "type": "remove_flag",
+                "value": "staff_janitor"
+            }
+        ],
+        "requirements": [
+            {
+                "type": "has_flag",
+                "value": "staff_janitor"
+            }
+        ]
+    },
+    "hire_security": {
+        "id": "hire_security",
+        "name": "Hire Security",
+        "cost": 0,
+        "target": "building",
+        "effects": [
+            {
+                "type": "set_flag",
+                "value": "staff_security"
+            }
+        ],
+        "requirements": [
+            {
+                "type": "missing_flag",
+                "value": "staff_security"
+            }
+        ]
+    },
+    "fire_security": {
+        "id": "fire_security",
+        "name": "Fire Security",
+        "cost": 0,
+        "target": "building",
+        "effects": [
+            {
+                "type": "remove_flag",
+                "value": "staff_security"
+            }
+        ],
+        "requirements": [
+            {
+                "type": "has_flag",
+                "value": "staff_security"
+            }
+        ]
+    },
+    "hire_manager": {
+        "id": "hire_manager",
+        "name": "Hire Manager",
+        "cost": 0,
+        "target": "building",
+        "effects": [
+            {
+                "type": "set_flag",
+                "value": "staff_manager"
+            }
+        ],
+        "requirements": [
+            {
+                "type": "missing_flag",
+                "value": "staff_manager"
+            }
+        ]
+    },
+    "fire_manager": {
+        "id": "fire_manager",
+        "name": "Fire Manager",
+        "cost": 0,
+        "target": "building",
+        "effects": [
+            {
+                "type": "remove_flag",
+                "value": "staff_manager"
+            }
+        ],
+        "requirements": [
+            {
+                "type": "has_flag",
+                "value": "staff_manager"
+            }
+        ]
+    },
+    "hire_receptionist": {
+        "id": "hire_receptionist",
+        "name": "Hire Receptionist",
+        "cost": 0,
+        "target": "building",
+        "effects": [
+            {
+                "type": "set_flag",
+                "value": "staff_receptionist"
+            }
+        ],
+        "requirements": [
+            {
+                "type": "missing_flag",
+                "value": "staff_receptionist"
+            }
+        ]
+    },
+    "fire_receptionist": {
+        "id": "fire_receptionist",
+        "name": "Fire Receptionist",
+        "cost": 0,
+        "target": "building",
+        "effects": [
+            {
+                "type": "remove_flag",
+                "value": "staff_receptionist"
+            }
+        ],
+        "requirements": [
+            {
+                "type": "has_flag",
+                "value": "staff_receptionist"
+            }
+        ]
+    }
+}
