@@ -2,6 +2,7 @@
 
 use serde::{Deserialize, Serialize};
 use super::{Apartment, ApartmentSize, NoiseLevel};
+use super::ownership::OwnershipType;
 
 #[derive(Clone, Debug, Serialize, Deserialize, Default)]
 pub struct Building {
@@ -10,7 +11,7 @@ pub struct Building {
     pub hallway_condition: i32,  // 0-100, affects building appeal
     pub rent_multiplier: f32,    // 0.5 - 2.0 default 1.0
     pub has_laundry: bool,       // Amenity
-    pub ownership_model: super::OwnershipType,
+    pub ownership_model: OwnershipType,
 }
 
 impl Building {
@@ -49,7 +50,7 @@ impl Building {
             hallway_condition: 60,  // Start slightly worn
             rent_multiplier: 1.0,
             has_laundry: false,
-            ownership_model: super::OwnershipType::FullRental,
+            ownership_model: OwnershipType::FullRental,
         }
     }
     
@@ -133,7 +134,7 @@ impl Building {
         // Actually, we're just updating the ownership model state here.
         // We probably need to verify it's not already owned?
         
-        use super::OwnershipType;
+
         use super::ownership::CondoBoard;
         
         // Check if apartment exists
@@ -165,7 +166,7 @@ impl Building {
         }
     }
     pub fn update_ownership(&mut self, current_month: u32) -> bool {
-        use super::OwnershipType;
+
         match &mut self.ownership_model {
             OwnershipType::MixedOwnership(board) | OwnershipType::FullCondo(board) => {
                 board.collect_fees();

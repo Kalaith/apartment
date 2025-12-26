@@ -2,7 +2,6 @@
 use serde::{Deserialize, Serialize};
 use super::{Neighborhood, NeighborhoodType, PropertyMarket};
 use crate::building::Building;
-use crate::tenant::Tenant;
 
 /// The city contains all neighborhoods and provides the top-level game world
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -78,21 +77,6 @@ impl City {
         self.buildings.get_mut(self.active_building_index)
     }
 
-    /// Get building by ID
-    pub fn get_building(&self, id: u32) -> Option<&Building> {
-        self.buildings.iter().find(|b| self.building_index_to_id(self.buildings.iter().position(|x| std::ptr::eq(x, *b)).unwrap_or(0)) == id)
-    }
-
-    /// Get mutable building by ID
-    pub fn get_building_mut(&mut self, id: u32) -> Option<&mut Building> {
-        self.buildings.get_mut(id as usize)
-    }
-
-    /// Helper to convert building index to ID (for now, they're the same)
-    fn building_index_to_id(&self, index: usize) -> u32 {
-        index as u32
-    }
-
     /// Switch to a different building
     pub fn switch_building(&mut self, index: usize) {
         if index < self.buildings.len() {
@@ -104,12 +88,6 @@ impl City {
     pub fn neighborhood_for_building(&self, building_index: usize) -> Option<&Neighborhood> {
         let building_id = building_index as u32;
         self.neighborhoods.iter().find(|n| n.building_ids.contains(&building_id))
-    }
-
-    /// Get mutable neighborhood for a building
-    pub fn neighborhood_for_building_mut(&mut self, building_index: usize) -> Option<&mut Neighborhood> {
-        let building_id = building_index as u32;
-        self.neighborhoods.iter_mut().find(|n| n.building_ids.contains(&building_id))
     }
 
     /// Add a new building to a neighborhood
@@ -129,39 +107,6 @@ impl City {
         self.total_buildings_managed += 1;
 
         Ok(building_id)
-    }
-
-    /// Calculate total monthly income across all buildings
-    pub fn total_monthly_income(&self, tenants: &[Tenant]) -> i32 {
-        let mut total = 0;
-        for building in &self.buildings {
-            for apt in &building.apartments {
-                if let Some(tenant_id) = apt.tenant_id {
-                    if tenants.iter().any(|t| t.id == tenant_id) {
-                        total += apt.rent_price;
-                    }
-                }
-            }
-        }
-        total
-    }
-
-    /// Calculate total property value
-    pub fn total_property_value(&self) -> i32 {
-        self.buildings.iter()
-            .map(|b| self.estimate_building_value(b))
-            .sum()
-    }
-
-    /// Estimate value of a single building
-    fn estimate_building_value(&self, building: &Building) -> i32 {
-        let base_value = 50000 * building.apartments.len() as i32;
-        let condition_factor = building.building_appeal() as f32 / 100.0;
-        let upgrades_value: i32 = building.apartments.iter()
-            .map(|a| a.design.appeal_score() * 500 + if a.has_soundproofing { 2000 } else { 0 })
-            .sum();
-        
-        (base_value as f32 * condition_factor) as i32 + upgrades_value
     }
 
     /// Get all buildings as a vector of (index, building, neighborhood_name)

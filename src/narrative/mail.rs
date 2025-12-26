@@ -32,18 +32,6 @@ impl MailType {
             MailType::Official => "📋",
         }
     }
-
-    pub fn priority(&self) -> i32 {
-        match self {
-            MailType::CityNotice => 3,
-            MailType::Official => 3,
-            MailType::TenantLetter { .. } => 2,
-            MailType::Financial => 2,
-            MailType::Personal => 1,
-            MailType::News => 0,
-            MailType::Advertisement => 0,
-        }
-    }
 }
 
 /// A mail item in the player's mailbox
@@ -100,27 +88,7 @@ impl MailItem {
         }
     }
 
-    /// Create a city notice
-    pub fn city_notice(
-        id: u32,
-        month: u32,
-        subject: &str,
-        body: &str,
-        action: Option<MailAction>,
-    ) -> Self {
-        let requires_attention = action.is_some();
-        Self {
-            id,
-            mail_type: MailType::CityNotice,
-            month_received: month,
-            sender: "City of Metropolis".to_string(),
-            subject: subject.to_string(),
-            body: body.to_string(),
-            read: false,
-            action,
-            requires_attention,
-        }
-    }
+
 
     /// Create a financial statement
     pub fn financial_statement(
@@ -168,10 +136,7 @@ impl MailItem {
         }
     }
 
-    /// Mark as read
-    pub fn mark_read(&mut self) {
-        self.read = true;
-    }
+
 
     /// Get age in months
     pub fn age(&self, current_month: u32) -> u32 {
@@ -208,40 +173,6 @@ impl Mailbox {
     /// Get unread count
     pub fn unread_count(&self) -> usize {
         self.unread_count
-    }
-
-    /// Get mail requiring attention
-    pub fn needs_attention(&self) -> Vec<&MailItem> {
-        self.items.iter()
-            .filter(|m| m.requires_attention && !m.read)
-            .collect()
-    }
-
-    /// Get all unread mail sorted by priority
-    pub fn unread_mail(&self) -> Vec<&MailItem> {
-        let mut unread: Vec<_> = self.items.iter().filter(|m| !m.read).collect();
-        unread.sort_by(|a, b| b.mail_type.priority().cmp(&a.mail_type.priority()));
-        unread
-    }
-
-    /// Mark item as read
-    pub fn mark_read(&mut self, id: u32) {
-        if let Some(item) = self.items.iter_mut().find(|m| m.id == id) {
-            if !item.read {
-                item.read = true;
-                self.unread_count = self.unread_count.saturating_sub(1);
-            }
-        }
-    }
-
-    /// Get a specific mail item
-    pub fn get(&self, id: u32) -> Option<&MailItem> {
-        self.items.iter().find(|m| m.id == id)
-    }
-
-    /// Get mutable reference to a mail item
-    pub fn get_mut(&mut self, id: u32) -> Option<&mut MailItem> {
-        self.items.iter_mut().find(|m| m.id == id)
     }
 
     /// Delete old read mail (cleanup)

@@ -115,10 +115,7 @@ impl NarrativeEvent {
         }
     }
 
-    /// Mark as read
-    pub fn mark_read(&mut self) {
-        self.read = true;
-    }
+
 
     /// Check if deadline has passed
     pub fn is_expired(&self, current_month: u32) -> bool {
@@ -161,10 +158,7 @@ impl NarrativeEventSystem {
         id
     }
 
-    /// Get unread events
-    pub fn unread_events(&self) -> Vec<&NarrativeEvent> {
-        self.events.iter().filter(|e| !e.read).collect()
-    }
+
 
     /// Get pending events requiring response
     pub fn events_requiring_response(&self) -> Vec<&NarrativeEvent> {
@@ -375,10 +369,7 @@ impl NarrativeEventSystem {
         }
     }
 
-    /// Get recent events for display
-    pub fn recent_events(&self, count: usize) -> Vec<&NarrativeEvent> {
-        self.events.iter().rev().take(count).collect()
-    }
+
 }
 
 impl Default for NarrativeEventSystem {
@@ -401,7 +392,7 @@ mod tests {
     #[test]
     fn test_event_system() {
         let mut system = NarrativeEventSystem::new();
-        let id = system.add_event(NarrativeEvent::news(0, 1, "Test", "Desc"));
-        assert_eq!(system.unread_events().len(), 1);
+        let _id = system.add_event(NarrativeEvent::news(0, 1, "Test", "Desc"));
+        assert_eq!(system.events.len(), 1);
     }
 }

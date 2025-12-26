@@ -68,68 +68,7 @@ pub enum FinancingOption {
     },
 }
 
-impl FinancingOption {
-    pub fn name(&self) -> &'static str {
-        match self {
-            FinancingOption::Cash => "Cash Purchase",
-            FinancingOption::Mortgage { .. } => "Bank Mortgage",
-            FinancingOption::Investor { .. } => "Investor Partner",
-        }
-    }
-
-    pub fn description(&self) -> String {
-        match self {
-            FinancingOption::Cash => "Pay the full amount upfront".to_string(),
-            FinancingOption::Mortgage { down_payment_percent, interest_rate, term_months } => {
-                format!(
-                    "{:.0}% down, {:.1}% APR, {} month term",
-                    down_payment_percent * 100.0,
-                    interest_rate * 100.0,
-                    term_months
-                )
-            }
-            FinancingOption::Investor { investment_percent, profit_share_percent } => {
-                format!(
-                    "Investor covers {:.0}%, takes {:.0}% of profits",
-                    investment_percent * 100.0,
-                    profit_share_percent * 100.0
-                )
-            }
-        }
-    }
-
-    /// Calculate upfront cost for a given property price
-    pub fn upfront_cost(&self, price: i32) -> i32 {
-        match self {
-            FinancingOption::Cash => price,
-            FinancingOption::Mortgage { down_payment_percent, .. } => {
-                (price as f32 * down_payment_percent) as i32
-            }
-            FinancingOption::Investor { investment_percent, .. } => {
-                (price as f32 * (1.0 - investment_percent)) as i32
-            }
-        }
-    }
-
-    /// Calculate monthly payment for a given property price
-    pub fn monthly_payment(&self, price: i32) -> i32 {
-        match self {
-            FinancingOption::Cash => 0,
-            FinancingOption::Mortgage { down_payment_percent, interest_rate, term_months } => {
-                let principal = price as f32 * (1.0 - down_payment_percent);
-                let monthly_rate = interest_rate / 12.0;
-                if monthly_rate == 0.0 {
-                    (principal / *term_months as f32) as i32
-                } else {
-                    let payment = principal * (monthly_rate * (1.0 + monthly_rate).powi(*term_months as i32))
-                        / ((1.0 + monthly_rate).powi(*term_months as i32) - 1.0);
-                    payment as i32
-                }
-            }
-            FinancingOption::Investor { .. } => 0, // Profit share is handled differently
-        }
-    }
-}
+impl FinancingOption {}
 
 /// A property listing on the market
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -255,16 +194,6 @@ impl PropertyListing {
     pub fn total_units(&self) -> u32 {
         self.num_floors * self.units_per_floor
     }
-
-    /// Apply time passing (price drops, etc.)
-    pub fn tick(&mut self) {
-        self.months_on_market += 1;
-        
-        // Price drops after 3 months on market
-        if self.months_on_market > 3 && self.months_on_market % 2 == 0 {
-            self.asking_price = (self.asking_price as f32 * 0.98) as i32;
-        }
-    }
 }
 
 /// Property market managing available listings
@@ -304,33 +233,6 @@ impl PropertyMarket {
         while self.listings.len() > 8 {
             self.listings.remove(0);
         }
-    }
-
-    /// Tick all listings
-    pub fn tick(&mut self) {
-        for listing in &mut self.listings {
-            listing.tick();
-        }
-        
-        // Remove listings that have been on market too long
-        self.listings.retain(|l| l.months_on_market < 12);
-    }
-
-    /// Get listings for a specific neighborhood
-    pub fn listings_for_neighborhood(&self, neighborhood_id: u32) -> Vec<&PropertyListing> {
-        self.listings.iter()
-            .filter(|l| l.neighborhood_id == neighborhood_id)
-            .collect()
-    }
-
-    /// Remove a listing (when purchased)
-    pub fn remove_listing(&mut self, listing_id: u32) {
-        self.listings.retain(|l| l.id != listing_id);
-    }
-
-    /// Get a specific listing
-    pub fn get_listing(&self, listing_id: u32) -> Option<&PropertyListing> {
-        self.listings.iter().find(|l| l.id == listing_id)
     }
 }
 

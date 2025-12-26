@@ -46,27 +46,6 @@ pub enum TenantRequest {
 }
 
 impl TenantRequest {
-    pub fn description(&self) -> String {
-        match self {
-            TenantRequest::Pet { pet_type } => format!("Can I keep a {}?", pet_type),
-            TenantRequest::TemporaryGuest { guest_name, duration_months } => {
-                format!("{} needs to stay with me for {} months", guest_name, duration_months)
-            }
-            TenantRequest::HomeBusiness { business_type } => {
-                format!("I'd like to run a small {} from my apartment", business_type)
-            }
-            TenantRequest::Modification { description } => {
-                format!("Can I make this change: {}?", description)
-            }
-            TenantRequest::Sublease => "I'd like to sublease part of my unit".to_string(),
-        }
-    }
-
-    /// What happens if the landlord approves
-    pub fn approval_effect(&self) -> StoryImpact {
-        StoryImpact::Happiness(15)
-    }
-
     /// What happens if the landlord denies
     pub fn denial_effect(&self) -> StoryImpact {
         match self {
@@ -104,50 +83,7 @@ pub enum LifeChangeType {
     Graduated,
 }
 
-impl LifeChangeType {
-    pub fn description(&self) -> &'static str {
-        match self {
-            LifeChangeType::NewJob { better: true } => "got a great new job",
-            LifeChangeType::NewJob { better: false } => "started a new job",
-            LifeChangeType::JobLoss => "lost their job",
-            LifeChangeType::Partnered => "got married",
-            LifeChangeType::Separated => "went through a separation",
-            LifeChangeType::NewBaby => "had a baby",
-            LifeChangeType::ChildLeftHome => "their child moved out",
-            LifeChangeType::HealthIssue => "is dealing with health issues",
-            LifeChangeType::Retired => "retired",
-            LifeChangeType::StartedSchool => "started taking classes",
-            LifeChangeType::Graduated => "graduated",
-        }
-    }
 
-    /// How this life change affects tenant needs
-    pub fn effects(&self) -> Vec<StoryImpact> {
-        match self {
-            LifeChangeType::NewJob { better: true } => {
-                vec![StoryImpact::Happiness(10), StoryImpact::RentTolerance(200)]
-            }
-            LifeChangeType::NewJob { better: false } => vec![StoryImpact::Happiness(5)],
-            LifeChangeType::JobLoss => {
-                vec![StoryImpact::Happiness(-20), StoryImpact::RentTolerance(-300), StoryImpact::MoveOutRisk(40)]
-            }
-            LifeChangeType::Partnered => vec![StoryImpact::Happiness(15), StoryImpact::Roommate],
-            LifeChangeType::Separated => {
-                vec![StoryImpact::Happiness(-15), StoryImpact::RentTolerance(-200)]
-            }
-            LifeChangeType::NewBaby => {
-                vec![StoryImpact::Happiness(10), StoryImpact::RentTolerance(-100)]
-            }
-            LifeChangeType::ChildLeftHome => vec![StoryImpact::Happiness(-5)],
-            LifeChangeType::HealthIssue => {
-                vec![StoryImpact::Happiness(-10), StoryImpact::RentTolerance(-150)]
-            }
-            LifeChangeType::Retired => vec![StoryImpact::Happiness(5), StoryImpact::RentTolerance(-200)],
-            LifeChangeType::StartedSchool => vec![StoryImpact::Happiness(5)],
-            LifeChangeType::Graduated => vec![StoryImpact::Happiness(20), StoryImpact::MoveOutRisk(50)],
-        }
-    }
-}
 
 /// Complete story/background for a tenant
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -268,20 +204,7 @@ impl TenantStory {
         self.pending_request = request;
     }
 
-    /// Get summary of tenant's story
-    pub fn summary(&self) -> String {
-        format!(
-            "{} from {}. {}{}",
-            self.job_title,
-            self.hometown,
-            self.move_reason,
-            if !self.hobbies.is_empty() {
-                format!(" Enjoys {}.", self.hobbies.join(", "))
-            } else {
-                String::new()
-            }
-        )
-    }
+
 }
 
 /// Generates tenant backgrounds

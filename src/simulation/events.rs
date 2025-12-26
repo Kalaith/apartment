@@ -167,22 +167,11 @@ impl EventLog {
         self.events.push((tick, event));
     }
     
-    pub fn events_for_tick(&self, tick: u32) -> Vec<&GameEvent> {
-        self.events.iter()
-            .filter(|(t, _)| *t == tick)
-            .map(|(_, e)| e)
-            .collect()
-    }
-    
     pub fn recent_events(&self, count: usize) -> Vec<&GameEvent> {
         self.events.iter()
             .rev()
             .take(count)
             .map(|(_, e)| e)
             .collect()
-    }
-    
-    pub fn all_events(&self) -> &[(u32, GameEvent)] {
-        &self.events
     }
 }

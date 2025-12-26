@@ -104,7 +104,12 @@ pub fn process_departures(tenants: &mut Vec<Tenant>, building: &mut Building) ->
     let mut notifications = Vec::new();
     let mut departing_ids = Vec::new();
     
-    for tenant in tenants.iter() {
+    for tenant in tenants.iter_mut() {
+        // Check for unhappy tenants (early warning)
+        if tenant.is_unhappy() && !tenant.will_leave() {
+            notifications.push(format!("{} is unhappy and may leave soon!", tenant.name));
+        }
+        
         if tenant.will_leave() {
             notifications.push(format!("{} has moved out!", tenant.name));
             departing_ids.push(tenant.id);
@@ -115,6 +120,9 @@ pub fn process_departures(tenants: &mut Vec<Tenant>, building: &mut Building) ->
                     apt.move_out();
                 }
             }
+            
+            // Clear tenant's apartment reference
+            tenant.move_out();
         }
     }
     

@@ -24,64 +24,14 @@ impl NeighborhoodType {
         }
     }
 
-    pub fn description(&self) -> &'static str {
-        match self {
-            NeighborhoodType::Downtown => "High-energy urban core. Premium rents but demanding tenants and constant noise.",
-            NeighborhoodType::Suburbs => "Family-friendly residential area. Stable tenants, lower turnover, moderate returns.",
-            NeighborhoodType::Industrial => "Up-and-coming area popular with artists and students. Affordable but gentrifying.",
-            NeighborhoodType::Historic => "Character-rich area with strict preservation rules. Appeals to elderly and history buffs.",
-        }
-    }
-
-    /// Base rent multiplier for this neighborhood
-    pub fn rent_multiplier(&self) -> f32 {
-        match self {
-            NeighborhoodType::Downtown => 1.5,
-            NeighborhoodType::Suburbs => 1.0,
-            NeighborhoodType::Industrial => 0.75,
-            NeighborhoodType::Historic => 1.2,
-        }
-    }
-
-    /// Base noise level (0-100)
-    pub fn base_noise(&self) -> i32 {
-        match self {
-            NeighborhoodType::Downtown => 70,
-            NeighborhoodType::Suburbs => 20,
-            NeighborhoodType::Industrial => 50,
-            NeighborhoodType::Historic => 30,
-        }
-    }
-
-    /// How strict are building regulations? (1.0 = normal, 2.0 = very strict)
-    pub fn regulation_strictness(&self) -> f32 {
-        match self {
-            NeighborhoodType::Downtown => 1.0,
-            NeighborhoodType::Suburbs => 0.8,
-            NeighborhoodType::Industrial => 0.6,
-            NeighborhoodType::Historic => 2.0,
-        }
-    }
-
-    /// Which tenant archetypes are common here?
-    pub fn common_archetypes(&self) -> Vec<crate::tenant::TenantArchetype> {
-        use crate::tenant::TenantArchetype;
-        match self {
-            NeighborhoodType::Downtown => vec![TenantArchetype::Professional, TenantArchetype::Student],
-            NeighborhoodType::Suburbs => vec![TenantArchetype::Family, TenantArchetype::Elderly],
-            NeighborhoodType::Industrial => vec![TenantArchetype::Artist, TenantArchetype::Student],
-            NeighborhoodType::Historic => vec![TenantArchetype::Elderly, TenantArchetype::Professional, TenantArchetype::Artist],
-        }
-    }
-
     /// Color for UI display
     pub fn color(&self) -> macroquad::color::Color {
         use macroquad::color::Color;
         match self {
-            NeighborhoodType::Downtown => Color::from_rgba(100, 149, 237, 255), // Cornflower blue
-            NeighborhoodType::Suburbs => Color::from_rgba(144, 238, 144, 255),  // Light green
-            NeighborhoodType::Industrial => Color::from_rgba(255, 165, 79, 255), // Orange
-            NeighborhoodType::Historic => Color::from_rgba(221, 160, 221, 255), // Plum
+            NeighborhoodType::Downtown => Color::from_rgba(100, 149, 237, 255),
+            NeighborhoodType::Suburbs => Color::from_rgba(144, 238, 144, 255),
+            NeighborhoodType::Industrial => Color::from_rgba(255, 165, 79, 255),
+            NeighborhoodType::Historic => Color::from_rgba(221, 160, 221, 255),
         }
     }
 }
@@ -147,14 +97,6 @@ impl NeighborhoodStats {
         }
     }
 
-    /// Calculate overall neighborhood appeal (affects building reputation)
-    pub fn appeal_score(&self) -> i32 {
-        let base = 100 - self.crime_level;
-        let services_bonus = self.services / 5;
-        let transit_bonus = self.transit_access / 10;
-        (base + services_bonus + transit_bonus).min(100)
-    }
-
     /// Apply monthly changes to neighborhood (gentrification, crime changes, etc.)
     pub fn tick(&mut self, neighborhood_type: &NeighborhoodType) {
         // Gentrification slowly increases in industrial areas
@@ -212,25 +154,9 @@ impl Neighborhood {
         }
     }
 
-    /// Remove a building from this neighborhood
-    pub fn remove_building(&mut self, building_id: u32) {
-        self.building_ids.retain(|&id| id != building_id);
-    }
-
     /// Check if we can add more buildings
     pub fn can_add_building(&self) -> bool {
         (self.building_ids.len() as u32) < self.available_slots
-    }
-
-    /// Update reputation based on building performance
-    pub fn update_reputation(&mut self, average_building_appeal: i32, tenant_satisfaction: i32) {
-        let target = (average_building_appeal + tenant_satisfaction) / 2;
-        // Slowly move towards target
-        if self.reputation < target {
-            self.reputation = (self.reputation + 1).min(100);
-        } else if self.reputation > target {
-            self.reputation = (self.reputation - 1).max(0);
-        }
     }
 
     /// Apply monthly tick

@@ -7,7 +7,6 @@ pub struct ResultsState {
     pub total_income: i32,
     pub tenants_housed: u32,
     pub tenants_left: u32,
-    pub final_reputation: f32,
     pub won: bool,
 }
 
@@ -17,7 +16,6 @@ impl ResultsState {
             total_income,
             tenants_housed,
             tenants_left,
-            final_reputation: 0.0,
             won,
         }
     }

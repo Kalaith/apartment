@@ -16,29 +16,7 @@ pub enum RelationshipType {
     Family,
 }
 
-impl RelationshipType {
-    /// How this relationship affects happiness of both parties
-    pub fn happiness_modifier(&self) -> i32 {
-        match self {
-            RelationshipType::Friendly => 5,
-            RelationshipType::Neutral => 0,
-            RelationshipType::Hostile => -10,
-            RelationshipType::Romantic => 10,
-            RelationshipType::Family => 8,
-        }
-    }
-
-    /// How stable is this relationship (affects move-out likelihood)
-    pub fn stability_modifier(&self) -> f32 {
-        match self {
-            RelationshipType::Friendly => 1.1,    // Less likely to move
-            RelationshipType::Neutral => 1.0,
-            RelationshipType::Hostile => 0.8,     // More likely to move
-            RelationshipType::Romantic => 1.3,    // Very stable
-            RelationshipType::Family => 1.2,
-        }
-    }
-}
+impl RelationshipType {}
 
 /// A relationship between two tenants
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -66,22 +44,6 @@ impl TenantRelationship {
         }
     }
 
-    /// Check if this relationship involves a specific tenant
-    pub fn involves(&self, tenant_id: u32) -> bool {
-        self.tenant_a_id == tenant_id || self.tenant_b_id == tenant_id
-    }
-
-    /// Get the other tenant in this relationship
-    pub fn other_tenant(&self, tenant_id: u32) -> Option<u32> {
-        if self.tenant_a_id == tenant_id {
-            Some(self.tenant_b_id)
-        } else if self.tenant_b_id == tenant_id {
-            Some(self.tenant_a_id)
-        } else {
-            None
-        }
-    }
-
     /// Apply monthly relationship dynamics
     pub fn tick(&mut self) {
         self.duration_months += 1;
@@ -104,11 +66,6 @@ impl TenantRelationship {
         while self.recent_events.len() > 5 {
             self.recent_events.remove(0);
         }
-    }
-
-    /// Record an interaction
-    pub fn add_event(&mut self, event: &str) {
-        self.recent_events.push(event.to_string());
     }
 
     /// Can these tenants potentially form this relationship?
@@ -147,59 +104,19 @@ impl TenantNetwork {
         }
     }
 
-    /// Get all relationships for a specific tenant
-    pub fn relationships_for(&self, tenant_id: u32) -> Vec<&TenantRelationship> {
-        self.relationships.iter()
-            .filter(|r| r.involves(tenant_id))
-            .collect()
-    }
-
     /// Get relationship between two specific tenants
-    pub fn relationship_between(&self, tenant_a: u32, tenant_b: u32) -> Option<&TenantRelationship> {
+    fn relationship_between(&self, tenant_a: u32, tenant_b: u32) -> Option<&TenantRelationship> {
         self.relationships.iter().find(|r| 
             (r.tenant_a_id == tenant_a && r.tenant_b_id == tenant_b) ||
             (r.tenant_a_id == tenant_b && r.tenant_b_id == tenant_a)
         )
     }
 
-    /// Get mutable relationship between two tenants
-    pub fn relationship_between_mut(&mut self, tenant_a: u32, tenant_b: u32) -> Option<&mut TenantRelationship> {
-        self.relationships.iter_mut().find(|r| 
-            (r.tenant_a_id == tenant_a && r.tenant_b_id == tenant_b) ||
-            (r.tenant_a_id == tenant_b && r.tenant_b_id == tenant_a)
-        )
-    }
-
     /// Create a new relationship
-    pub fn add_relationship(&mut self, tenant_a: u32, tenant_b: u32, rel_type: RelationshipType) {
+    fn add_relationship(&mut self, tenant_a: u32, tenant_b: u32, rel_type: RelationshipType) {
         if self.relationship_between(tenant_a, tenant_b).is_none() {
             self.relationships.push(TenantRelationship::new(tenant_a, tenant_b, rel_type));
         }
-    }
-
-    /// Remove all relationships involving a tenant (when they move out)
-
-
-    /// Calculate total happiness modifier from relationships for a tenant
-    pub fn happiness_modifier_for(&self, tenant_id: u32) -> i32 {
-        self.relationships_for(tenant_id)
-            .iter()
-            .map(|r| r.relationship_type.happiness_modifier())
-            .sum()
-    }
-
-    /// Calculate stability modifier from relationships for a tenant
-    pub fn stability_modifier_for(&self, tenant_id: u32) -> f32 {
-        let relationships = self.relationships_for(tenant_id);
-        if relationships.is_empty() {
-            return 1.0;
-        }
-        
-        let mut total = 1.0;
-        for rel in relationships {
-            total *= rel.relationship_type.stability_modifier();
-        }
-        total
     }
 
     /// Process monthly relationship dynamics
@@ -278,49 +195,6 @@ impl TenantNetwork {
 
         // Default to neutral
         RelationshipType::Neutral
-    }
-
-    /// Record when a tenant moves in (for displacement tracking)
-    pub fn record_move_in(&mut self, tenant: &crate::tenant::Tenant, rent: i32, current_month: u32) {
-        if tenant.months_residing == 0 {
-            self.long_term_tenants.push(LongTermTenantRecord {
-                tenant_id: tenant.id,
-                tenant_name: tenant.name.clone(),
-                archetype: tenant.archetype.clone(),
-                months_at_move_in: current_month,
-                original_rent: rent,
-                current_rent: rent,
-                is_displaced: false,
-                displacement_reason: None,
-            });
-        }
-    }
-
-    /// Update rent for a tenant record
-    pub fn update_tenant_rent(&mut self, tenant_id: u32, new_rent: i32) {
-        if let Some(record) = self.long_term_tenants.iter_mut().find(|r| r.tenant_id == tenant_id) {
-            record.current_rent = new_rent;
-        }
-    }
-
-    /// Mark a tenant as displaced
-    pub fn mark_displaced(&mut self, tenant_id: u32, reason: &str) {
-        if let Some(record) = self.long_term_tenants.iter_mut().find(|r| r.tenant_id == tenant_id) {
-            record.is_displaced = true;
-            record.displacement_reason = Some(reason.to_string());
-        }
-    }
-
-    /// Get count of displaced tenants
-    pub fn displaced_count(&self) -> usize {
-        self.long_term_tenants.iter().filter(|r| r.is_displaced).count()
-    }
-
-    /// Get count of long-term tenants (12+ months)
-    pub fn long_term_count(&self, current_month: u32) -> usize {
-        self.long_term_tenants.iter()
-            .filter(|r| !r.is_displaced && current_month - r.months_at_move_in >= 12)
-            .count()
     }
 }
 

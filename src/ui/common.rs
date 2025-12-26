@@ -107,17 +107,6 @@ pub fn progress_bar(x: f32, y: f32, w: f32, h: f32, value: f32, max: f32, color:
     draw_rectangle_lines(x, y, w, h, 1.0, colors::TEXT_DIM);
 }
 
-/// Draw labeled progress bar
-pub fn labeled_bar(x: f32, y: f32, w: f32, label: &str, value: i32, max: i32, color: Color) {
-    let h = 16.0;
-    draw_text(label, x, y, 16.0, colors::TEXT_DIM);
-    progress_bar(x, y + 4.0, w, h, value as f32, max as f32, color);
-    
-    let value_text = format!("{}/{}", value, max);
-    let text_width = measure_text(&value_text, None, 14, 1.0).width;
-    draw_text(&value_text, x + w - text_width, y, 14.0, colors::TEXT);
-}
-
 /// Draw a panel with header
 pub fn panel(x: f32, y: f32, w: f32, h: f32, title: &str) {
     // Background

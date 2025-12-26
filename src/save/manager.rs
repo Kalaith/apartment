@@ -29,14 +29,6 @@ pub fn has_save_game() -> bool {
     Path::new(SAVE_FILE_PATH).exists()
 }
 
-/// Delete the save file (e.g. on game over if permadeath, or user request)
-pub fn delete_save() -> std::io::Result<()> {
-    if has_save_game() {
-        fs::remove_file(SAVE_FILE_PATH)?;
-    }
-    Ok(())
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;

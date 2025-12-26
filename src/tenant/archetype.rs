@@ -21,16 +21,6 @@ impl TenantArchetype {
         }
     }
     
-    pub fn description(&self) -> &'static str {
-        match self {
-            TenantArchetype::Student => "Budget-conscious, tolerates some issues",
-            TenantArchetype::Professional => "Values quality and quiet",
-            TenantArchetype::Artist => "Seeks creative, cozy spaces",
-            TenantArchetype::Family => "Needs space, sensitive to noise",
-            TenantArchetype::Elderly => "Needs low floor, quiet/stable",
-        }
-    }
-    
     /// Get the preferences for this archetype
     pub fn preferences(&self) -> ArchetypePreferences {
         match self {

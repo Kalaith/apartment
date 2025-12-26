@@ -539,12 +539,11 @@ fn draw_listing_card(
 pub enum CityMapAction {
     SelectNeighborhood(u32),
     SelectBuilding(usize),
-    ManageBuilding(usize),
     OpenMarket,
     CloseMarket,
     PurchaseBuilding(u32),
-    BackToBuilding,
 }
+
 
 // Helper functions
 fn draw_progress_bar(x: f32, y: f32, width: f32, height: f32, progress: f32, color: Color) {

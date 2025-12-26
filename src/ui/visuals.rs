@@ -59,7 +59,6 @@ impl FloatingText {
 
 /// Simple interpolation helper
 pub struct Tween {
-    pub start: f32,
     pub end: f32,
     pub current: f32,
     pub speed: f32,
@@ -68,7 +67,6 @@ pub struct Tween {
 impl Tween {
     pub fn new(val: f32) -> Self {
         Self {
-            start: val,
             end: val,
             current: val,
             speed: 10.0,
@@ -86,10 +84,6 @@ impl Tween {
         } else {
             self.current += diff * self.speed * dt;
         }
-    }
-    
-    pub fn value(&self) -> f32 {
-        self.current
     }
 }
 

@@ -170,6 +170,51 @@ impl Apartment {
     pub fn move_out(&mut self) {
         self.tenant_id = None;
     }
+    
+    /// Calculate market value for selling the unit
+    /// Takes into account: size, condition, design, kitchen, floor, soundproofing
+    pub fn market_value(&self) -> i32 {
+        // Base price by size
+        let base_price = match self.size {
+            ApartmentSize::Small => 50_000,
+            ApartmentSize::Medium => 75_000,
+        };
+        
+        // Condition bonus: +$500 per point above 50, -$300 per point below 50
+        let condition_bonus = if self.condition > 50 {
+            (self.condition - 50) * 500
+        } else {
+            (self.condition - 50) * 300 // Negative bonus for poor condition
+        };
+        
+        // Design bonus
+        let design_bonus = match self.design {
+            DesignType::Bare => 0,
+            DesignType::Practical => 5_000,
+            DesignType::Cozy => 15_000,
+        };
+        
+        // Kitchen bonus
+        let kitchen_bonus = match self.kitchen_level {
+            0 => 0,
+            1 => 8_000,
+            _ => 15_000, // Level 2+
+        };
+        
+        // Floor bonus: higher floors worth more (+$2000 per floor)
+        let floor_bonus = (self.floor as i32) * 2_000;
+        
+        // Soundproofing bonus
+        let soundproofing_bonus = if self.has_soundproofing { 3_000 } else { 0 };
+        
+        // Noise penalty for noisy units without soundproofing
+        let noise_penalty = match self.base_noise {
+            NoiseLevel::High if !self.has_soundproofing => -5_000,
+            _ => 0,
+        };
+        
+        (base_price + condition_bonus + design_bonus + kitchen_bonus + floor_bonus + soundproofing_bonus + noise_penalty).max(10_000)
+    }
 }
 
 #[cfg(test)]

@@ -43,30 +43,3 @@ pub fn draw_notifications(event_log: &EventLog, _current_tick: u32, _assets: &As
         }
     }
 }
-
-/// Draw a floating notification for important events
-pub fn draw_toast(message: &str, severity: EventSeverity, progress: f32) {
-    if progress <= 0.0 {
-        return;
-    }
-    
-    let alpha = progress.min(1.0);
-    let w = 400.0;
-    let h = 50.0;
-    let x = (screen_width() - w) / 2.0;
-    let y = layout::HEADER_HEIGHT + 20.0;
-    
-    let bg_color = match severity {
-        EventSeverity::Positive => Color::new(0.2, 0.5, 0.3, alpha),
-        EventSeverity::Info => Color::new(0.2, 0.3, 0.5, alpha),
-        EventSeverity::Warning => Color::new(0.5, 0.4, 0.2, alpha),
-        EventSeverity::Negative => Color::new(0.5, 0.2, 0.2, alpha),
-    };
-    
-    draw_rectangle(x, y, w, h, bg_color);
-    draw_rectangle_lines(x, y, w, h, 2.0, Color::new(1.0, 1.0, 1.0, alpha * 0.5));
-    
-    let text_color = Color::new(1.0, 1.0, 1.0, alpha);
-    let text_width = measure_text(message, None, 20, 1.0).width;
-    draw_text(message, x + (w - text_width) / 2.0, y + 32.0, 20.0, text_color);
-}

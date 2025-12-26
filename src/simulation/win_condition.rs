@@ -82,39 +82,3 @@ pub fn check_win_condition(
     
     None
 }
-
-/// Get progress towards victory
-#[derive(Clone, Debug)]
-pub struct VictoryProgress {
-    pub occupancy_percent: f32,
-    pub avg_happiness: i32,
-    pub happiness_target: i32,
-    pub months_played: u32,
-    pub months_required: u32,
-    pub is_profitable: bool,
-}
-
-pub fn get_victory_progress(
-    building: &Building,
-    tenants: &[Tenant],
-    funds: &PlayerFunds,
-    current_tick: u32,
-) -> VictoryProgress {
-    let total_units = building.apartments.len() as f32;
-    let occupied = building.occupancy_count() as f32;
-    
-    let avg_happiness = if tenants.is_empty() {
-        0
-    } else {
-        tenants.iter().map(|t| t.happiness).sum::<i32>() / tenants.len() as i32
-    };
-    
-    VictoryProgress {
-        occupancy_percent: if total_units > 0.0 { (occupied / total_units) * 100.0 } else { 0.0 },
-        avg_happiness,
-        happiness_target: thresholds::MIN_HAPPINESS,
-        months_played: current_tick,
-        months_required: thresholds::MIN_TICKS_FOR_VICTORY,
-        is_profitable: funds.balance > 0 && funds.net_profit() >= 0,
-    }
-}

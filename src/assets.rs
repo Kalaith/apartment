@@ -117,9 +117,5 @@ impl AssetManager {
     pub fn get_texture(&self, id: &str) -> Option<&Texture2D> {
         self.textures.get(id)
     }
-    
-    /// Get a texture or a default constant texture (not implemented, returns None for now)
-    pub fn texture(&self, id: &str) -> Option<&Texture2D> {
-        self.textures.get(id)
-    }
 }
+

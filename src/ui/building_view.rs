@@ -252,7 +252,7 @@ fn draw_apartment_unit(
         if let Some(tenant) = tenants.iter().find(|t| t.id == tenant_id) {
             
             // Draw Tenant Sprite in the room
-             let portrait_id = format!("tenant_{}", format!("{:?}", tenant.archetype).to_lowercase());
+             let portrait_id = format!("tenant_{}", tenant.archetype.name().to_lowercase());
             if let Some(tex) = assets.get_texture(&portrait_id) {
                 // Draw sprite scaled down
                 draw_texture_ex(tex, x + 35.0, y + 40.0, WHITE, DrawTextureParams {

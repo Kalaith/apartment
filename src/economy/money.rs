@@ -94,19 +94,9 @@ impl PlayerFunds {
         self.balance < 0
     }
     
-    /// Get net profit/loss
-    pub fn net_profit(&self) -> i32 {
-        self.total_income - self.total_expenses
-    }
-    
     /// Get transactions for a specific tick
     pub fn transactions_for_tick(&self, tick: u32) -> Vec<&Transaction> {
         self.transactions.iter().filter(|t| t.tick == tick).collect()
-    }
-    
-    /// Get recent transactions (last N)
-    pub fn recent_transactions(&self, count: usize) -> Vec<&Transaction> {
-        self.transactions.iter().rev().take(count).collect()
     }
 }
 

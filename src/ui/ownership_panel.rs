@@ -1,6 +1,6 @@
 use macroquad::prelude::*;
 use crate::building::Building;
-use crate::building::ownership::CondoBoard;
+use crate::building::ownership::OwnershipType;
 use crate::ui::{UiAction, colors};
 
 pub fn draw_ownership_panel(
@@ -124,15 +124,11 @@ pub fn draw_ownership_panel(
                     }
                 );
                 
-                // Sell Button
-                // Mock price calculation: size base * 100? or something
-                let sale_price = apt.size.base_rent() * 120; // 10 years rent roughly? No, 120 months = 10 years.
+                // Sell Button - use calculated market value
+                let sale_price = apt.market_value();
                 
                 if draw_button_mini(&format!("Sell Condo (${})", sale_price), panel_x + panel_width - 160.0, y + 5.0, 140.0, 20.0) {
-                     // We need a specific action for this
-                     // Need to add UiAction::SellUnitAsCondo
-                     // But for now let's reuse generic or create new
-                     // Assuming we have a way to trigger logic
+                    action = Some(UiAction::SellUnitAsCondo { apartment_id: apt.id });
                 }
                 
                 y += 35.0;
@@ -140,7 +136,86 @@ pub fn draw_ownership_panel(
             }
         },
         OwnershipType::MixedOwnership(board) | OwnershipType::FullCondo(board) => {
-             draw_condo_board_interface(board, panel_x, y, panel_width, &mut action);
+            // Show condo board stats
+            draw_text_ex(
+                &format!("Reserve Fund: ${}", board.reserve_fund),
+                panel_x + 10.0,
+                y,
+                TextParams { font_size: 16, color: colors::POSITIVE, ..Default::default() }
+            );
+            y += 25.0;
+            
+            draw_text_ex(
+                &format!("Sold Units: {} | Remaining: {}", 
+                    board.units.len(),
+                    building.apartments.len() - board.units.len()),
+                panel_x + 10.0,
+                y,
+                TextParams { font_size: 14, color: colors::TEXT, ..Default::default() }
+            );
+            y += 30.0;
+            
+            // Show unsold units that can still be converted
+            let sold_ids: std::collections::HashSet<u32> = board.units.iter()
+                .map(|u| u.apartment_id)
+                .collect();
+            
+            let unsold: Vec<_> = building.apartments.iter()
+                .filter(|apt| !sold_ids.contains(&apt.id))
+                .collect();
+            
+            if !unsold.is_empty() {
+                draw_text_ex(
+                    "Remaining Units for Sale:",
+                    panel_x + 10.0,
+                    y,
+                    TextParams { font_size: 14, color: colors::ACCENT, ..Default::default() }
+                );
+                y += 20.0;
+                
+                for apt in unsold {
+                    // Background strip
+                    draw_rectangle(panel_x + 10.0, y, panel_width - 20.0, 30.0, colors::PANEL);
+                    
+                    // Unit Name
+                    draw_text_ex(
+                        &format!("Unit {}", apt.unit_number),
+                        panel_x + 20.0,
+                        y + 20.0,
+                        TextParams { font_size: 14, color: colors::TEXT, ..Default::default() }
+                    );
+                    
+                    // Status
+                    let status = if apt.is_vacant() { "Vacant" } else { "Occupied" };
+                    draw_text_ex(
+                        status,
+                        panel_x + 100.0,
+                        y + 20.0,
+                        TextParams { 
+                            font_size: 14, 
+                            color: if apt.is_vacant() { colors::POSITIVE } else { colors::WARNING },
+                            ..Default::default() 
+                        }
+                    );
+                    
+                    // Sell Button
+                    let sale_price = apt.market_value();
+                    
+                    if draw_button_mini(&format!("Sell (${})", sale_price), panel_x + panel_width - 140.0, y + 5.0, 120.0, 20.0) {
+                        action = Some(UiAction::SellUnitAsCondo { apartment_id: apt.id });
+                    }
+                    
+                    y += 35.0;
+                    if y > panel_y + panel_height - 80.0 { break; }
+                }
+            } else {
+                draw_text_ex(
+                    "All units have been sold as condos.",
+                    panel_x + 10.0,
+                    y,
+                    TextParams { font_size: 14, color: colors::TEXT_DIM, ..Default::default() }
+                );
+            }
         },
         _ => {
              draw_text_ex(
@@ -158,82 +233,6 @@ pub fn draw_ownership_panel(
     }
 
     action
-}
-
-fn draw_condo_board_interface(
-    board: &CondoBoard,
-    x: f32,
-    y: f32,
-    width: f32,
-    action: &mut Option<UiAction>
-) {
-    let mut current_y = y;
-    
-    // Board Stats
-    draw_text_ex(
-        &format!("Reserve Fund: ${}", board.reserve_fund),
-        x + 10.0,
-        current_y,
-        TextParams { font_size: 16, color: colors::POSITIVE, ..Default::default() }
-    );
-    current_y += 25.0;
-    
-    draw_text_ex(
-        &format!("Active Board Members: {}", board.units.len()),
-        x + 10.0,
-        current_y,
-        TextParams { font_size: 14, color: colors::TEXT, ..Default::default() }
-    );
-    current_y += 30.0;
-    
-    // Pending Votes
-    draw_text_ex(
-        "Pending Votes:",
-        x + 10.0,
-        current_y,
-        TextParams { font_size: 14, color: colors::ACCENT, ..Default::default() }
-    );
-    current_y += 20.0;
-    
-    if board.pending_votes.is_empty() {
-        draw_text_ex(
-            "No active votes.",
-            x + 10.0,
-            current_y,
-            TextParams { font_size: 14, color: colors::TEXT_DIM, ..Default::default() }
-        );
-         // current_y += 20.0; // Unused
-    } else {
-        for vote in &board.pending_votes {
-            draw_rectangle(x + 10.0, current_y, width - 20.0, 60.0, colors::PANEL);
-            draw_rectangle_lines(x + 10.0, current_y, width - 20.0, 60.0, 1.0, colors::TEXT_DIM);
-            
-            draw_text_ex(
-                &vote.proposal,
-                x + 20.0,
-                current_y + 20.0,
-                TextParams { font_size: 14, color: colors::TEXT_BRIGHT, ..Default::default() }
-            );
-            
-            draw_text_ex(
-                &format!("Cost: ${} | Deadline: Month {}", vote.cost, vote.deadline_month),
-                x + 20.0,
-                current_y + 40.0,
-                TextParams { font_size: 12, color: colors::TEXT_DIM, ..Default::default() }
-            );
-            
-            
-             // Vote buttons
-             if draw_button_mini("Vote YES", x + width - 150.0, current_y + 10.0, 60.0, 40.0) {
-                 *action = Some(UiAction::VoteOnProposal { proposal_index: 0, vote_yes: true }); // Index 0 placeholder
-             }
-             if draw_button_mini("Vote NO", x + width - 80.0, current_y + 10.0, 60.0, 40.0) {
-                 *action = Some(UiAction::VoteOnProposal { proposal_index: 0, vote_yes: false });
-             }
-
-            // current_y += 70.0; // Unused
-        }
-    }
 }
 
 // Helper duplicates (should be in common really, but for speed)

@@ -4,7 +4,6 @@ mod apartment_panel;
 mod application_panel;
 mod notifications;
 mod header;
-mod tenant_list;
 pub mod visuals; // Make public so we can use FloatingText
 pub mod city_view; // Phase 3 city map
 pub mod ownership_panel; // Phase 3 ownership
