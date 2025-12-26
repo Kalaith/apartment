@@ -7,7 +7,7 @@ use crate::assets::AssetManager;
 
 pub fn draw_apartment_panel(
     apt: &Apartment,
-    _building: &Building,
+    building: &Building,
     tenants: &[Tenant],
     money: i32,
     offset_x: f32,
@@ -26,6 +26,53 @@ pub fn draw_apartment_panel(
     }
     
     let panel_h = screen_height() - layout::HEADER_HEIGHT - layout::FOOTER_HEIGHT - layout::PADDING * 2.0;
+    
+    // Check if this unit has been sold as a condo
+    let is_sold = building.is_unit_sold(apt.id);
+    
+    if is_sold {
+        // Show sold condo panel instead
+        panel(panel_x, panel_y, panel_w, panel_h, &format!("Unit {} - SOLD", apt.unit_number));
+        
+        let content_x = panel_x + 15.0;
+        let mut y = panel_y + 60.0;
+        
+        // Show sold status
+        draw_text("CONDO - PRIVATELY OWNED", content_x, y, 20.0, colors::WARNING);
+        y += 35.0;
+        
+        // Show owner info
+        if let Some((owner_name, purchase_price)) = building.get_condo_info(apt.id) {
+            draw_text(&format!("Owner: {}", owner_name), content_x, y, 18.0, colors::TEXT);
+            y += 25.0;
+            draw_text(&format!("Purchased for: ${}", purchase_price), content_x, y, 16.0, colors::TEXT_DIM);
+            y += 35.0;
+            
+            // Buyback option
+            let buyback_price = (purchase_price as f32 * 1.1) as i32;
+            draw_text("Buyback Option:", content_x, y, 16.0, colors::ACCENT);
+            y += 25.0;
+            
+            let can_afford = money >= buyback_price;
+            let btn_label = format!("Buy Back (${}) ", buyback_price);
+            
+            if button(content_x, y, panel_w - 30.0, 35.0, &btn_label, can_afford) {
+                action = Some(UiAction::BuybackCondo { apartment_id: apt.id });
+            }
+            y += 45.0;
+            
+            if !can_afford {
+                draw_text("Insufficient funds", content_x, y, 14.0, colors::NEGATIVE);
+            }
+        }
+        
+        y += 30.0;
+        draw_text("You cannot modify or rent this unit", content_x, y, 14.0, colors::TEXT_DIM);
+        y += 20.0;
+        draw_text("while it is privately owned.", content_x, y, 14.0, colors::TEXT_DIM);
+        
+        return (action, new_scroll);
+    }
     
     panel(panel_x, panel_y, panel_w, panel_h, &format!("Unit {}", apt.unit_number));
     
@@ -258,7 +305,7 @@ pub fn draw_apartment_panel(
     let mut total_upgrade_height = 0.0;
     
     for upgrade in &available {
-        if upgrade.cost(_building).is_some() {
+        if upgrade.cost(building).is_some() {
             total_upgrade_height += btn_h + 8.0;
         }
     }
@@ -268,9 +315,9 @@ pub fn draw_apartment_panel(
     new_scroll = new_scroll.min(max_scroll);
     
     for upgrade in available {
-        if let Some(cost) = upgrade.cost(_building) {
+        if let Some(cost) = upgrade.cost(building) {
             let can_afford = money >= cost;
-            let label = format!("{} (${})", upgrade.label(_building), cost);
+            let label = format!("{} (${})", upgrade.label(building), cost);
             
             // Only draw and handle clicks if visible
             if y + btn_h > content_top && y < content_bottom {

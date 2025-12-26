@@ -80,6 +80,7 @@ pub enum UiAction {
     DenyRequest { tenant_id: u32 },
     
     // Phase 3: Ownership
-    SellUnitAsCondo { apartment_id: u32 }, // Inferred logic needed in game.rs
+    SellUnitAsCondo { apartment_id: u32 },
+    BuybackCondo { apartment_id: u32 },
     VoteOnProposal { proposal_index: usize, vote_yes: bool },
 }

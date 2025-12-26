@@ -176,6 +176,51 @@ impl Building {
             _ => false,
         }
     }
+    
+    /// Check if a specific apartment has been sold as a condo
+    pub fn is_unit_sold(&self, apartment_id: u32) -> bool {
+        match &self.ownership_model {
+            OwnershipType::MixedOwnership(board) | OwnershipType::FullCondo(board) => {
+                board.units.iter().any(|u| u.apartment_id == apartment_id)
+            },
+            _ => false,
+        }
+    }
+    
+    /// Get the condo info for a sold unit (owner name, HOA, purchase price)
+    pub fn get_condo_info(&self, apartment_id: u32) -> Option<(String, i32)> {
+        match &self.ownership_model {
+            OwnershipType::MixedOwnership(board) | OwnershipType::FullCondo(board) => {
+                board.units.iter()
+                    .find(|u| u.apartment_id == apartment_id)
+                    .map(|u| (u.owner_name.clone(), u.purchase_price))
+            },
+            _ => None,
+        }
+    }
+    
+    /// Buy back a condo unit (returns cost if successful)
+    pub fn buyback_condo(&mut self, apartment_id: u32) -> Option<i32> {
+        match &mut self.ownership_model {
+            OwnershipType::MixedOwnership(board) | OwnershipType::FullCondo(board) => {
+                if let Some(idx) = board.units.iter().position(|u| u.apartment_id == apartment_id) {
+                    // Buyback costs 110% of original purchase price
+                    let buyback_price = (board.units[idx].purchase_price as f32 * 1.1) as i32;
+                    board.units.remove(idx);
+                    
+                    // If no more sold units, revert to FullRental
+                    if board.units.is_empty() {
+                        self.ownership_model = OwnershipType::FullRental;
+                    }
+                    
+                    Some(buyback_price)
+                } else {
+                    None
+                }
+            },
+            _ => None,
+        }
+    }
 }
 
 #[cfg(test)]

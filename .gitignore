@@ -21,3 +21,4 @@ Thumbs.db
 # Dependency directories
 /vendor/
 dist/
+savegame.json

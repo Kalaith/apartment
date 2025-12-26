@@ -371,6 +371,35 @@ impl GameplayState {
                     self.save_building_to_city();
                 }
             }
+            UiAction::BuybackCondo { apartment_id } => {
+                if let Some(buyback_cost) = self.building.buyback_condo(apartment_id) {
+                    if self.funds.balance >= buyback_cost {
+                        let transaction = crate::economy::Transaction::expense(
+                            crate::economy::TransactionType::BuildingPurchase,
+                            buyback_cost,
+                            "Condo Buyback",
+                            self.current_tick
+                        );
+                        self.funds.deduct_expense(transaction);
+                        
+                        self.floating_texts.push(FloatingText::new(
+                            &format!("-${}", buyback_cost),
+                            screen_width() / 2.0,
+                            screen_height() / 2.0,
+                            colors::NEGATIVE,
+                        ));
+                        
+                        self.floating_texts.push(FloatingText::new(
+                            "Unit Repurchased!",
+                            screen_width() / 2.0,
+                            screen_height() / 2.0 + 30.0,
+                            colors::POSITIVE,
+                        ));
+                        
+                        self.save_building_to_city();
+                    }
+                }
+            }
         }
     }
     
