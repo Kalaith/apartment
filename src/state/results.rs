@@ -1,4 +1,4 @@
-#![allow(dead_code)]
+
 use macroquad::prelude::*;
 use super::StateTransition;
 use crate::assets::AssetManager;

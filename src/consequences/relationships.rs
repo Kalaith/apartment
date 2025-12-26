@@ -1,4 +1,4 @@
-#![allow(dead_code)]
+
 use serde::{Deserialize, Serialize};
 
 /// Type of relationship between tenants
@@ -178,9 +178,7 @@ impl TenantNetwork {
     }
 
     /// Remove all relationships involving a tenant (when they move out)
-    pub fn remove_tenant(&mut self, tenant_id: u32) {
-        self.relationships.retain(|r| !r.involves(tenant_id));
-    }
+
 
     /// Calculate total happiness modifier from relationships for a tenant
     pub fn happiness_modifier_for(&self, tenant_id: u32) -> i32 {

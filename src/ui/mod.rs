@@ -7,10 +7,12 @@ mod header;
 mod tenant_list;
 pub mod visuals; // Make public so we can use FloatingText
 pub mod city_view; // Phase 3 city map
+pub mod ownership_panel; // Phase 3 ownership
 
 pub use common::*;
 pub use building_view::draw_building_view;
 pub use apartment_panel::{draw_apartment_panel, draw_hallway_panel};
+pub use ownership_panel::draw_ownership_panel;
 
 pub use application_panel::draw_application_panel;
 pub use notifications::draw_notifications;
@@ -28,6 +30,7 @@ pub enum Selection {
     Tenant(u32),         // Tenant ID
     Applications,        // Show all pending applications
     Hallway,             // Hallway details
+    Ownership,           // Ownership View
 }
 
 impl Default for Selection {
@@ -45,6 +48,7 @@ pub enum UiAction {
     SelectTenant(u32),
     SelectApplications,
     SelectHallway,
+    SelectOwnership,
     ClearSelection,
     
     // Generic Upgrade Action
@@ -75,4 +79,8 @@ pub enum UiAction {
     // Phase 3: Tenant requests
     ApproveRequest { tenant_id: u32 },
     DenyRequest { tenant_id: u32 },
+    
+    // Phase 3: Ownership
+    SellUnitAsCondo { apartment_id: u32 }, // Inferred logic needed in game.rs
+    VoteOnProposal { proposal_index: usize, vote_yes: bool },
 }

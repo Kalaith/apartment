@@ -1,4 +1,4 @@
-#![allow(dead_code)]
+
 
 use serde::{Deserialize, Serialize};
 use super::{Apartment, ApartmentSize, NoiseLevel};
@@ -10,6 +10,7 @@ pub struct Building {
     pub hallway_condition: i32,  // 0-100, affects building appeal
     pub rent_multiplier: f32,    // 0.5 - 2.0 default 1.0
     pub has_laundry: bool,       // Amenity
+    pub ownership_model: super::OwnershipType,
 }
 
 impl Building {
@@ -48,22 +49,10 @@ impl Building {
             hallway_condition: 60,  // Start slightly worn
             rent_multiplier: 1.0,
             has_laundry: false,
+            ownership_model: super::OwnershipType::FullRental,
         }
     }
     
-    /// Set the rent multiplier and update all apartment prices
-    pub fn set_rent_multiplier(&mut self, multiplier: f32) {
-        self.rent_multiplier = multiplier.clamp(0.5, 3.0);
-        self.recalculate_rents();
-    }
-    
-    /// Recalculate rent prices for all apartments
-    pub fn recalculate_rents(&mut self) {
-        for apt in &mut self.apartments {
-            let base = apt.size.base_rent() as f32;
-            apt.rent_price = (base * self.rent_multiplier) as i32;
-        }
-    }
     
     /// Install laundry amenity
     pub fn install_laundry(&mut self) {
@@ -88,11 +77,6 @@ impl Building {
     /// Get all vacant apartments
     pub fn vacant_apartments(&self) -> Vec<&Apartment> {
         self.apartments.iter().filter(|a| a.is_vacant()).collect()
-    }
-    
-    /// Get all occupied apartments
-    pub fn occupied_apartments(&self) -> Vec<&Apartment> {
-        self.apartments.iter().filter(|a| !a.is_vacant()).collect()
     }
     
     /// Count vacant units
@@ -141,6 +125,55 @@ impl Building {
             apt.decay_condition(2);  // Slow decay
         }
         self.decay_hallway(1);  // Even slower for shared space
+    }
+
+    /// Convert a rental unit to a condo (sell it)
+    pub fn convert_unit_to_condo(&mut self, apartment_id: u32, owner_name: &str, sale_price: i32) -> bool {
+        // Ensure apartment exists and is handled correctly ??
+        // Actually, we're just updating the ownership model state here.
+        // We probably need to verify it's not already owned?
+        
+        use super::OwnershipType;
+        use super::ownership::CondoBoard;
+        
+        // Check if apartment exists
+        if !self.apartments.iter().any(|a| a.id == apartment_id) {
+            return false;
+        }
+
+        // Initialize board if rental
+        match &mut self.ownership_model {
+            OwnershipType::FullRental => {
+                let mut board = CondoBoard::new();
+                board.add_unit(apartment_id, owner_name, 200, sale_price); // $200 HOA default
+                self.ownership_model = OwnershipType::MixedOwnership(board);
+                true
+            },
+            OwnershipType::MixedOwnership(board) | OwnershipType::FullCondo(board) => {
+                // Check if already in board
+                if board.units.iter().any(|u| u.apartment_id == apartment_id) {
+                    return false; // Already owned
+                }
+                board.add_unit(apartment_id, owner_name, 200, sale_price);
+                
+                // If all units sold, switch to FullCondo ??
+                // Logic for "all units" check might be expensive here?
+                // Let's just keep Mixed for now unless strict transition needed.
+                true
+            },
+            _ => false, // Can't convert from Coop/Social easily yet
+        }
+    }
+    pub fn update_ownership(&mut self, current_month: u32) -> bool {
+        use super::OwnershipType;
+        match &mut self.ownership_model {
+            OwnershipType::MixedOwnership(board) | OwnershipType::FullCondo(board) => {
+                board.collect_fees();
+                board.resolve_votes(current_month);
+                true
+            },
+            _ => false,
+        }
     }
 }
 

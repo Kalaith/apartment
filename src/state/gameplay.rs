@@ -9,7 +9,7 @@ use crate::simulation::{EventLog, GameOutcome, TickResult, advance_tick, GameEve
 use crate::ui::{
     Selection, UiAction, FloatingText, Tween,
     draw_header, draw_building_view, draw_apartment_panel, draw_hallway_panel,
-    draw_application_panel, draw_notifications,
+    draw_application_panel, draw_notifications, draw_ownership_panel,
 };
 use crate::ui::colors;
 use crate::assets::AssetManager;
@@ -284,6 +284,7 @@ impl GameplayState {
             UiAction::ClearSelection => {
                 self.selection = Selection::None;
             }
+
             UiAction::UpgradeAction(upgrade) => {
                 let description = upgrade.label(&self.building);
                 if let Ok(cost) = process_upgrade(&upgrade, &mut self.building, &mut self.funds, self.current_tick) {
@@ -453,6 +454,43 @@ impl GameplayState {
                             tenant.happiness = (tenant.happiness - 10).max(0);
                         }
                     }
+                }
+            }
+            
+            // Phase 3: Ownership
+            UiAction::SelectOwnership => {
+                 self.selection = Selection::Ownership;
+            }
+            UiAction::VoteOnProposal { proposal_index: _index, vote_yes: _vote } => {
+                // TODO: Implement voting logic in CondoBoard
+                // For now just log it
+                self.floating_texts.push(FloatingText::new(
+                    "Vote Cast",
+                    screen_width() / 2.0,
+                    screen_height() / 2.0,
+                    colors::ACCENT,
+                ));
+            }
+            UiAction::SellUnitAsCondo { apartment_id } => {
+                // Simple auto-sell logic for MVP
+                let sale_price = 10000; // Placeholder
+                if self.building.convert_unit_to_condo(apartment_id, "New Owner", sale_price) {
+                     let transaction = crate::economy::Transaction::income(
+                        crate::economy::TransactionType::AssetSale,
+                        sale_price,
+                        "Condo Sale",
+                        self.current_tick
+                    );
+                    self.funds.add_income(transaction);
+                    
+                    self.floating_texts.push(FloatingText::new(
+                        &format!("+${}", sale_price),
+                        screen_width() / 2.0,
+                        screen_height() / 2.0,
+                        colors::POSITIVE,
+                    ));
+                    
+                    self.save_building_to_city(); // Sync
                 }
             }
         }
@@ -772,6 +810,11 @@ impl GameplayState {
             }
             Selection::Applications => {
                 if let Some(action) = draw_application_panel(&self.applications, &self.building, 0.0, assets) {
+                    self.pending_actions.push(action);
+                }
+            }
+            Selection::Ownership => {
+                if let Some(action) = draw_ownership_panel(&self.building) {
                     self.pending_actions.push(action);
                 }
             }

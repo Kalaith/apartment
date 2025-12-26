@@ -1,4 +1,4 @@
-#![allow(dead_code)]
+
 use macroquad::prelude::*;
 use crate::city::{City, Neighborhood, NeighborhoodType, PropertyListing};
 use crate::ui::colors;

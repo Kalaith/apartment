@@ -1,4 +1,4 @@
-#![allow(dead_code)]
+
 use super::{Transaction, TransactionType};
 use serde::{Deserialize, Serialize};
 
@@ -45,6 +45,7 @@ impl FinancialLedger {
                 }
                 TransactionType::UpgradeCost => upgrade_costs += t.amount.abs(),
                 TransactionType::BuildingPurchase => upgrade_costs += t.amount.abs(), // Count as capital upgrade for now
+                TransactionType::AssetSale => rent_income += t.amount.abs(), // Count condo sales as income
             }
         }
         

@@ -1,4 +1,4 @@
-#![allow(dead_code)]
+
 use macroquad::prelude::*;
 use crate::building::{Building, Apartment, DesignType, NoiseLevel, ApartmentSize};
 use crate::tenant::Tenant;
@@ -138,6 +138,12 @@ pub fn draw_building_view(
     let apps_btn_y = view_y + 10.0; // Top of the panel
     if button(apps_btn_x, apps_btn_y, 150.0, 35.0, "Applications", true) {
         action = Some(UiAction::SelectApplications);
+    }
+    
+    // Ownership button
+    let own_btn_x = apps_btn_x + 160.0;
+    if button(own_btn_x, apps_btn_y, 150.0, 35.0, "Ownership", true) {
+        action = Some(UiAction::SelectOwnership);
     }
     
     action

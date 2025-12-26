@@ -63,6 +63,11 @@ impl GameTick {
         result.events.extend(random_events);
         
         // === Phase 2: Apply Decay ===
+        // Update ownership (HOA fees, votes)
+        if building.update_ownership(current_tick) {
+            // Logic for handling ownership updates could go here
+        }
+
         let decay_events = decay::apply_decay(building);
         result.events.extend(decay_events);
         
