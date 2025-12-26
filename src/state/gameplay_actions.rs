@@ -679,13 +679,23 @@ impl GameplayState {
                         // Trigger The Leak event immediately implies a problem
                         // We can sabotage a unit or just let narrative flow
                          if let Some(apt) = self.building.apartments.first_mut() {
-                             apt.condition = 40; // Force damage
+                             apt.condition = 20; // Critical condition for visual urgency
                          }
+                         
+                         // Visual cue
+                         self.floating_texts.push(FloatingText::new(
+                             "⚠ LEAK DETECTED!",
+                             screen_width() / 2.0,
+                             screen_height() / 2.0 + 60.0,
+                             colors::NEGATIVE,
+                         ));
                     }
                 }
                 TutorialMilestone::TheLeak => {
-                    // Check if repairs are done (condition > 60 for all units?)
-                    let all_good = self.building.apartments.iter().all(|a| a.condition > 60);
+                    // Check if repairs are done (no units in critical condition)
+                    // We check < 30 because the leak sets it to 20. Repair (+25) brings it to 45.
+                    // If they just did a small repair (+10), it would be 30.
+                    let all_good = !self.building.apartments.iter().any(|a| a.condition < 30);
                     if all_good {
                         self.tutorial.modify_relationship(0, 20); // Mentor very happy
                         
@@ -697,15 +707,7 @@ impl GameplayState {
                              colors::POSITIVE,
                         ));
                         
-                        // Pop final congratulations message
-                        while let Some(msg) = self.tutorial.pop_message() {
-                            self.floating_texts.push(FloatingText::new(
-                                &msg,
-                                screen_width() / 2.0,
-                                screen_height() / 2.0 + 60.0,
-                                colors::ACCENT,
-                            ));
-                        }
+                        // Messages are already in pending_messages and will be shown by the tutorial overlay
                     }
                 }
                 TutorialMilestone::Complete => {}

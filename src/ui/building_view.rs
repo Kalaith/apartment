@@ -235,6 +235,11 @@ fn draw_apartment_unit(
         }
     }
     
+    // Low Condition Warning (Leak/Damage)
+    if apt.condition < 40 {
+         draw_text("⚠", x + w - 25.0, y + 50.0, 24.0, colors::NEGATIVE);
+    }
+    
     // Soundproofing indicator
     if apt.has_soundproofing {
         if let Some(icon) = assets.get_texture("icon_soundproofing") {

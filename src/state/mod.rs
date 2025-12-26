@@ -1,3 +1,10 @@
+//! # State Module
+//! 
+//! Manages the global application state machine:
+//! - `GameState`: The top-level enum for game modes (Menu, Gameplay, Results).
+//! - Transitions between these high-level states.
+//! - Specific state structs for each mode.
+
 mod menu;
 mod gameplay;
 mod gameplay_actions;  // Action processing (end_turn, process_action, etc.)

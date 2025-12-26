@@ -1,3 +1,11 @@
+//! # Simulation Module
+//! 
+//! The heartbeat of the game. Handles time and state progression:
+//! - `Tick`: The central game loop processing logic.
+//! - `Decay`: Entropy and maintenance mechanics.
+//! - `Win Conditions`: Victory and failure state checks.
+//! - `Events`: Random events and lucky/unlucky occurrences.
+
 mod tick;
 mod decay;
 mod events;

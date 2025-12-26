@@ -1,3 +1,11 @@
+//! # UI Module
+//! 
+//! Pure view layer using Macroquad immediate mode UI:
+//! - Uses `UiAction` pattern to send intents back to the game logic.
+//! - Contains sub-panels for different views (Building, Apartment, City).
+//! - `Visuals`: Floating text and animations.
+//! - Strictly separation of concerns: No game state mutation happens here.
+
 mod common;
 mod building_view;
 mod apartment_panel;
