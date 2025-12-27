@@ -12,6 +12,12 @@ pub struct BuildingTemplates {
 pub struct BuildingTemplate {
     pub id: String,
     pub name: String,
+    #[serde(default)]
+    pub unlock_order: u32,
+    #[serde(default)]
+    pub difficulty: String,
+    #[serde(default)]
+    pub description: String,
     pub floors: u32,
     pub units_per_floor: u32,
     pub hallway_condition: i32,

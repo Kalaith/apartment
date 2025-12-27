@@ -1,7 +1,6 @@
 use macroquad::prelude::*;
 use crate::state::GameplayState;
 use crate::ui::{UiAction, colors};
-use crate::ui::common::colored_button;
 
 pub fn draw_career_summary(state: &GameplayState) -> Option<UiAction> {
     let screen_w = screen_width();
@@ -94,13 +93,34 @@ pub fn draw_career_summary(state: &GameplayState) -> Option<UiAction> {
         }
     }
     
-    // Back to Menu Button
-    let btn_w = 200.0;
-    let btn_h = 50.0;
-    let btn_x = cx - btn_w / 2.0;
-    let btn_y = screen_h - 80.0;
+    // Back to Menu Button - positioned below all achievements
+    // Add one more row height if there was a partial last row
+    let final_ach_y = if col > 0 { ach_y + ach_h + gap } else { ach_y };
     
-    if colored_button(btn_x, btn_y, btn_w, btn_h, "MAIN MENU", true, colors::PANEL, colors::TEXT_BRIGHT) {
+    let btn_w = 250.0;
+    let btn_h = 55.0;
+    let btn_x = cx - btn_w / 2.0;
+    let btn_y = final_ach_y + 30.0; // After all achievements
+    
+    // Draw more prominent button
+    let mouse = mouse_position();
+    let hovered = mouse.0 >= btn_x && mouse.0 <= btn_x + btn_w && mouse.1 >= btn_y && mouse.1 <= btn_y + btn_h;
+    let clicked = hovered && is_mouse_button_pressed(MouseButton::Left);
+    
+    let bg_color = if hovered { 
+        Color::from_rgba(80, 140, 80, 255) 
+    } else { 
+        Color::from_rgba(60, 110, 60, 255) 
+    };
+    
+    draw_rectangle(btn_x, btn_y, btn_w, btn_h, bg_color);
+    draw_rectangle_lines(btn_x, btn_y, btn_w, btn_h, 3.0, Color::from_rgba(100, 180, 100, 255));
+    
+    let text = "RETURN TO MENU";
+    let text_width = measure_text(text, None, 24, 1.0).width;
+    draw_text(text, btn_x + (btn_w - text_width) / 2.0, btn_y + btn_h / 2.0 + 8.0, 24.0, WHITE);
+    
+    if clicked {
         return Some(UiAction::ReturnToMenu); 
     }
     

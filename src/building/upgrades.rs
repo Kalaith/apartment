@@ -287,7 +287,7 @@ mod tests {
     
     #[test]
     fn test_upgrade_costs() {
-        let building = Building::default_mvp();
+        let building = Building::new("Test", 3, 2);
         let config = GameConfig::default().economy;
         let upgrades = GameConfig::default().upgrades;
         
@@ -300,7 +300,7 @@ mod tests {
     
     #[test]
     fn test_apply_repair_upgrade() {
-        let mut building = Building::default_mvp();
+        let mut building = Building::new("Test", 3, 2);
         let config = GameConfig::default().economy;
         let upgrades = GameConfig::default().upgrades;
         let initial_condition = building.apartments[0].condition;

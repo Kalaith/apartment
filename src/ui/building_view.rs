@@ -29,14 +29,16 @@ pub fn draw_building_view(
     }
 
     
-    // Calculate layout
+    // Calculate layout - use max units per floor for total width
     let max_floor = building.apartments.iter().map(|a| a.floor).max().unwrap_or(1);
-    let units_per_floor = building.apartments.iter()
-        .filter(|a| a.floor == 1)
-        .count();
+    let max_units_per_floor = (1..=max_floor)
+        .map(|f| building.apartments.iter().filter(|a| a.floor == f).count())
+        .max()
+        .unwrap_or(1);
     
-    let total_width = units_per_floor as f32 * (layout::UNIT_WIDTH + layout::UNIT_GAP);
+    let total_width = max_units_per_floor as f32 * (layout::UNIT_WIDTH + layout::UNIT_GAP);
     
+    let center_x = view_x + view_width / 2.0;
     let start_x = view_x + (view_width - total_width) / 2.0;
     let start_y = view_y + view_height - 80.0;  // Start from bottom
     
@@ -58,20 +60,44 @@ pub fn draw_building_view(
             .filter(|a| a.floor == floor)
             .collect();
         
-        for (i, apt) in floor_apartments.iter().enumerate() {
-            let apt_x = start_x + i as f32 * (layout::UNIT_WIDTH + layout::UNIT_GAP);
-            let apt_y = floor_y;
+        
+        
+        // Calculate total floor width (accounting for penthouse double-width)
+        let mut floor_total_width = 0.0;
+        for apt in &floor_apartments {
+            let unit_w = if matches!(apt.size, ApartmentSize::Penthouse) {
+                (layout::UNIT_WIDTH * 2.0) + layout::UNIT_GAP // Double width
+            } else {
+                layout::UNIT_WIDTH
+            };
+            floor_total_width += unit_w + layout::UNIT_GAP;
+        }
+        floor_total_width -= layout::UNIT_GAP; // Remove trailing gap
+        
+        // Center this floor's units
+        let floor_start_x = center_x - floor_total_width / 2.0;
+        
+        let mut current_x = floor_start_x;
+        for apt in floor_apartments.iter() {
+            let unit_w = if matches!(apt.size, ApartmentSize::Penthouse) {
+                (layout::UNIT_WIDTH * 2.0) + layout::UNIT_GAP
+            } else {
+                layout::UNIT_WIDTH
+            };
             
-            if let Some(apt_action) = draw_apartment_unit(
+            if let Some(apt_action) = draw_apartment_unit_sized(
                 apt,
                 tenants,
-                apt_x,
-                apt_y,
+                current_x,
+                floor_y,
+                unit_w,
                 selection,
                 assets,
             ) {
                 action = Some(apt_action);
             }
+            
+            current_x += unit_w + layout::UNIT_GAP;
         }
     }
     
@@ -149,15 +175,15 @@ pub fn draw_building_view(
     action
 }
 
-fn draw_apartment_unit(
+fn draw_apartment_unit_sized(
     apt: &Apartment,
     tenants: &[Tenant],
     x: f32,
     y: f32,
+    w: f32,
     selection: &Selection,
     assets: &AssetManager,
 ) -> Option<UiAction> {
-    let w = layout::UNIT_WIDTH;
     let h = layout::UNIT_HEIGHT;
     
     let is_selected = matches!(selection, Selection::Apartment(id) if *id == apt.id);

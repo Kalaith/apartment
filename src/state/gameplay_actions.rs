@@ -257,6 +257,10 @@
                  total_income: self.funds.total_income,
              });
              self.view_mode = ViewMode::CareerSummary;
+             
+             // Unlock next building on victory
+             self.unlock_next_building();
+             
               // Check final achievements immediately
              let new_unlocks = self.achievements.check_new_unlocks(
                  &self.city, &self.building, &self.tenants, &self.funds, self.current_tick, &self.config

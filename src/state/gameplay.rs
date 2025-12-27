@@ -12,7 +12,7 @@ use crate::assets::AssetManager;
 use crate::ui::layout::HEADER_HEIGHT;
 
 // Phase 3 imports
-use crate::city::{City, NeighborhoodType};
+use crate::city::City;
 use crate::consequences::{TenantNetwork, ComplianceSystem, GentrificationTracker};
 use crate::narrative::{TenantStory, NarrativeEventSystem, Mailbox, TutorialManager, MissionManager, NotificationManager, TenantEventsConfig, load_events_config, RelationshipEventsConfig, load_relationship_config};
 
@@ -100,28 +100,28 @@ pub struct GameplayState {
     pub is_fullscreen: bool,
     #[serde(skip)]
     pub pending_quit_to_menu: bool,
+    
+    /// Current building template ID (for unlock tracking)
+    #[serde(default)]
+    pub current_building_id: String,
 }
 
 impl GameplayState {
-    /// Create a new game with a starter building in the default neighborhood (Suburbs)
-    pub fn new(config: GameConfig) -> Self {
-        Self::new_in_neighborhood(1, config) // Default to Suburbs (index 1)
-    }
-    
-    /// Create a new game with a starter building in a specific neighborhood
-    pub fn new_in_neighborhood(neighborhood_index: usize, config: GameConfig) -> Self {
-        // Create city with starter building
-        let (city, initial_tenant_data) = City::with_starter_building("Metropolis", neighborhood_index);
+    /// Create a new game with a specific building template
+    pub fn new_with_template(config: GameConfig, template: crate::data::templates::BuildingTemplate) -> Self {
+        use crate::building::Building;
         
-        // Clone the first building for backwards-compatible `building` field
-        let building = city.buildings.first().cloned().unwrap_or_else(Building::default_mvp);
+        // Create building from template
+        let building = Building::from_template(&template);
+        let building_id = template.id.clone();
         
-        // Initialize compliance for the starter building
-        let mut compliance = ComplianceSystem::new();
-        let is_historic = city.neighborhoods.get(neighborhood_index)
-            .map(|n| matches!(n.neighborhood_type, NeighborhoodType::Historic))
-            .unwrap_or(false);
-        compliance.init_building_regulations(0, is_historic);
+        // Create minimal city with just this building
+        let mut city = City::new("Metropolis");
+        city.buildings.push(building.clone());
+        city.total_buildings_managed = 1;
+        
+        // Initialize compliance
+        let compliance = ComplianceSystem::new();
         
         let mut state = Self {
             city,
@@ -137,7 +137,6 @@ impl GameplayState {
             game_outcome: None,
             last_tick_result: None,
             
-            // Phase 3 systems
             tenant_network: TenantNetwork::new(),
             compliance,
             gentrification: GentrificationTracker::new(),
@@ -148,17 +147,11 @@ impl GameplayState {
             tenant_events_config: load_events_config(),
             relationship_events_config: load_relationship_config(),
             
-            // Phase 4: Tutorial & Missions
             tutorial: TutorialManager::new(),
             missions: MissionManager::new(),
-            
-            // Phase 5: Notifications
             notifications: NotificationManager::new(),
-            
-            // Phase 5: Achievements
             achievements: crate::narrative::AchievementSystem::new(),
             
-            // UI state
             view_mode: ViewMode::Building,
             selection: Selection::None,
             pending_actions: Vec::new(),
@@ -168,12 +161,12 @@ impl GameplayState {
             show_pause_menu: false,
             is_fullscreen: false,
             pending_quit_to_menu: false,
+            current_building_id: building_id,
         };
-
+        
         // Handle initial tenant if present in template
-        if let Some(data) = initial_tenant_data {
+        if let Some(data) = &template.initial_tenant {
             if let Some(archetype) = crate::tenant::TenantArchetype::from_id(&data.archetype) {
-                // Find target apartment by unit number
                 if let Some(apt) = state.building.apartments.iter_mut().find(|a| a.unit_number == data.apartment_unit) {
                     let tenant_id = state.next_tenant_id;
                     state.next_tenant_id += 1;
@@ -184,7 +177,6 @@ impl GameplayState {
                     
                     state.tenants.push(tenant);
                     
-                    // Also update the city's building instance
                     if let Some(city_building) = state.city.active_building_mut() {
                         if let Some(city_apt) = city_building.apartments.iter_mut().find(|a| a.id == apt.id) {
                             city_apt.move_in(tenant_id);
@@ -194,7 +186,7 @@ impl GameplayState {
             }
         }
         
-        // Generate initial applications for the starter building
+        // Generate initial applications
         state.applications = crate::tenant::generate_applications(
             &state.building, 
             &[], 
@@ -203,9 +195,7 @@ impl GameplayState {
             &state.config.matching,
         );
         
-        // Generate starter missions
         state.missions.generate_starter_missions();
-        
         
         state
     }
@@ -222,6 +212,37 @@ impl GameplayState {
         if let Some(b) = self.city.active_building() {
             self.building = b.clone();
         }
+    }
+    
+    /// Unlock the next building after completing the current one
+    pub fn unlock_next_building(&self) {
+        use crate::save::{load_player_progress, save_player_progress};
+        use crate::data::templates::load_templates;
+        
+        let mut progress = load_player_progress();
+        
+        // Mark current building as completed
+        progress.mark_completed(&self.current_building_id);
+        
+        // Find the next building to unlock based on unlock_order
+        if let Some(templates) = load_templates() {
+            // Find current building's unlock_order
+            let current_order = templates.templates.iter()
+                .find(|t| t.id == self.current_building_id)
+                .map(|t| t.unlock_order)
+                .unwrap_or(0);
+            
+            // Find the next building in sequence
+            if let Some(next_template) = templates.templates.iter()
+                .filter(|t| t.unlock_order == current_order + 1)
+                .next()
+            {
+                progress.unlock_building(&next_template.id);
+            }
+        }
+        
+        // Save progress
+        let _ = save_player_progress(&progress);
     }
 
     /// Main update function - handles game logic and input
@@ -317,24 +338,6 @@ impl GameplayState {
         // Handle keyboard input for ending turn (Space)
         if is_key_pressed(KeyCode::Space) && matches!(self.view_mode, ViewMode::Building) {
             self.end_turn();
-        }
-        
-        // Tab key toggles between Building and CityMap views
-        if is_key_pressed(KeyCode::Tab) {
-            self.view_mode = match self.view_mode {
-                ViewMode::Building => ViewMode::CityMap,
-                ViewMode::CityMap => ViewMode::Building,
-                ViewMode::Market => ViewMode::CityMap,
-                ViewMode::Mail => ViewMode::Building,
-                ViewMode::CareerSummary => ViewMode::CareerSummary,
-            };
-            self.selection = Selection::None;
-        }
-        
-        // C key switches to City Map
-        if is_key_pressed(KeyCode::C) {
-            self.view_mode = ViewMode::CityMap;
-            self.selection = Selection::None;
         }
         
         // ESC key toggles pause menu

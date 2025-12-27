@@ -139,13 +139,6 @@ impl Building {
         }
     }
     
-
-
-    /// Create the default MVP building (6 units, 3 floors, 2 per floor)
-    pub fn default_mvp() -> Self {
-        Self::new("Sunset Apartments", 3, 2)
-    }
-    
     /// Get apartment by ID
     pub fn get_apartment(&self, id: u32) -> Option<&Apartment> {
         self.apartments.iter().find(|a| a.id == id)
@@ -322,16 +315,8 @@ mod tests {
     }
     
     #[test]
-    fn test_default_mvp_building() {
-        let building = Building::default_mvp();
-        assert_eq!(building.name, "Sunset Apartments");
-        assert_eq!(building.apartments.len(), 6);
-        assert_eq!(building.hallway_condition, 60);
-    }
-    
-    #[test]
     fn test_vacancy_tracking() {
-        let mut building = Building::default_mvp();
+        let mut building = Building::new("Test", 3, 2);
         assert_eq!(building.vacancy_count(), 6);
         assert_eq!(building.occupancy_count(), 0);
         
@@ -344,7 +329,7 @@ mod tests {
     
     #[test]
     fn test_building_appeal() {
-        let building = Building::default_mvp();
+        let building = Building::new("Test", 3, 2);
         // hallway_condition = 60, each apartment condition = 50
         // hallway_factor = 60 / 2 = 30
         // avg_factor = 50 / 2 = 25
@@ -354,7 +339,7 @@ mod tests {
     
     #[test]
     fn test_monthly_decay() {
-        let mut building = Building::default_mvp();
+        let mut building = Building::new("Test", 3, 2);
         let initial_hallway = building.hallway_condition;
         let initial_apt_condition = building.apartments[0].condition;
         
