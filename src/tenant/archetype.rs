@@ -21,8 +21,32 @@ impl TenantArchetype {
         }
     }
     
+    /// Get the ID used in JSON files
+    pub fn id(&self) -> &'static str {
+        match self {
+            TenantArchetype::Student => "student",
+            TenantArchetype::Professional => "professional",
+            TenantArchetype::Artist => "artist",
+            TenantArchetype::Family => "family",
+            TenantArchetype::Elderly => "elderly",
+        }
+    }
+    
     /// Get the preferences for this archetype
+    /// Attempts to load from JSON registry first, falls back to hardcoded defaults
     pub fn preferences(&self) -> ArchetypePreferences {
+        // Try to load from JSON registry
+        let registry = crate::data::archetypes::archetypes();
+        if let Some(definition) = registry.get(self.id()) {
+            return crate::data::archetypes::ArchetypeRegistry::to_preferences(&definition.preferences);
+        }
+        
+        // Fallback to hardcoded values
+        self.default_preferences()
+    }
+    
+    /// Hardcoded default preferences (fallback if JSON fails to load)
+    fn default_preferences(&self) -> ArchetypePreferences {
         match self {
             TenantArchetype::Student => ArchetypePreferences {
                 rent_sensitivity: 0.9,      // Very price sensitive
@@ -30,7 +54,7 @@ impl TenantArchetype {
                 noise_sensitivity: 0.4,     // Low - can deal with noise
                 design_sensitivity: 0.2,    // Doesn't care much
                 
-                ideal_rent_max: 700,
+                ideal_rent_max: 750,
                 min_acceptable_condition: 30,
                 prefers_quiet: false,
                 preferred_design: None,
@@ -105,3 +129,4 @@ pub struct ArchetypePreferences {
     pub preferred_design: Option<crate::building::DesignType>,
     pub hates_design: Option<crate::building::DesignType>,
 }
+

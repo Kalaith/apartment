@@ -1,9 +1,6 @@
 use super::application::TenantApplication;
 use crate::economy::PlayerFunds;
-
-/// Costs for vetting actions
-pub const COST_CREDIT_CHECK: i32 = 25;
-pub const COST_BACKGROUND_CHECK: i32 = 10;
+use crate::data::config::VettingConfig;
 
 /// Results of a credit check
 pub struct CreditCheckResult {
@@ -20,13 +17,14 @@ pub struct BackgroundCheckResult {
 /// Perform a credit check on a tenant applicant
 pub fn perform_credit_check(
     application: &mut TenantApplication,
-    funds: &mut PlayerFunds
+    funds: &mut PlayerFunds,
+    config: &VettingConfig,
 ) -> Option<CreditCheckResult> {
     if application.revealed_reliability {
         return None; // Already checked
     }
     
-    if !funds.spend(COST_CREDIT_CHECK) {
+    if !funds.spend(config.credit_check_cost) {
         return None; // Cannot afford
     }
     
@@ -34,14 +32,15 @@ pub fn perform_credit_check(
     application.revealed_reliability = true;
     let score = application.tenant.rent_reliability;
     
-    // Generate simple recommendation string
-    let recommendation = if score >= 90 {
+    // Generate recommendation based on thresholds
+    let thresholds = &config.credit_thresholds;
+    let recommendation = if score >= thresholds.excellent {
         "Excellent credit history. Highly recommended.".to_string()
-    } else if score >= 75 {
+    } else if score >= thresholds.good {
         "Good credit standing. No major concerns.".to_string()
-    } else if score >= 60 {
+    } else if score >= thresholds.average {
         "Average credit. Has some missed payments.".to_string()
-    } else if score >= 40 {
+    } else if score >= thresholds.below_average {
         "Below average. High risk of late rent.".to_string()
     } else {
         "Poor credit history. Default risk high.".to_string()
@@ -56,13 +55,14 @@ pub fn perform_credit_check(
 /// Perform a background check (previous landlord reference)
 pub fn perform_background_check(
     application: &mut TenantApplication,
-    funds: &mut PlayerFunds
+    funds: &mut PlayerFunds,
+    config: &VettingConfig,
 ) -> Option<BackgroundCheckResult> {
     if application.revealed_behavior {
         return None; // Already checked
     }
     
-    if !funds.spend(COST_BACKGROUND_CHECK) {
+    if !funds.spend(config.background_check_cost) {
         return None; // Cannot afford
     }
     
@@ -70,14 +70,15 @@ pub fn perform_background_check(
     application.revealed_behavior = true;
     let score = application.tenant.behavior_score;
     
-    // Generate notes
-    let history_notes = if score >= 90 {
+    // Generate notes based on thresholds
+    let thresholds = &config.behavior_thresholds;
+    let history_notes = if score >= thresholds.excellent {
         "Quiet, respectful, keeps unit in perfect condition.".to_string()
-    } else if score >= 75 {
+    } else if score >= thresholds.good {
         "Generally good tenant. No noise complaints.".to_string()
-    } else if score >= 60 {
+    } else if score >= thresholds.average {
         "Occasional minor complaints but pays for damages.".to_string()
-    } else if score >= 40 {
+    } else if score >= thresholds.below_average {
         "History of noise complaints and minor damage.".to_string()
     } else {
         "Evicted from previous apartment for disturbance.".to_string()
@@ -88,3 +89,4 @@ pub fn perform_background_check(
         history_notes,
     })
 }
+

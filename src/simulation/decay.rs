@@ -1,21 +1,11 @@
 
 use crate::building::Building;
+use crate::data::config::ThresholdsConfig;
 use super::GameEvent;
-
-/// Decay rates per tick
-pub mod rates {
-
-    
-    /// Threshold for "poor condition" warning
-    pub const POOR_CONDITION_THRESHOLD: i32 = 40;
-    
-    /// Threshold for "critical condition" warning
-    pub const CRITICAL_CONDITION_THRESHOLD: i32 = 20;
-}
 
 /// Apply monthly decay to all building elements
 /// Returns events for significant decay milestones
-pub fn apply_decay(building: &mut Building) -> Vec<GameEvent> {
+pub fn apply_decay(building: &mut Building, thresholds: &ThresholdsConfig) -> Vec<GameEvent> {
     let mut events = Vec::new();
     
     // Track conditions before decay for event generation
@@ -35,15 +25,15 @@ pub fn apply_decay(building: &mut Building) -> Vec<GameEvent> {
             let new_condition = apt.condition;
             
             // Check for crossing thresholds
-            if old_condition >= rates::CRITICAL_CONDITION_THRESHOLD 
-               && new_condition < rates::CRITICAL_CONDITION_THRESHOLD 
+            if old_condition >= thresholds.critical_condition 
+               && new_condition < thresholds.critical_condition 
             {
                 events.push(GameEvent::CriticalCondition {
                     apartment_unit: unit,
                     condition: new_condition,
                 });
-            } else if old_condition >= rates::POOR_CONDITION_THRESHOLD 
-               && new_condition < rates::POOR_CONDITION_THRESHOLD 
+            } else if old_condition >= thresholds.poor_condition 
+               && new_condition < thresholds.poor_condition 
             {
                 events.push(GameEvent::PoorCondition {
                     apartment_unit: unit,
@@ -55,8 +45,8 @@ pub fn apply_decay(building: &mut Building) -> Vec<GameEvent> {
     
     // Check hallway
     let hallway_after = building.hallway_condition;
-    if hallway_before >= rates::POOR_CONDITION_THRESHOLD 
-       && hallway_after < rates::POOR_CONDITION_THRESHOLD 
+    if hallway_before >= thresholds.poor_condition 
+       && hallway_after < thresholds.poor_condition 
     {
         events.push(GameEvent::HallwayDeteriorating {
             condition: hallway_after,
@@ -65,5 +55,6 @@ pub fn apply_decay(building: &mut Building) -> Vec<GameEvent> {
     
     events
 }
+
 
 

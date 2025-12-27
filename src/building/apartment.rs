@@ -38,7 +38,7 @@ impl ApartmentSize {
     pub fn base_rent(&self) -> i32 {
         match self {
             ApartmentSize::Small => 600,
-            ApartmentSize::Medium => 900,
+            ApartmentSize::Medium => 850,
         }
     }
     
@@ -65,6 +65,8 @@ impl NoiseLevel {
     }
 }
 
+use crate::tenant::TenantArchetype;
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Apartment {
     pub id: u32,
@@ -83,6 +85,10 @@ pub struct Apartment {
     // Occupancy
     pub tenant_id: Option<u32>,
     pub flags: HashSet<String>,
+    
+    // Leasing
+    pub is_listed_for_lease: bool,
+    pub preferred_archetype: Option<TenantArchetype>,
 }
 
 impl Apartment {
@@ -101,6 +107,8 @@ impl Apartment {
             rent_price,
             tenant_id: None,
             flags: HashSet::new(),
+            is_listed_for_lease: false,
+            preferred_archetype: None,
         }
     }
     
@@ -153,6 +161,8 @@ impl Apartment {
     /// Move a tenant in
     pub fn move_in(&mut self, tenant_id: u32) {
         self.tenant_id = Some(tenant_id);
+        self.is_listed_for_lease = false;
+        self.preferred_archetype = None;
     }
     
     /// Move tenant out

@@ -57,11 +57,11 @@ impl GameTick {
         if building.update_ownership(current_tick) {
             // Logic for handling ownership updates could go here
         }
-        let decay_events = decay::apply_decay(building);
+        let decay_events = decay::apply_decay(building, &config.thresholds);
         result.events.extend(decay_events);
         
         // 5. Tenant Happiness & Updates
-        Self::update_tenants(building, tenants, &mut result);
+        Self::update_tenants(building, tenants, &mut result, &config.happiness);
         
         // 6. Move-outs
         let departure_notices = process_departures(tenants, building);
@@ -79,6 +79,7 @@ impl GameTick {
             applications,
             current_tick,
             next_tenant_id,
+            &config.matching,
         );
         result.new_applications = new_apps.len();
         
@@ -110,6 +111,9 @@ impl GameTick {
             tenants,
             funds,
             current_tick,
+            &config.win_conditions,
+            &config.happiness,
+            &config.thresholds,
         );
         
         if let Some(ref outcome) = result.outcome {
@@ -159,7 +163,7 @@ impl GameTick {
         config: &crate::data::config::GameConfig,
     ) {
         // Marketing
-        let marketing_cost = building.marketing_strategy.monthly_cost();
+        let marketing_cost = building.marketing_strategy.monthly_cost(&config.marketing);
         if marketing_cost > 0 {
             if !funds.spend(marketing_cost) {
                 building.marketing_strategy = crate::building::MarketingType::None;
@@ -181,17 +185,17 @@ impl GameTick {
         }
         
         // Taxes & Expenses
-        let tax = OperatingCosts::calculate_property_tax(building, result.rent_collected);
+        let tax = OperatingCosts::calculate_property_tax(building, result.rent_collected, &config.operating_costs);
         if tax > 0 {
             funds.deduct_expense(Transaction::expense(TransactionType::PropertyTax, tax, "Monthly Property Tax", current_tick));
         }
         
-        let utilities = OperatingCosts::calculate_utilities(building);
+        let utilities = OperatingCosts::calculate_utilities(building, &config.operating_costs);
         if utilities > 0 {
             funds.deduct_expense(Transaction::expense(TransactionType::Utilities, utilities, "Utility Bills", current_tick));
         }
         
-        let insurance = OperatingCosts::calculate_insurance(building);
+        let insurance = OperatingCosts::calculate_insurance(building, &config.operating_costs);
         if insurance > 0 {
             funds.deduct_expense(Transaction::expense(TransactionType::Insurance, insurance, "Property Insurance", current_tick));
         }
@@ -276,11 +280,16 @@ impl GameTick {
         }
     }
 
-    fn update_tenants(building: &Building, tenants: &mut Vec<Tenant>, result: &mut TickResult) {
+    fn update_tenants(
+        building: &Building,
+        tenants: &mut Vec<Tenant>,
+        result: &mut TickResult,
+        config: &crate::data::config::HappinessConfig,
+    ) {
         for tenant in tenants.iter_mut() {
             if let Some(apt_id) = tenant.apartment_id {
                 if let Some(apartment) = building.get_apartment(apt_id) {
-                    let factors = calculate_happiness(tenant, apartment, building);
+                    let factors = calculate_happiness(tenant, apartment, building, config);
                     let old_happiness = tenant.happiness;
                     let new_happiness = factors.total();
                     tenant.set_happiness(new_happiness);

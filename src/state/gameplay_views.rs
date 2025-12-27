@@ -91,8 +91,8 @@ impl GameplayState {
                     self.pending_actions.push(action);
                 }
             }
-            Selection::Applications => {
-                if let Some(action) = draw_application_panel(&self.applications, &self.building, 0.0, assets) {
+            Selection::Applications(filter) => {
+                if let Some(action) = draw_application_panel(&self.applications, &self.building, filter, 0.0, assets) {
                     self.pending_actions.push(action);
                 }
             }

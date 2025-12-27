@@ -1,6 +1,7 @@
 
 use serde::{Deserialize, Serialize};
 use crate::tenant::TenantArchetype;
+use crate::data::config::GentrificationConfig;
 
 /// Tracks a displacement event
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -63,24 +64,24 @@ impl GentrificationTracker {
     }
 
     /// Record a rent change
-    pub fn record_rent_change(&mut self, building_id: u32, month: u32, old_avg: i32, new_avg: i32) {
+    pub fn record_rent_change(&mut self, building_id: u32, month: u32, old_avg: i32, new_avg: i32, config: &GentrificationConfig) {
         let history = self.rent_history.entry(building_id).or_insert_with(Vec::new);
         history.push((month, old_avg, new_avg));
         
         // If significant rent increase, add to gentrification score
         if old_avg > 0 {
             let increase_percent = ((new_avg - old_avg) as f32 / old_avg as f32 * 100.0) as i32;
-            if increase_percent > 10 {
-                self.gentrification_score = (self.gentrification_score + increase_percent / 5).min(100);
+            if increase_percent > config.rent_increase_threshold_percent {
+                self.gentrification_score = (self.gentrification_score + increase_percent / config.rent_increase_score_divisor)
+                    .min(config.max_gentrification_score);
             }
         }
     }
 
     /// Update affordable unit count
-    pub fn update_affordable_units(&mut self, apartments: &[crate::building::Apartment]) {
-        const AFFORDABLE_THRESHOLD: i32 = 700;
+    pub fn update_affordable_units(&mut self, apartments: &[crate::building::Apartment], config: &GentrificationConfig) {
         self.affordable_units = apartments.iter()
-            .filter(|a| a.rent_price <= AFFORDABLE_THRESHOLD)
+            .filter(|a| a.rent_price <= config.affordable_threshold)
             .count() as u32;
     }
 }
@@ -98,9 +99,10 @@ mod tests {
     #[test]
     fn test_gentrification_score() {
         let mut tracker = GentrificationTracker::new();
+        let config = GentrificationConfig::default();
         assert_eq!(tracker.gentrification_score, 0);
         
-        tracker.record_rent_change(0, 1, 500, 700);
+        tracker.record_rent_change(0, 1, 500, 700, &config);
         assert!(tracker.gentrification_score > 0);
     }
 

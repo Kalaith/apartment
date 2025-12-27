@@ -506,12 +506,107 @@ fn draw_tenant_info(
         }
         *y += 25.0;
         
-        if *y + 30.0 > content_top && *y < content_bottom {
-            if button(content_x, *y, panel_w - 30.0, 30.0, "View Applications", true) {
-                return Some(UiAction::SelectApplications);
+        let btn_w = panel_w - 30.0;
+        
+        // Listing Status
+        if apt.is_listed_for_lease {
+             if *y > content_top && *y < content_bottom {
+                draw_text("Status: LISTED", content_x, *y, 16.0, colors::POSITIVE);
             }
+             *y += 20.0;
+             
+            if *y > content_top && *y < content_bottom {
+                let target_text = if let Some(pref) = &apt.preferred_archetype {
+                    format!("Target: {}", pref.name())
+                } else {
+                    "Target: Open (Any)".to_string()
+                };
+                draw_text(&target_text, content_x, *y, 14.0, colors::TEXT);
+            }
+            *y += 30.0;
+             
+            if *y + 30.0 > content_top && *y < content_bottom {
+                if button(content_x, *y, btn_w, 30.0, "View Applications", true) {
+                    return Some(UiAction::SelectApplications(Some(apt.id)));
+                }
+            }
+            *y += 35.0;
+            
+            if *y + 30.0 > content_top && *y < content_bottom {
+                if button(content_x, *y, btn_w, 30.0, "Unlist Property", true) {
+                    return Some(UiAction::UnlistApartment { apartment_id: apt.id });
+                }
+            }
+            *y += 40.0;
+            
+        } else {
+             if *y > content_top && *y < content_bottom {
+                draw_text("Status: OFF MARKET", content_x, *y, 14.0, colors::TEXT_DIM);
+            }
+             *y += 30.0;
+             
+             // Rent Control
+             if *y > content_top && *y < content_bottom {
+                 draw_text(&format!("Rent: ${}", apt.rent_price), content_x, *y, 20.0, colors::TEXT);
+                 
+                 let btn_size = 25.0;
+                 if button(content_x + 120.0, *y - 18.0, btn_size, btn_size, "-", true) {
+                     return Some(UiAction::AdjustRent { apartment_id: apt.id, amount: -50 });
+                 }
+                 if button(content_x + 150.0, *y - 18.0, btn_size, btn_size, "+", true) {
+                     return Some(UiAction::AdjustRent { apartment_id: apt.id, amount: 50 });
+                 }
+             }
+             *y += 40.0;
+             
+             if *y > content_top && *y < content_bottom {
+                 draw_text("List for Lease:", content_x, *y, 14.0, colors::ACCENT);
+             }
+             *y += 20.0;
+             
+             // List Any
+             if *y + 30.0 > content_top && *y < content_bottom {
+                 if button(content_x, *y, btn_w, 30.0, "Any Tenant", true) {
+                     return Some(UiAction::ListApartment { apartment_id: apt.id, preference: None });
+                 }
+             }
+             *y += 35.0;
+             
+             // Targeted Listing
+             let types = [
+                 (crate::tenant::TenantArchetype::Student, "Student"),
+                 (crate::tenant::TenantArchetype::Professional, "Pro"),
+                 (crate::tenant::TenantArchetype::Artist, "Artist"),
+                 (crate::tenant::TenantArchetype::Family, "Family"),
+                 (crate::tenant::TenantArchetype::Elderly, "Elderly"),
+             ];
+             
+             let small_btn_w = (btn_w - 10.0) / 2.0;
+             
+             for (i, (arch, label)) in types.iter().enumerate() {
+                 let col = i % 2;
+                 let _row = i / 2;
+                 
+                 // If odd number of items, last one takes full width? Or just left align.
+                 // let x = content_x + col as f32 * (small_btn_w + 10.0);
+                 // let this_y = *y; 
+                 // We need to increment y only after completing a row
+                 
+                 let x = content_x + col as f32 * (small_btn_w + 10.0);
+                 
+                 // Only verify drawing if within bounds
+                 if *y + 25.0 > content_top && *y < content_bottom {
+                     if button(x, *y, small_btn_w, 25.0, label, true) {
+                         return Some(UiAction::ListApartment { apartment_id: apt.id, preference: Some(arch.clone()) });
+                     }
+                 }
+                 
+                 if col == 1 || i == types.len() - 1 {
+                     *y += 30.0;
+                 }
+             }
+             *y += 10.0;
         }
-        *y += 40.0;
     }
     None
 }

@@ -152,6 +152,91 @@
                     "W"
                 ]
             }
+        },
+        {
+            "id": "family",
+            "name": "Family",
+            "description": "Needs space and stability",
+            "spawn_weight": 20,
+            "preferences": {
+                "rent_sensitivity": 0.5,
+                "condition_sensitivity": 0.7,
+                "noise_sensitivity": 0.6,
+                "design_sensitivity": 0.4,
+                "ideal_rent_max": 1100,
+                "min_acceptable_condition": 55,
+                "prefers_quiet": true,
+                "preferred_design": "practical",
+                "hates_design": null
+            },
+            "name_pool": {
+                "first_names": [
+                    "The Smith",
+                    "The Johnson",
+                    "The Williams",
+                    "The Brown",
+                    "The Davis",
+                    "The Garcia",
+                    "The Martinez",
+                    "The Anderson",
+                    "The Thomas",
+                    "The Jackson"
+                ],
+                "last_initials": [
+                    "Family"
+                ]
+            }
+        },
+        {
+            "id": "elderly",
+            "name": "Elderly",
+            "description": "Quiet, long-term residents",
+            "spawn_weight": 15,
+            "preferences": {
+                "rent_sensitivity": 0.7,
+                "condition_sensitivity": 0.6,
+                "noise_sensitivity": 0.95,
+                "design_sensitivity": 0.3,
+                "ideal_rent_max": 800,
+                "min_acceptable_condition": 50,
+                "prefers_quiet": true,
+                "preferred_design": null,
+                "hates_design": null
+            },
+            "name_pool": {
+                "first_names": [
+                    "Dorothy",
+                    "Margaret",
+                    "Ruth",
+                    "Harold",
+                    "Walter",
+                    "Earl",
+                    "Edith",
+                    "Mildred",
+                    "Clarence",
+                    "Eugene"
+                ],
+                "last_initials": [
+                    "A",
+                    "B",
+                    "C",
+                    "D",
+                    "E",
+                    "F",
+                    "G",
+                    "H",
+                    "J",
+                    "K",
+                    "L",
+                    "M",
+                    "N",
+                    "P",
+                    "R",
+                    "S",
+                    "T",
+                    "W"
+                ]
+            }
         }
     ]
 }

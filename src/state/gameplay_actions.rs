@@ -74,13 +74,13 @@
          self.city.tick();
          
          // Update tenant relationships
-         self.tenant_network.tick(&self.tenants, &self.building);
+         self.tenant_network.tick(&self.tenants, &self.building, &self.config.relationships);
          
          // Update compliance system (check inspection timers)
          self.compliance.tick(self.current_tick);
          
          // Update gentrification tracking
-         self.gentrification.update_affordable_units(&self.building.apartments);
+         self.gentrification.update_affordable_units(&self.building.apartments, &self.config.gentrification);
          
          // Generate narrative events
          self.narrative_events.generate_events(
@@ -183,7 +183,7 @@
              );
              
              // Check for tenant council formation
-             if self.tenant_network.should_form_council(&self.tenants) {
+             if self.tenant_network.should_form_council(&self.tenants, &self.config.gentrification) {
                  self.floating_texts.push(FloatingText::new(
                      "Tenants forming a council!",
                      screen_width() / 2.0,
@@ -199,12 +199,13 @@
          }
          
          // Calculate and apply community cohesion bonus to happiness
-         let cohesion = self.tenant_network.calculate_cohesion(&self.tenants);
+         let cohesion = self.tenant_network.calculate_cohesion(&self.tenants, &self.config.cohesion);
          for tenant in &mut self.tenants {
              // Apply relationship happiness modifier (uses RelationshipType::happiness_modifier)
              let relationship_bonus = crate::tenant::happiness::calculate_relationship_happiness(
                  tenant.id,
                  &self.tenant_network,
+                 &self.config.relationships,
              );
              
              // Apply cohesion bonus if threshold met
@@ -239,14 +240,49 @@
              UiAction::SelectTenant(id) => {
                  self.selection = Selection::Tenant(id);
              }
-             UiAction::SelectApplications => {
-                 self.selection = Selection::Applications;
+             UiAction::SelectApplications(filter) => {
+                 self.selection = Selection::Applications(filter);
+                 self.panel_scroll_offset = 0.0;
              }
              UiAction::SelectHallway => {
                  self.selection = Selection::Hallway;
              }
              UiAction::ClearSelection => {
                  self.selection = Selection::None;
+             }
+             
+             UiAction::ListApartment { apartment_id, preference } => {
+                 if let Some(apt) = self.building.get_apartment_mut(apartment_id) {
+                     apt.is_listed_for_lease = true;
+                     apt.preferred_archetype = preference;
+                     
+                     self.floating_texts.push(FloatingText::new(
+                         "Listed for Lease",
+                         screen_width() / 2.0,
+                         screen_height() / 2.0,
+                         colors::POSITIVE,
+                     ));
+                 }
+             }
+             
+             UiAction::UnlistApartment { apartment_id } => {
+                 if let Some(apt) = self.building.get_apartment_mut(apartment_id) {
+                     apt.is_listed_for_lease = false;
+                     apt.preferred_archetype = None;
+                     
+                     self.floating_texts.push(FloatingText::new(
+                         "Property Unlisted",
+                         screen_width() / 2.0,
+                         screen_height() / 2.0,
+                         colors::TEXT,
+                     ));
+                 }
+             }
+             
+             UiAction::AdjustRent { apartment_id, amount } => {
+                 if let Some(apt) = self.building.get_apartment_mut(apartment_id) {
+                     apt.rent_price = (apt.rent_price + amount).max(100); // Minimum rent $100
+                 }
              }
  
              UiAction::UpgradeAction(upgrade) => {
@@ -272,7 +308,7 @@
                      apt.rent_price = new_rent;
                      
                      if old_rent != new_rent {
-                         self.gentrification.record_rent_change(0, self.current_tick, old_rent, new_rent);
+                         self.gentrification.record_rent_change(0, self.current_tick, old_rent, new_rent, &self.config.gentrification);
                      }
                  }
              }
@@ -281,10 +317,10 @@
                      let app = self.applications.remove(application_index);
                      let mut tenant = app.tenant;
                      
-                     // Evaluate lease using the standard offer
+                     // Evaluate lease using the configured offer
                      if let Some(apt) = self.building.get_apartment(app.apartment_id) {
-                         let offer = crate::tenant::matching::LeaseOffer::standard(apt.rent_price);
-                         let accept_probability = crate::tenant::matching::evaluate_lease_offer(&tenant, &offer);
+                         let offer = crate::tenant::matching::LeaseOffer::from_config(apt.rent_price, &self.config.matching.lease_defaults);
+                         let accept_probability = crate::tenant::matching::evaluate_lease_offer(&tenant, &offer, &self.config.matching.lease_acceptance);
                          
                          // Log the negotiation outcome
                          let leverage = tenant.negotiation_leverage();
@@ -327,7 +363,7 @@
              UiAction::CreditCheck { application_index } => {
                  if application_index < self.applications.len() {
                      let app = &mut self.applications[application_index];
-                     if let Some(result) = crate::tenant::vetting::perform_credit_check(app, &mut self.funds) {
+                     if let Some(result) = crate::tenant::vetting::perform_credit_check(app, &mut self.funds, &self.config.vetting) {
                          self.floating_texts.push(FloatingText::new(
                              &format!("Credit: {} - {}", result.reliability_score, result.recommendation),
                              screen_width() / 2.0,
@@ -349,7 +385,7 @@
              UiAction::BackgroundCheck { application_index } => {
                  if application_index < self.applications.len() {
                      let app = &mut self.applications[application_index];
-                     if let Some(result) = crate::tenant::vetting::perform_background_check(app, &mut self.funds) {
+                     if let Some(result) = crate::tenant::vetting::perform_background_check(app, &mut self.funds, &self.config.vetting) {
                          self.floating_texts.push(FloatingText::new(
                              &format!("Background: {} - {}", result.behavior_score, result.history_notes),
                              screen_width() / 2.0,

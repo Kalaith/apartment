@@ -137,7 +137,7 @@ pub fn draw_building_view(
     let apps_btn_x = start_x;
     let apps_btn_y = view_y + 10.0; // Top of the panel
     if button(apps_btn_x, apps_btn_y, 150.0, 35.0, "Applications", true) {
-        action = Some(UiAction::SelectApplications);
+        action = Some(UiAction::SelectApplications(None));
     }
     
     // Ownership button

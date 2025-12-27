@@ -3,24 +3,25 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use super::{Apartment, ApartmentSize, NoiseLevel};
 use super::ownership::OwnershipType;
+use crate::data::config::MarketingConfig;
 
 /// Marketing campaign types with different costs and target demographics
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
 pub enum MarketingType {
     #[default]
     None,              // No active marketing
-    SocialMedia,       // $50/month - High volume, attracts Students/Artists
-    LocalNewspaper,    // $150/month - Moderate volume, attracts Elderly/Families
-    PremiumAgency,     // $500/month - Low volume, high quality, attracts Professionals
+    SocialMedia,       // Attracts Students/Artists
+    LocalNewspaper,    // Attracts Elderly/Families
+    PremiumAgency,     // Attracts Professionals
 }
 
 impl MarketingType {
-    pub fn monthly_cost(&self) -> i32 {
+    pub fn monthly_cost(&self, config: &MarketingConfig) -> i32 {
         match self {
-            MarketingType::None => 0,
-            MarketingType::SocialMedia => 50,
-            MarketingType::LocalNewspaper => 150,
-            MarketingType::PremiumAgency => 500,
+            MarketingType::None => config.none_cost,
+            MarketingType::SocialMedia => config.social_media_cost,
+            MarketingType::LocalNewspaper => config.local_newspaper_cost,
+            MarketingType::PremiumAgency => config.premium_agency_cost,
         }
     }
     

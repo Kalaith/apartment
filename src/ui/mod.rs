@@ -35,7 +35,7 @@ pub enum Selection {
     None,
     Apartment(u32),      // Apartment ID
     Tenant(u32),         // Tenant ID
-    Applications,        // Show all pending applications
+    Applications(Option<u32>), // Show pending applications (Optionally filtered by apartment)
     Hallway,             // Hallway details
     Ownership,           // Ownership View
 }
@@ -53,7 +53,7 @@ use crate::building::UpgradeAction;
 pub enum UiAction {
     SelectApartment(u32),
     SelectTenant(u32),
-    SelectApplications,
+    SelectApplications(Option<u32>),
     SelectHallway,
     SelectOwnership,
     ClearSelection,
@@ -98,4 +98,9 @@ pub enum UiAction {
     // Phase 4: Tenant vetting
     CreditCheck { application_index: usize },
     BackgroundCheck { application_index: usize },
+    
+    // Leasing
+    ListApartment { apartment_id: u32, preference: Option<crate::tenant::TenantArchetype> },
+    UnlistApartment { apartment_id: u32 },
+    AdjustRent { apartment_id: u32, amount: i32 },
 }

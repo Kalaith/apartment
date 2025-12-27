@@ -1,4 +1,5 @@
 use crate::building::{UpgradeAction, Building, apply_upgrade};
+use crate::data::config::OperatingCostsConfig;
 use super::{Transaction, TransactionType, PlayerFunds};
 
 
@@ -7,33 +8,35 @@ pub struct OperatingCosts;
 
 impl OperatingCosts {
     /// Calculate monthly property tax based on building value/income
-    pub fn calculate_property_tax(_building: &Building, rent_income: i32) -> i32 {
-        // Simplified: 10% of gross rent income
-        (rent_income as f32 * 0.10) as i32
+    pub fn calculate_property_tax(_building: &Building, rent_income: i32, config: &OperatingCostsConfig) -> i32 {
+        (rent_income as f32 * config.property_tax_rate) as i32
     }
     
     /// Calculate monthly utilities
-    pub fn calculate_utilities(building: &Building) -> i32 {
+    pub fn calculate_utilities(building: &Building, config: &OperatingCostsConfig) -> i32 {
         if !building.utilities_included {
             return 0;
         }
         
         // Base cost per occupied unit
         let occupied = building.occupancy_count() as i32;
-        occupied * 50 // $50 per unit
+        occupied * config.utility_cost_per_unit
     }
     
     /// Calculate monthly insurance
-    pub fn calculate_insurance(building: &Building) -> i32 {
+    pub fn calculate_insurance(building: &Building, config: &OperatingCostsConfig) -> i32 {
         if !building.insurance_active {
             return 0;
         }
         
-        let base_rate = 150;
         // Discount for good condition
-        let discount = if building.hallway_condition > 80 { 50 } else { 0 };
+        let discount = if building.hallway_condition > config.insurance_good_condition_threshold { 
+            config.insurance_good_condition_discount 
+        } else { 
+            0 
+        };
         
-        base_rate - discount
+        config.insurance_base_rate - discount
     }
     
     /// Calculate monthly staff salaries

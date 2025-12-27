@@ -1,6 +1,7 @@
 use macroquad::rand::gen_range;
 use super::{Tenant, TenantArchetype, matching::MatchResult};
 use crate::building::Building;
+use crate::data::config::MatchingConfig;
 use serde::{Deserialize, Serialize};
 
 /// A tenant application for a specific apartment
@@ -34,66 +35,92 @@ impl TenantApplication {
     }
 }
 
-/// Generate new tenant applications based on building state
+/// Generate new tenant applications for listed apartments
 pub fn generate_applications(
     building: &Building,
     existing_applications: &[TenantApplication],
     current_tick: u32,
     next_tenant_id: &mut u32,
+    config: &MatchingConfig,
 ) -> Vec<TenantApplication> {
     let mut new_applications = Vec::new();
     
-    let vacant = building.vacant_apartments();
-    if vacant.is_empty() {
+    // 1. Identify listed vacancies
+    let listed_apartments: Vec<&_> = building.vacant_apartments()
+        .into_iter()
+        .filter(|a| a.is_listed_for_lease)
+        .collect();
+        
+    if listed_apartments.is_empty() {
         return new_applications;
     }
     
     let building_appeal = building.building_appeal();
     
-    // Number of applications based on building appeal and vacancies
-    let base_apps = (vacant.len() as f32 * 0.5).ceil() as usize;
-    let appeal_bonus = (building_appeal as f32 / 50.0) as usize;
-    
-    // Apply marketing strategy multipliers
+    // Marketing multipliers (same as before)
     let marketing_multiplier = match building.marketing_strategy {
         crate::building::MarketingType::None => 1.0,
-        crate::building::MarketingType::SocialMedia => 2.0, // High volume
-        crate::building::MarketingType::LocalNewspaper => 1.5, // Moderate volume
-        crate::building::MarketingType::PremiumAgency => 0.8, // Low volume, high quality
+        crate::building::MarketingType::SocialMedia => 2.0,
+        crate::building::MarketingType::LocalNewspaper => 1.5,
+        crate::building::MarketingType::PremiumAgency => 0.8,
     };
     
-    // Open house bonus (doubles volume)
     let open_house_multiplier = if building.open_house_remaining > 0 { 2.0 } else { 1.0 };
     
-    let raw_num_applications = (base_apps + appeal_bonus) as f32 * marketing_multiplier * open_house_multiplier;
-    let num_applications = (raw_num_applications as usize).min(vacant.len() * 2).max(1);
-    
-    for _ in 0..num_applications {
-        // Pick a random archetype (weighted by marketing)
-        let archetype = pick_random_archetype(&building.marketing_strategy);
+    // 2. Generate applications for EACH listed apartment
+    for apt in listed_apartments {
+        // Base probability per apartment
+        let appeal_factor = (building_appeal as f32 / 50.0).max(0.5);
+        let chance = 0.8 * appeal_factor * marketing_multiplier * open_house_multiplier; 
         
-        // Generate a tenant
-        let tenant = Tenant::generate(*next_tenant_id, archetype);
-        *next_tenant_id += 1;
+        // Debug print
+        println!("Gen App Check: Apt {} Chance {:.2}", apt.unit_number, chance);
         
-        // Find an apartment they'd apply to
-        let apartment_refs: Vec<&_> = vacant.iter().map(|a| *a).collect();
-        
-        if let Some((apt, match_result)) = super::matching::find_best_match(&tenant, &apartment_refs) {
-            // Check if there's already an application for this apartment from this archetype
-            let already_applied = existing_applications.iter().any(|app| {
-                app.apartment_id == apt.id && app.tenant.archetype == tenant.archetype
-            }) || new_applications.iter().any(|app: &TenantApplication| {
-                app.apartment_id == apt.id && app.tenant.archetype == tenant.archetype
-            });
+        // Random check to see if we generate an applicant this tick
+        if gen_range(0.0, 1.0) < chance {
+            // Pick archetype based on preference + marketing
+            let archetype = pick_archetype_with_preference(
+                &building.marketing_strategy, 
+                apt.preferred_archetype.as_ref()
+            );
             
-            if !already_applied {
-                new_applications.push(TenantApplication::new(
-                    tenant,
-                    apt.id,
-                    match_result,
-                    current_tick,
-                ));
+            // Generate tenant
+            let tenant = Tenant::generate(*next_tenant_id, archetype);
+            *next_tenant_id += 1;
+            
+            // Check match
+            let apt_slice = [apt];
+            if let Some((_, match_result)) = super::matching::find_best_match(&tenant, &apt_slice, config) {
+                // Check dupes
+                let already_applied = existing_applications.iter().any(|app| {
+                    app.apartment_id == apt.id && app.tenant.archetype == tenant.archetype
+                }) || new_applications.iter().any(|app: &TenantApplication| {
+                    app.apartment_id == apt.id && app.tenant.archetype == tenant.archetype
+                });
+                
+                if !already_applied {
+                    println!("SUCCESS: Added applicant for unit {} (Archetype: {:?})", apt.unit_number, tenant.archetype); // Debug print
+                    new_applications.push(TenantApplication::new(
+                        tenant,
+                        apt.id,
+                        match_result,
+                        current_tick,
+                    ));
+                } else {
+                    println!("SKIPPED: Duplicate application for unit {}", apt.unit_number);
+                }
+            } else {
+                // Debug: Why did they reject?
+                let prefs = tenant.archetype.preferences();
+                if apt.rent_price > tenant.rent_tolerance {
+                     println!("SKIPPED: Tenant {:?} rejected unit {} due to RENT (Rent: {}, Tolerance: {})", 
+                        tenant.archetype, apt.unit_number, apt.rent_price, tenant.rent_tolerance);
+                } else if apt.condition < prefs.min_acceptable_condition {
+                     println!("SKIPPED: Tenant {:?} rejected unit {} due to CONDITION (Cond: {}, Min: {})",
+                        tenant.archetype, apt.unit_number, apt.condition, prefs.min_acceptable_condition);
+                } else {
+                     println!("SKIPPED: Tenant {:?} rejected unit {} due to other factors (Noise/Design)", tenant.archetype, apt.unit_number);
+                }
             }
         }
     }
@@ -101,20 +128,28 @@ pub fn generate_applications(
     new_applications
 }
 
-fn pick_random_archetype(marketing: &crate::building::MarketingType) -> TenantArchetype {
+fn pick_archetype_with_preference(
+    marketing: &crate::building::MarketingType, 
+    preference: Option<&TenantArchetype>
+) -> TenantArchetype {
+    // If preference exists, 80% chance to pick it
+    if let Some(pref) = preference {
+        if gen_range(0, 100) < 80 {
+            return pref.clone();
+        }
+    }
+
     let roll = gen_range(0, 100);
     
     // Adjust weights based on marketing
     match marketing {
         crate::building::MarketingType::SocialMedia => {
-            // Heavily favors Students and Artists
             if roll < 50 { TenantArchetype::Student }
             else if roll < 80 { TenantArchetype::Artist }
             else if roll < 90 { TenantArchetype::Professional }
             else { TenantArchetype::Family }
         },
         crate::building::MarketingType::LocalNewspaper => {
-            // Favors Elderly and Families
             if roll < 15 { TenantArchetype::Student }
             else if roll < 30 { TenantArchetype::Professional }
             else if roll < 60 { TenantArchetype::Family }
@@ -122,7 +157,6 @@ fn pick_random_archetype(marketing: &crate::building::MarketingType) -> TenantAr
             else { TenantArchetype::Artist }
         },
         crate::building::MarketingType::PremiumAgency => {
-            // Heavily favors Professionals, filters out Students
             if roll < 5 { TenantArchetype::Student }
             else if roll < 65 { TenantArchetype::Professional }
             else if roll < 85 { TenantArchetype::Family }
@@ -130,7 +164,6 @@ fn pick_random_archetype(marketing: &crate::building::MarketingType) -> TenantAr
             else { TenantArchetype::Artist }
         },
         crate::building::MarketingType::None => {
-            // Default distribution
             if roll < 35 { TenantArchetype::Student }
             else if roll < 60 { TenantArchetype::Professional }
             else if roll < 75 { TenantArchetype::Family }

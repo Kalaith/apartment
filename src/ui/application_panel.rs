@@ -7,6 +7,7 @@ use crate::assets::AssetManager;
 pub fn draw_application_panel(
     applications: &[TenantApplication],
     building: &Building,
+    filter_apartment_id: Option<u32>,
     offset_x: f32,
     assets: &AssetManager,
 ) -> Option<UiAction> {
@@ -27,16 +28,33 @@ pub fn draw_application_panel(
     let content_x = panel_x + 15.0;
     let mut y = panel_y + 50.0;
     
-    if applications.is_empty() {
-        draw_text("No pending applications", content_x, y, 18.0, colors::TEXT_DIM);
-        draw_text("Improve your building to attract tenants!", content_x, y + 25.0, 14.0, colors::TEXT_DIM);
+    let filtered_apps: Vec<(usize, &TenantApplication)> = applications.iter()
+        .enumerate()
+        .filter(|(_, app)| filter_apartment_id.map_or(true, |id| app.apartment_id == id))
+        .collect();
+    
+    if filtered_apps.is_empty() {
+        // Debug info
+        if !applications.is_empty() {
+             println!("DEBUG UI: Has {} total apps, but 0 after filter {:?}", applications.len(), filter_apartment_id);
+             for app in applications {
+                 println!(" - App for unit with ID: {}", app.apartment_id);
+             }
+        }
+        
+        if filter_apartment_id.is_some() {
+            draw_text("No applications for this unit", content_x, y, 18.0, colors::TEXT_DIM);
+        } else {
+            draw_text("No pending applications", content_x, y, 18.0, colors::TEXT_DIM);
+            draw_text("List apartments for lease, then End Month!", content_x, y + 25.0, 14.0, colors::TEXT_DIM);
+        }
         return None;
     }
     
-    draw_text(&format!("{} pending", applications.len()), content_x, y, 16.0, colors::TEXT_DIM);
+    draw_text(&format!("{} pending", filtered_apps.len()), content_x, y, 16.0, colors::TEXT_DIM);
     y += 25.0;
     
-    for (i, app) in applications.iter().enumerate() {
+    for (i, app) in filtered_apps {
         if y > panel_y + panel_h - 100.0 {
             draw_text("... more applications", content_x, y, 14.0, colors::TEXT_DIM);
             break;

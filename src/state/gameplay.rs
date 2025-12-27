@@ -155,7 +155,8 @@ impl GameplayState {
             &state.building, 
             &[], 
             0, 
-            &mut state.next_tenant_id
+            &mut state.next_tenant_id,
+            &state.config.matching,
         );
         
         // Generate starter missions
@@ -336,8 +337,15 @@ impl GameplayState {
         );
         
         // Navigation hint
+        let nav_hint = match self.view_mode {
+            ViewMode::Building => "[Tab] City Map | [M] Mail",
+            ViewMode::CityMap => "[Tab] Building View | [M] Mail",
+            ViewMode::Market => "[Tab] City Map | [M] Mail",
+            ViewMode::Mail => "[Tab] Return | [Esc] Return",
+        };
+
         draw_text_ex(
-            "[Tab] Building View | [M] Mail",
+            nav_hint,
             20.0,
             55.0,
             TextParams {

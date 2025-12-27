@@ -36,11 +36,32 @@
     "min_for_victory": 60,
     "leave_threshold": 0,
     "unhappy_threshold": 30,
-    "tenure_bonus_max": 12
+    "tenure_bonus_max": 12,
+    "rent_bonus_multiplier": 0.02,
+    "rent_bonus_cap": 15,
+    "rent_penalty_multiplier": 0.05,
+    "rent_penalty_cap": -30,
+    "condition_bonus_multiplier": 0.3,
+    "condition_bonus_cap": 20,
+    "condition_penalty_multiplier": 0.5,
+    "condition_penalty_cap": 40,
+    "noise_quiet_bonus": 10.0,
+    "noise_high_penalty_base": -25,
+    "noise_tolerance_multiplier": 0.3,
+    "design_preferred_bonus": 20,
+    "design_hated_penalty": -25,
+    "design_style_modifiers": {
+      "Bare": -5,
+      "Practical": 5,
+      "Cozy": 10
+    },
+    "hallway_condition_base": 50,
+    "hallway_condition_multiplier": 0.1
   },
   "win_conditions": {
     "full_occupancy_required": true,
-    "min_ticks_for_victory": 6
+    "min_ticks_for_victory": 6,
+    "game_duration_ticks": 36
   },
   "applications": {
     "expire_after_ticks": 3,
@@ -57,5 +78,239 @@
       "kitchen_renovation": "Renovate Kitchen",
       "install_laundry": "Install Laundry"
     }
+  },
+  "matching": {
+    "base_score": 50,
+    "desperate_penalty": -40,
+    "rent_great_threshold": 200,
+    "rent_great_bonus": 15,
+    "rent_fair_bonus": 8,
+    "rent_slight_penalty": -5,
+    "rent_unaffordable_penalty": -20,
+    "condition_excellent_threshold": 80,
+    "condition_excellent_bonus": 15,
+    "condition_good_threshold": 60,
+    "condition_good_bonus": 8,
+    "condition_poor_threshold": 50,
+    "condition_poor_penalty": 10,
+    "noise_quiet_bonus": 12,
+    "noise_loud_penalty": 15,
+    "design_preferred_bonus": 18,
+    "size_medium_bonus": 5,
+    "lease_defaults": {
+      "security_deposit_months": 1,
+      "lease_duration_months": 12,
+      "cleaning_fee": 0
+    },
+    "lease_acceptance": {
+      "deposit_2_month_penalty": 0.15,
+      "deposit_3_month_penalty": 0.35,
+      "short_lease_bonus": 0.1,
+      "long_lease_penalty": 0.15,
+      "good_deal_bonus": 0.1,
+      "expensive_penalty": 0.1
+    }
+  },
+  "thresholds": {
+    "poor_condition": 40,
+    "critical_condition": 20,
+    "all_left_check_tick": 3
+  },
+  "operating_costs": {
+    "property_tax_rate": 0.10,
+    "utility_cost_per_unit": 50,
+    "insurance_base_rate": 150,
+    "insurance_good_condition_discount": 50,
+    "insurance_good_condition_threshold": 80
+  },
+  "vetting": {
+    "credit_check_cost": 25,
+    "background_check_cost": 10,
+    "credit_thresholds": {
+      "excellent": 90,
+      "good": 75,
+      "average": 60,
+      "below_average": 40
+    },
+    "behavior_thresholds": {
+      "excellent": 90,
+      "good": 75,
+      "average": 60,
+      "below_average": 40
+    }
+  },
+  "marketing": {
+    "none_cost": 0,
+    "social_media_cost": 50,
+    "local_newspaper_cost": 150,
+    "premium_agency_cost": 500
+  },
+  "relationships": {
+    "happiness_modifiers": {
+      "friendly": 5,
+      "neutral": 0,
+      "hostile": -10,
+      "romantic": 8,
+      "family": 10
+    },
+    "formation_chance": 5,
+    "hostile_cooldown_chance": 5,
+    "hostile_strength_decay": 5,
+    "hostile_transition_threshold": 20,
+    "same_archetype_friendly_chance": 60,
+    "adjacent_hostile_chance": 30
+  },
+  "cohesion": {
+    "archetype_group_threshold": 3,
+    "archetype_group_base_bonus": 5,
+    "archetype_group_per_extra": 2,
+    "friendly_relationship_bonus": 2,
+    "hostile_relationship_penalty": 5,
+    "tension_penalty": 8,
+    "cohesion_min": -50,
+    "cohesion_max": 50
+  },
+  "gentrification": {
+    "affordable_threshold": 700,
+    "rent_increase_threshold_percent": 10,
+    "rent_increase_score_divisor": 5,
+    "max_gentrification_score": 100,
+    "council_formation_threshold": 0.4,
+    "council_min_tenants": 4
+  },
+  "theme": {
+    "background": [
+      0.12,
+      0.12,
+      0.14,
+      1.0
+    ],
+    "panel": [
+      0.18,
+      0.18,
+      0.22,
+      1.0
+    ],
+    "panel_header": [
+      0.22,
+      0.22,
+      0.28,
+      1.0
+    ],
+    "text": [
+      0.9,
+      0.9,
+      0.9,
+      1.0
+    ],
+    "text_bright": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ],
+    "text_dim": [
+      0.6,
+      0.6,
+      0.6,
+      1.0
+    ],
+    "accent": [
+      0.3,
+      0.6,
+      0.9,
+      1.0
+    ],
+    "positive": [
+      0.3,
+      0.8,
+      0.4,
+      1.0
+    ],
+    "warning": [
+      0.9,
+      0.7,
+      0.2,
+      1.0
+    ],
+    "negative": [
+      0.9,
+      0.3,
+      0.3,
+      1.0
+    ],
+    "vacant": [
+      0.3,
+      0.3,
+      0.35,
+      1.0
+    ],
+    "occupied": [
+      0.25,
+      0.35,
+      0.45,
+      1.0
+    ],
+    "selected": [
+      0.35,
+      0.5,
+      0.7,
+      1.0
+    ],
+    "hovered": [
+      0.3,
+      0.4,
+      0.55,
+      1.0
+    ],
+    "archetype_student": [
+      0.8,
+      0.5,
+      0.3,
+      1.0
+    ],
+    "archetype_professional": [
+      0.3,
+      0.5,
+      0.8,
+      1.0
+    ],
+    "archetype_artist": [
+      0.8,
+      0.3,
+      0.7,
+      1.0
+    ],
+    "archetype_family": [
+      0.4,
+      0.8,
+      0.4,
+      1.0
+    ],
+    "archetype_elderly": [
+      0.7,
+      0.7,
+      0.7,
+      1.0
+    ]
+  },
+  "layout": {
+    "header_height": 60.0,
+    "footer_height": 100.0,
+    "panel_split": 0.6,
+    "padding": 10.0,
+    "unit_width": 120.0,
+    "unit_height": 80.0,
+    "unit_gap": 15.0,
+    "floor_height": 100.0
+  },
+  "ui_thresholds": {
+    "happiness_ecstatic": 85,
+    "happiness_happy": 70,
+    "happiness_neutral": 50,
+    "happiness_unhappy": 30,
+    "condition_good": 80,
+    "condition_fair": 50,
+    "condition_poor": 30
   }
 }

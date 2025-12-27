@@ -88,7 +88,7 @@ impl TutorialManager {
             pending_messages: vec![
                 "Welcome! I'm your Uncle Artie. I've left you this building in my will.".to_string(),
                 "It's a bit of a mess, but nothing we can't fix together.".to_string(),
-                "First things first - let's clean up this place. Click on an apartment to start.".to_string(),
+                "First, select an apartment and do some repairs. Then repair the Hallway too.".to_string(),
             ],
             rival_introduced: false,
         }
@@ -108,7 +108,8 @@ impl TutorialManager {
             self.current_milestone = match milestone {
                 TutorialMilestone::InheritedMess => {
                     self.pending_messages.push("Great job cleaning up! Now let's find your first tenant.".to_string());
-                    self.pending_messages.push("Check the applications panel and accept a tenant.".to_string());
+                    self.pending_messages.push("Select an apartment, adjust the Rent if needed, and click 'List for Lease'.".to_string());
+                    self.pending_messages.push("Then click 'End Month' to let time pass. Applicants will arrive!".to_string());
                     Some(TutorialMilestone::FirstResident)
                 }
                 TutorialMilestone::FirstResident => {
@@ -170,10 +171,10 @@ impl TutorialManager {
     pub fn get_hint(&self) -> Option<&'static str> {
         match &self.current_milestone {
             Some(TutorialMilestone::InheritedMess) => {
-                Some("Hint: Click on an apartment and use the Repair button to improve condition.")
+                Some("Hint: Click the Hallway and repair it to 80+ condition.")
             }
             Some(TutorialMilestone::FirstResident) => {
-                Some("Hint: Click 'Applications' to view tenant applications, then Accept one.")
+                Some("Hint: List an apartment for lease, End Month, then check Applications.")
             }
             Some(TutorialMilestone::TheLeak) => {
                 Some("Hint: A unit has low condition. Repair it to proceed!")

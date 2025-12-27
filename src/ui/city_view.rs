@@ -75,9 +75,9 @@ fn draw_neighborhood_cell(
     let base_color = neighborhood.neighborhood_type.color();
     let bg_color = if hovered {
         Color::from_rgba(
-            (base_color.r * 255.0) as u8 + 20,
-            (base_color.g * 255.0) as u8 + 20,
-            (base_color.b * 255.0) as u8 + 20,
+            ((base_color.r * 255.0) + 20.0).min(255.0) as u8,
+            ((base_color.g * 255.0) + 20.0).min(255.0) as u8,
+            ((base_color.b * 255.0) + 20.0).min(255.0) as u8,
             200
         )
     } else {

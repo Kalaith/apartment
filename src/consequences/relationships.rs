@@ -1,5 +1,6 @@
 
 use serde::{Deserialize, Serialize};
+use crate::data::config::RelationshipsConfig;
 
 /// Type of relationship between tenants
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
@@ -17,14 +18,15 @@ pub enum RelationshipType {
 }
 
 impl RelationshipType {
-    pub fn happiness_modifier(&self) -> i32 {
-        match self {
-            RelationshipType::Friendly => 5,
-            RelationshipType::Neutral => 0,
-            RelationshipType::Hostile => -10,
-            RelationshipType::Romantic => 8,
-            RelationshipType::Family => 10,
-        }
+    pub fn happiness_modifier(&self, config: &RelationshipsConfig) -> i32 {
+        let key = match self {
+            RelationshipType::Friendly => "friendly",
+            RelationshipType::Neutral => "neutral",
+            RelationshipType::Hostile => "hostile",
+            RelationshipType::Romantic => "romantic",
+            RelationshipType::Family => "family",
+        };
+        *config.happiness_modifiers.get(key).unwrap_or(&0)
     }
 }
 
@@ -70,7 +72,7 @@ impl TenantRelationship {
     }
 
     /// Apply monthly relationship dynamics
-    pub fn tick(&mut self) {
+    pub fn tick(&mut self, config: &RelationshipsConfig) {
         self.duration_months += 1;
         
         // Long-term relationships tend to strengthen
@@ -79,9 +81,11 @@ impl TenantRelationship {
         }
         
         // Hostile relationships can cool down over time
-        if matches!(self.relationship_type, RelationshipType::Hostile) && macroquad::rand::gen_range(0, 100) < 5 {
-            self.strength = (self.strength - 5).max(0);
-            if self.strength < 20 {
+        if matches!(self.relationship_type, RelationshipType::Hostile) 
+            && macroquad::rand::gen_range(0, 100) < config.hostile_cooldown_chance 
+        {
+            self.strength = (self.strength - config.hostile_strength_decay).max(0);
+            if self.strength < config.hostile_transition_threshold {
                 self.relationship_type = RelationshipType::Neutral;
                 self.recent_events.push("Conflict cooled down".to_string());
             }
@@ -149,10 +153,15 @@ impl TenantNetwork {
     }
 
     /// Process monthly relationship dynamics
-    pub fn tick(&mut self, tenants: &[crate::tenant::Tenant], building: &crate::building::Building) {
+    pub fn tick(
+        &mut self, 
+        tenants: &[crate::tenant::Tenant], 
+        building: &crate::building::Building,
+        config: &RelationshipsConfig,
+    ) {
         // Update existing relationships
         for relationship in &mut self.relationships {
-            relationship.tick();
+            relationship.tick(config);
         }
 
         // Chance to form new relationships between neighbors
@@ -172,9 +181,9 @@ impl TenantNetwork {
                     continue;
                 }
 
-                // 5% chance per month for new relationship
-                if macroquad::rand::gen_range(0, 100) < 5 {
-                    let rel_type = self.determine_initial_relationship(tenant_a, tenant_b, building);
+                // Chance per month for new relationship
+                if macroquad::rand::gen_range(0, 100) < config.formation_chance {
+                    let rel_type = self.determine_initial_relationship(tenant_a, tenant_b, building, config);
                     self.add_relationship(tenant_a.id, tenant_b.id, rel_type);
                 }
             }
@@ -186,7 +195,8 @@ impl TenantNetwork {
         &self, 
         tenant_a: &crate::tenant::Tenant, 
         tenant_b: &crate::tenant::Tenant,
-        building: &crate::building::Building
+        building: &crate::building::Building,
+        config: &RelationshipsConfig,
     ) -> RelationshipType {
         use crate::tenant::TenantArchetype;
 
@@ -202,7 +212,7 @@ impl TenantNetwork {
             // Check if apartments are adjacent (same floor or floor ±1)
             if let (Some(a), Some(b)) = (apt_a, apt_b) {
                 if (a.floor as i32 - b.floor as i32).abs() <= 1 {
-                    if macroquad::rand::gen_range(0, 100) < 30 {
+                    if macroquad::rand::gen_range(0, 100) < config.adjacent_hostile_chance {
                         return RelationshipType::Hostile;
                     }
                 }
@@ -211,7 +221,7 @@ impl TenantNetwork {
 
         // Same archetype tends to be friendly
         if tenant_a.archetype == tenant_b.archetype {
-            if macroquad::rand::gen_range(0, 100) < 60 {
+            if macroquad::rand::gen_range(0, 100) < config.same_archetype_friendly_chance {
                 return RelationshipType::Friendly;
             }
         }
@@ -227,7 +237,7 @@ impl TenantNetwork {
     }
     
     /// Calculate community cohesion bonus based on matching archetypes
-    pub fn calculate_cohesion(&self, tenants: &[crate::tenant::Tenant]) -> i32 {
+    pub fn calculate_cohesion(&self, tenants: &[crate::tenant::Tenant], config: &crate::data::config::CohesionConfig) -> i32 {
         if tenants.is_empty() { return 0; }
         
         let mut archetype_counts = std::collections::HashMap::new();
@@ -239,8 +249,8 @@ impl TenantNetwork {
         
         // Bonus for having significant groups of same archetype
         for (_, count) in archetype_counts {
-            if count >= 3 {
-                bonus += 5 + (count - 3) * 2;
+            if count >= config.archetype_group_threshold {
+                bonus += config.archetype_group_base_bonus + (count - config.archetype_group_threshold) * config.archetype_group_per_extra;
             }
         }
         
@@ -249,28 +259,28 @@ impl TenantNetwork {
             .filter(|r| matches!(r.relationship_type, RelationshipType::Friendly | RelationshipType::Family))
             .count() as i32;
             
-        bonus += friendly_count * 2;
+        bonus += friendly_count * config.friendly_relationship_bonus;
         
         // Penalty for tensions/hostility
         let hostile_count = self.relationships.iter()
             .filter(|r| matches!(r.relationship_type, RelationshipType::Hostile))
             .count() as i32;
             
-        bonus -= hostile_count * 5;
-        bonus -= (self.tensions.len() as i32) * 8;
+        bonus -= hostile_count * config.hostile_relationship_penalty;
+        bonus -= (self.tensions.len() as i32) * config.tension_penalty;
         
-        bonus.clamp(-50, 50)
+        bonus.clamp(config.cohesion_min, config.cohesion_max)
     }
     
     /// Check if tenants are unhappy enough to form a council
-    pub fn should_form_council(&self, tenants: &[crate::tenant::Tenant]) -> bool {
-        if tenants.len() < 4 { return false; }
+    pub fn should_form_council(&self, tenants: &[crate::tenant::Tenant], config: &crate::data::config::GentrificationConfig) -> bool {
+        if tenants.len() < config.council_min_tenants { return false; }
         
         let unhappy_count = tenants.iter().filter(|t| t.is_unhappy()).count();
         let relative_unhappiness = unhappy_count as f32 / tenants.len() as f32;
         
-        // Formation threshold: 40% of tenants unhappy
-        relative_unhappiness >= 0.4
+        // Formation threshold from config
+        relative_unhappiness >= config.council_formation_threshold
     }
 }
 
@@ -286,8 +296,9 @@ mod tests {
 
     #[test]
     fn test_relationship_modifiers() {
-        assert!(RelationshipType::Friendly.happiness_modifier() > 0);
-        assert!(RelationshipType::Hostile.happiness_modifier() < 0);
+        let config = RelationshipsConfig::default();
+        assert!(RelationshipType::Friendly.happiness_modifier(&config) > 0);
+        assert!(RelationshipType::Hostile.happiness_modifier(&config) < 0);
     }
 
     #[test]
