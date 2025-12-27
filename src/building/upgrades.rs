@@ -59,8 +59,21 @@ impl UpgradeAction {
             UpgradeAction::RepairHallway { amount } => {
                 Some(amount * config.hallway_repair_cost_per_point)
             }
-            UpgradeAction::Apply { upgrade_id, .. } => {
-                upgrades.get(upgrade_id).map(|u| u.cost)
+            UpgradeAction::Apply { upgrade_id, target_id } => {
+                let base_cost = upgrades.get(upgrade_id).map(|u| u.cost)?;
+                
+                // Discount logic: If upgrading to Cozy and already Practical, discount by 5000
+                if upgrade_id == "upgrade_to_cozy" {
+                    if let Some(tid) = target_id {
+                        if let Some(apt) = building.get_apartment(*tid) {
+                            if apt.design == DesignType::Practical {
+                                return Some(base_cost - 5000);
+                            }
+                        }
+                    }
+                }
+                
+                Some(base_cost)
             }
         }
     }
@@ -102,6 +115,14 @@ pub fn apply_upgrade(building: &mut Building, action: &UpgradeAction, upgrades: 
                             crate::data::config::UpgradeEffect::RemoveFlag(flag) => {
                                 apt.flags.remove(flag);
                             }
+                            crate::data::config::UpgradeEffect::SetDesign(design_str) => {
+                                match design_str.as_str() {
+                                    "Bare" => apt.design = DesignType::Bare,
+                                    "Practical" => apt.design = DesignType::Practical,
+                                    "Cozy" => apt.design = DesignType::Cozy,
+                                    _ => {}
+                                }
+                            }
                             _ => {}
                         }
                     }
@@ -138,12 +159,7 @@ pub fn available_apartment_upgrades(apt: &Apartment, upgrades: &HashMap<String, 
         });
     }
 
-    // 2. Design (hardcoded logic)
-    if apt.design.next_upgrade().is_some() {
-        actions.push(UpgradeAction::UpgradeDesign { apartment_id: apt.id });
-    }
-
-    // 3. Generic Upgrades
+    // 2. Generic Upgrades (includes Design upgrades now)
     for (id, def) in upgrades {
         if def.target == UpgradeTarget::Apartment {
             if check_requirements(&def.requirements, apt, None) {
@@ -196,6 +212,22 @@ fn check_requirements(reqs: &[UpgradeRequirement], apt: &Apartment, _building: O
                     || (flag == "has_soundproofing" && apt.has_soundproofing)
                     || (flag == "has_renovated_kitchen" && apt.kitchen_level >= 2);
                 if !has { return false; }
+            }
+            UpgradeRequirement::HasDesign(design_str) => {
+                let current = match apt.design {
+                    DesignType::Bare => "Bare",
+                    DesignType::Practical => "Practical",
+                    DesignType::Cozy => "Cozy",
+                };
+                if current != design_str { return false; }
+            }
+            UpgradeRequirement::MissingDesign(design_str) => {
+                let current = match apt.design {
+                    DesignType::Bare => "Bare",
+                    DesignType::Practical => "Practical",
+                    DesignType::Cozy => "Cozy",
+                };
+                if current == design_str { return false; }
             }
              _ => {} // Implement generic stat checks later if needed
         }

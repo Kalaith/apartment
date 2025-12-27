@@ -528,12 +528,28 @@
              // Phase 3: Tenant requests
              UiAction::ApproveRequest { tenant_id } => {
                  if let Some(story) = self.tenant_stories.get_mut(&tenant_id) {
-                     if story.pending_request.take().is_some() {
-                         story.add_event(self.current_tick, "Request approved by landlord", 
-                             StoryImpact::Happiness(15));
+                     if let Some(request) = story.pending_request.take() {
+                         let effect = request.approval_effect();
+                         story.add_event(self.current_tick, "Request approved by landlord", effect.clone());
                          
-                         if let Some(tenant) = self.tenants.iter_mut().find(|t| t.id == tenant_id) {
-                             tenant.happiness = (tenant.happiness + 15).min(100);
+                         let mut stack = vec![effect];
+                         while let Some(e) = stack.pop() {
+                             match e {
+                                 StoryImpact::Happiness(amount) => {
+                                     if let Some(tenant) = self.tenants.iter_mut().find(|t| t.id == tenant_id) {
+                                         tenant.happiness = (tenant.happiness + amount).clamp(0, 100);
+                                     }
+                                 },
+                                 StoryImpact::SetApartmentFlag(flag) => {
+                                     if let Some(apt) = self.building.apartments.iter_mut().find(|a| a.tenant_id == Some(tenant_id)) {
+                                         apt.flags.insert(flag);
+                                     }
+                                 },
+                                 StoryImpact::Multiple(sub_effects) => {
+                                     stack.extend(sub_effects);
+                                 },
+                                 _ => {}
+                             }
                          }
                      }
                  }
@@ -756,6 +772,36 @@
             NarrativeEffect::MoveOut { tenant_id } => {
                  if let Some(tenant) = self.tenants.iter_mut().find(|t| t.id == *tenant_id) {
                     tenant.happiness = 0; // Force leave
+                 }
+            },
+            NarrativeEffect::SellBuilding { building_id } => {
+                 // Remove building from city
+                 if let Some(pos) = self.city.buildings.iter().position(|b| self.city.get_building_id(b) == *building_id) {
+                     self.city.buildings.remove(pos);
+                 } else {
+                     // Fallback if ID lookup fails (might be active building)
+                     // Implementation note: building_id logic in city might need review, 
+                     // but for now we assume index 0 if only one building.
+                 }
+                 
+                 if self.city.buildings.is_empty() {
+                     // Cashed out completely! Victory!
+                     self.game_outcome = Some(crate::simulation::GameOutcome::Victory { 
+                         score: self.funds.balance, // Score is cash
+                         months: self.current_tick,
+                         total_income: self.funds.total_income,
+                     });
+                     self.view_mode = ViewMode::CareerSummary;
+                 } else {
+                     // Switch to another building
+                     self.city.active_building_index = 0;
+                     self.sync_building();
+                     self.floating_texts.push(FloatingText::new(
+                         "Building Sold!",
+                         screen_width() / 2.0,
+                         screen_height() / 2.0,
+                         colors::POSITIVE,
+                     ));
                  }
             },
             NarrativeEffect::Multiple { effects } => {

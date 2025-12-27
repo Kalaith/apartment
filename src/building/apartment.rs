@@ -116,6 +116,8 @@ impl Apartment {
     pub fn effective_noise(&self) -> NoiseLevel {
         if self.has_soundproofing {
             NoiseLevel::Low
+        } else if self.flags.contains("high_noise") {
+            NoiseLevel::High
         } else {
             self.base_noise.clone()
         }

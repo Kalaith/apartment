@@ -515,6 +515,40 @@ fn draw_tenant_info(
                              draw_text(&req_text, content_x, *y, 16.0, colors::TEXT);
                              *y += 25.0;
                              
+                             // Show effects
+                             let effect = request.approval_effect();
+                             let mut effect_text = String::new();
+                             
+                             // Simple recursive helper to format text
+                             let mut stack = vec![effect];
+                             while let Some(e) = stack.pop() {
+                                 match e {
+                                     crate::narrative::StoryImpact::Happiness(amount) => {
+                                         if !effect_text.is_empty() { effect_text.push_str(", "); }
+                                         effect_text.push_str(&format!("Happiness {:+}", amount));
+                                     },
+                                     crate::narrative::StoryImpact::SetApartmentFlag(flag) => {
+                                         if !effect_text.is_empty() { effect_text.push_str(", "); }
+                                         if flag == "high_noise" {
+                                             effect_text.push_str("Noise Increases");
+                                         } else {
+                                             effect_text.push_str(&format!("Flag: {}", flag));
+                                         }
+                                     },
+                                     crate::narrative::StoryImpact::Multiple(list) => {
+                                         for item in list.iter().rev() {
+                                             stack.push(item.clone());
+                                         }
+                                     },
+                                     _ => {}
+                                 }
+                             }
+                             
+                             if !effect_text.is_empty() {
+                                 draw_text(&format!("Effect: {}", effect_text), content_x, *y, 14.0, colors::ACCENT);
+                                 *y += 25.0;
+                             }
+
                              // Approve/Deny Buttons
                              if crate::ui::common::colored_button(content_x, *y, 100.0, 30.0, "APPROVE", true, colors::POSITIVE, colors::TEXT_BRIGHT) {
                                  return Some(UiAction::ApproveRequest { tenant_id: tenant.id });

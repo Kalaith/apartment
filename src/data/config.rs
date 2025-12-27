@@ -61,6 +61,7 @@ pub enum UpgradeEffect {
     SetFlag(String),
     RemoveFlag(String),
     ModifyStat { stat: String, amount: i32 },
+    SetDesign(String),
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -70,6 +71,8 @@ pub enum UpgradeRequirement {
     HasFlag(String),
     MinStat { stat: String, value: i32 },
     MaxStat { stat: String, value: i32 },
+    HasDesign(String),
+    MissingDesign(String),
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

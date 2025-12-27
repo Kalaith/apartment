@@ -107,6 +107,22 @@ pub fn process_upgrade(
                                           (flag == "has_renovated_kitchen" && apt.kitchen_level >= 2);
                                 if !has { return Err(format!("Missing requirement: {}", flag)); }
                             }
+                            crate::data::config::UpgradeRequirement::HasDesign(design_str) => {
+                                let current = match apt.design {
+                                    crate::building::DesignType::Bare => "Bare",
+                                    crate::building::DesignType::Practical => "Practical",
+                                    crate::building::DesignType::Cozy => "Cozy",
+                                };
+                                if current != design_str { return Err(format!("Requirement failed: Design must be {}", design_str)); }
+                            }
+                            crate::data::config::UpgradeRequirement::MissingDesign(design_str) => {
+                                let current = match apt.design {
+                                    crate::building::DesignType::Bare => "Bare",
+                                    crate::building::DesignType::Practical => "Practical",
+                                    crate::building::DesignType::Cozy => "Cozy",
+                                };
+                                if current == design_str { return Err(format!("Requirement failed: Design cannot be {}", design_str)); }
+                            }
                              _ => {}
                         }
                     }

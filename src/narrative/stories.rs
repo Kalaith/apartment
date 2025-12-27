@@ -29,6 +29,8 @@ pub enum StoryImpact {
     Roommate,
     /// Tenant has life event
     LifeChange(LifeChangeType),
+    SetApartmentFlag(String),
+    Multiple(Vec<StoryImpact>),
 }
 
 /// Types of requests tenants can make
@@ -55,6 +57,23 @@ impl TenantRequest {
             TenantRequest::HomeBusiness { .. } => StoryImpact::Happiness(-8),
             TenantRequest::Modification { .. } => StoryImpact::Happiness(-5),
             TenantRequest::Sublease => StoryImpact::MoveOutRisk(30),
+        }
+    }
+
+    pub fn approval_effect(&self) -> StoryImpact {
+        match self {
+            TenantRequest::Pet { .. } => StoryImpact::Happiness(15),
+            TenantRequest::TemporaryGuest { .. } => StoryImpact::Happiness(10),
+            TenantRequest::HomeBusiness { business_type } => {
+                let impacts = if business_type.to_lowercase().contains("music") || business_type.to_lowercase().contains("drum") {
+                     vec![StoryImpact::Happiness(15), StoryImpact::SetApartmentFlag("high_noise".to_string())]
+                } else {
+                     vec![StoryImpact::Happiness(15)]
+                };
+                StoryImpact::Multiple(impacts)
+            },
+            TenantRequest::Modification { .. } => StoryImpact::Happiness(10),
+            TenantRequest::Sublease => StoryImpact::Happiness(5),
         }
     }
 }

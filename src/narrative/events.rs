@@ -83,6 +83,8 @@ pub enum NarrativeEffect {
     OpinionChange { tenant_id: u32, amount: i32 },
     /// Tenant moves out
     MoveOut { tenant_id: u32 },
+    /// Sell the building (Game Over / Victory)
+    SellBuilding { building_id: u32 },
     /// Multiple effects
     Multiple { effects: Vec<NarrativeEffect> },
 }
@@ -333,9 +335,10 @@ impl NarrativeEventSystem {
         event
     }
 
-    fn generate_offer_event(&self, month: u32, _building_id: u32, building: &crate::building::Building) -> NarrativeEvent {
+    fn generate_offer_event(&self, month: u32, building_id: u32, building: &crate::building::Building) -> NarrativeEvent {
         let base_value = 50000 * building.apartments.len() as i32;
-        let offer = (base_value as f32 * gen_range(0.9, 1.3)) as i32;
+        // Increased offer multiplier to 2.5x - 4.0x base value to be "worth it"
+        let offer = (base_value as f32 * gen_range(2.5, 4.0)) as i32;
 
         NarrativeEvent::with_choices(
             0,
@@ -350,7 +353,12 @@ impl NarrativeEventSystem {
                 NarrativeChoice {
                     label: "Accept Offer".to_string(),
                     description: format!("Sell the building for ${}", offer),
-                    effect: NarrativeEffect::Money { amount: offer },
+                    effect: NarrativeEffect::Multiple { 
+                        effects: vec![
+                            NarrativeEffect::Money { amount: offer },
+                            NarrativeEffect::SellBuilding { building_id }
+                        ]
+                    },
                     reputation_change: -20,
                 },
                 NarrativeChoice {

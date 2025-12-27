@@ -88,7 +88,7 @@ impl TutorialManager {
             pending_messages: vec![
                 "Welcome! I'm your Uncle Artie. I've left you this building in my will.".to_string(),
                 "It's a bit of a mess, but nothing we can't fix together.".to_string(),
-                "First, select an apartment and do some repairs. Then repair the Hallway too.".to_string(),
+                "First, select the Hallway and repair it to fix up the place.".to_string(),
             ],
             rival_introduced: false,
         }

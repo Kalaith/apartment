@@ -2,7 +2,7 @@
     "soundproofing": {
         "id": "soundproofing",
         "name": "Install Soundproofing",
-        "cost": 300,
+        "cost": 3000,
         "target": "apartment",
         "effects": [
             {
@@ -20,7 +20,7 @@
     "lighting_upgrade": {
         "id": "lighting_upgrade",
         "name": "Upgrade Lighting",
-        "cost": 200,
+        "cost": 2000,
         "target": "apartment",
         "effects": [
             {
@@ -38,7 +38,7 @@
     "kitchen_renovation": {
         "id": "kitchen_renovation",
         "name": "Renovate Kitchen",
-        "cost": 800,
+        "cost": 8000,
         "target": "apartment",
         "effects": [
             {
@@ -212,6 +212,42 @@
             {
                 "type": "has_flag",
                 "value": "staff_receptionist"
+            }
+        ]
+    },
+    "upgrade_to_practical": {
+        "id": "upgrade_to_practical",
+        "name": "Upgrade to Practical",
+        "cost": 5000,
+        "target": "apartment",
+        "effects": [
+            {
+                "type": "set_design",
+                "value": "Practical"
+            }
+        ],
+        "requirements": [
+            {
+                "type": "missing_design",
+                "value": "Practical"
+            }
+        ]
+    },
+    "upgrade_to_cozy": {
+        "id": "upgrade_to_cozy",
+        "name": "Upgrade to Cozy",
+        "cost": 10000,
+        "target": "apartment",
+        "effects": [
+            {
+                "type": "set_design",
+                "value": "Cozy"
+            }
+        ],
+        "requirements": [
+            {
+                "type": "missing_design",
+                "value": "Cozy"
             }
         ]
     }
