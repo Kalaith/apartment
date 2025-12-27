@@ -7,6 +7,7 @@ use crate::ui::{
     draw_header, draw_building_view, draw_apartment_panel, draw_hallway_panel,
     draw_application_panel, draw_notifications, draw_ownership_panel,
 };
+use crate::narrative::NotificationCategory;
 use crate::ui::layout::HEADER_HEIGHT;
 
 use super::gameplay::{GameplayState, ViewMode};
@@ -19,7 +20,7 @@ impl GameplayState {
                 self.draw_building_mode(assets);
             }
             ViewMode::CityMap => {
-                if let Some(action) = crate::ui::city_view::draw_city_map(&self.city, assets) {
+                if let Some(action) = crate::ui::city_view::draw_city_map(&self.city, assets, &self.narrative_events) {
                     self.handle_city_action(action);
                 }
                 
@@ -36,6 +37,27 @@ impl GameplayState {
             ViewMode::Mail => {
                 self.draw_mail_view(assets);
             }
+            ViewMode::CareerSummary => {
+                if let Some(action) = crate::ui::career_summary::draw_career_summary(self) {
+                     self.pending_actions.push(action);
+                }
+            }
+        }
+
+        // Draw blocking narrative event modal (Phase 4)
+        // Find first unread event that requires response
+        let blocking_event = self.narrative_events.events.iter()
+            .find(|e| !e.read && e.requires_response);
+            
+        if let Some(event) = blocking_event {
+            if let Some(action) = crate::ui::event_modal::draw_event_modal(event) {
+                self.pending_actions.push(action);
+            }
+        }
+
+        // Draw notifications (hints, etc) on top
+        if !self.tutorial.active {
+            self.draw_notification_overlay();
         }
         
         draw_notifications(&self.event_log, self.current_tick, assets);
@@ -45,9 +67,13 @@ impl GameplayState {
             text.draw();
         }
         
-        // Tutorial overlay
-        if self.tutorial.active {
+        // Tutorial overlay (takes precedence)
+        if self.tutorial.active && !self.tutorial.pending_messages.is_empty() {
             self.draw_tutorial_overlay(assets);
+        }
+        // Notification overlay (shows when tutorial is done/empty)
+        else if self.notifications.has_pending() {
+            self.draw_notification_overlay();
         }
         
         // Draw pause menu on top of everything if active
@@ -77,7 +103,7 @@ impl GameplayState {
         match self.selection {
             Selection::Apartment(id) => {
                  if let Some(apt) = self.building.get_apartment(id) {
-                     let (action, new_scroll) = draw_apartment_panel(apt, &self.building, &self.tenants, self.funds.balance, 0.0, self.panel_scroll_offset, assets, &self.config);
+                     let (action, new_scroll) = draw_apartment_panel(apt, &self.building, &self.tenants, self.funds.balance, 0.0, self.panel_scroll_offset, assets, &self.config, &self.tenant_network, &self.tenant_stories);
                      self.panel_scroll_offset = new_scroll;
                      if let Some(action) = action {
                          self.pending_actions.push(action);
@@ -395,5 +421,84 @@ impl GameplayState {
         let text_width = measure_text(text, None, 22, 1.0).width;
         draw_text(text, btn_x + (btn_w - text_width) / 2.0, btn_y + btn_h / 2.0 + 7.0, 22.0, colors::TEXT_BRIGHT);
         // Click handling is done in gameplay.rs update function
+    }
+    
+    /// Draw the notification overlay (similar to tutorial but for game hints and relationship changes)
+    pub(super) fn draw_notification_overlay(&self) {
+        if self.notifications.pending.is_empty() {
+            return;
+        }
+        
+        let notification = &self.notifications.pending[0];
+        
+        // Layout - similar to tutorial overlay
+        let panel_w = 550.0;
+        let panel_h = 150.0;
+        let panel_x = (screen_width() - panel_w) / 2.0;
+        let panel_y = screen_height() - panel_h - 20.0;
+        
+        // Category-based border color
+        let border_color = match notification.category {
+            NotificationCategory::Positive => colors::POSITIVE,
+            NotificationCategory::Warning => colors::WARNING,
+            NotificationCategory::Info => colors::ACCENT,
+            NotificationCategory::Hint => colors::TEXT_DIM,
+        };
+        
+        // Background
+        draw_rectangle(panel_x, panel_y, panel_w, panel_h, colors::PANEL);
+        draw_rectangle_lines(panel_x, panel_y, panel_w, panel_h, 3.0, border_color);
+        
+        // Icon
+        draw_text(&notification.icon, panel_x + 20.0, panel_y + 50.0, 40.0, WHITE);
+        
+        // Message (with word wrapping)
+        let max_chars_per_line: usize = 50;
+        let mut y = panel_y + 40.0;
+        let words: Vec<&str> = notification.message.split(' ').collect();
+        let mut current_line = String::new();
+        
+        for word in words {
+            if current_line.len() + word.len() > max_chars_per_line {
+                draw_text(&current_line, panel_x + 80.0, y, 20.0, colors::TEXT_BRIGHT);
+                y += 24.0;
+                current_line.clear();
+            }
+            if !current_line.is_empty() {
+                current_line.push(' ');
+            }
+            current_line.push_str(word);
+        }
+        if !current_line.is_empty() {
+            draw_text(&current_line, panel_x + 80.0, y, 20.0, colors::TEXT_BRIGHT);
+            y += 24.0;
+        }
+        
+        // Description (if any)
+        if let Some(desc) = &notification.description {
+            draw_text(desc, panel_x + 80.0, y + 5.0, 14.0, colors::TEXT_DIM);
+        }
+        
+        // OK Button
+        let btn_w = 100.0;
+        let btn_h = 32.0;
+        let btn_x = panel_x + panel_w - btn_w - 15.0;
+        let btn_y = panel_y + panel_h - btn_h - 12.0;
+        
+        let mouse = mouse_position();
+        let hovered = mouse.0 >= btn_x && mouse.0 <= btn_x + btn_w && mouse.1 >= btn_y && mouse.1 <= btn_y + btn_h;
+        
+        let bg_color = if hovered {
+            colors::HOVERED
+        } else {
+            border_color
+        };
+        
+        draw_rectangle(btn_x, btn_y, btn_w, btn_h, bg_color);
+        draw_rectangle_lines(btn_x, btn_y, btn_w, btn_h, 2.0, colors::TEXT_BRIGHT);
+        
+        let text = "OK";
+        let text_width = measure_text(text, None, 20, 1.0).width;
+        draw_text(text, btn_x + (btn_w - text_width) / 2.0, btn_y + btn_h / 2.0 + 6.0, 20.0, colors::TEXT_BRIGHT);
     }
 }

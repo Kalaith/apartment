@@ -1,0 +1,54 @@
+[
+    {
+        "id": "first_tenant",
+        "name": "First Lease",
+        "description": "Successfully move in your first tenant.",
+        "condition": {
+            "type": "TotalTenants",
+            "min": 1
+        }
+    },
+    {
+        "id": "money_maker",
+        "name": "Money Maker",
+        "description": "Amass a fortune of over $10,000.",
+        "condition": {
+            "type": "Funds",
+            "min": 10000
+        }
+    },
+    {
+        "id": "slumlord",
+        "name": "Slumlord",
+        "description": "Have average tenant happiness drop below 25%.",
+        "condition": {
+            "type": "AvgHappiness",
+            "max": 25
+        }
+    },
+    {
+        "id": "saint",
+        "name": "Saint of the City",
+        "description": "Reach maximum reputation with a neighborhood.",
+        "condition": {
+            "type": "MaxReputation",
+            "min": 100
+        }
+    },
+    {
+        "id": "full_house",
+        "name": "Full House",
+        "description": "Achieve 100% occupancy.",
+        "condition": {
+            "type": "FullOccupancy"
+        }
+    },
+    {
+        "id": "survivor",
+        "name": "Survivor",
+        "description": "Complete the 3-year term without going bankrupt.",
+        "condition": {
+            "type": "GameComplete"
+        }
+    }
+]

@@ -1,0 +1,187 @@
+{
+    "hostile": [
+        {
+            "id": "noise_complaint_music",
+            "trigger_strength_max": 30,
+            "probability": 15,
+            "headline": "Noise Complaint",
+            "description": "{tenant_a} in {apt_a} is complaining about loud music from {tenant_b} in {apt_b}. 'It's 2 AM and the bass is shaking my walls!'",
+            "choices": [
+                {
+                    "label": "Warn {tenant_b}",
+                    "description": "Tell them to keep it down.",
+                    "effect": {
+                        "type": "Multiple",
+                        "effects": [
+                            {
+                                "type": "TenantHappiness",
+                                "tenant_id": 0,
+                                "change": 10
+                            },
+                            {
+                                "type": "TenantHappiness",
+                                "tenant_id": 1,
+                                "change": -5
+                            },
+                            {
+                                "type": "RelationshipStrength",
+                                "tenant_a_id": 0,
+                                "tenant_b_id": 0,
+                                "change": -5
+                            }
+                        ]
+                    },
+                    "reputation_change": 0
+                },
+                {
+                    "label": "Ignore it",
+                    "description": "Let them sort it out themselves.",
+                    "effect": {
+                        "type": "TenantHappiness",
+                        "tenant_id": 0,
+                        "change": -10
+                    },
+                    "reputation_change": -5
+                },
+                {
+                    "label": "Eviction Warning",
+                    "description": "Threaten {tenant_b} with eviction if they persist.",
+                    "effect": {
+                        "type": "Multiple",
+                        "effects": [
+                            {
+                                "type": "TenantHappiness",
+                                "tenant_id": 0,
+                                "change": 20
+                            },
+                            {
+                                "type": "TenantHappiness",
+                                "tenant_id": 1,
+                                "change": -20
+                            },
+                            {
+                                "type": "OpinionChange",
+                                "tenant_id": 0,
+                                "amount": -30
+                            }
+                        ]
+                    },
+                    "reputation_change": 5
+                }
+            ]
+        },
+        {
+            "id": "common_area_conflict",
+            "trigger_strength_max": 20,
+            "probability": 10,
+            "headline": "Dispute in the Hallway",
+            "description": "{tenant_a} and {tenant_b} got into a shouting match over left-out trash.",
+            "choices": [
+                {
+                    "label": "Fine both tenants",
+                    "description": "Implement a $50 fine for disturbance.",
+                    "effect": {
+                        "type": "Multiple",
+                        "effects": [
+                            {
+                                "type": "Money",
+                                "amount": 100
+                            },
+                            {
+                                "type": "TenantHappiness",
+                                "tenant_id": 0,
+                                "change": -15
+                            },
+                            {
+                                "type": "TenantHappiness",
+                                "tenant_id": 1,
+                                "change": -15
+                            }
+                        ]
+                    },
+                    "reputation_change": -10
+                },
+                {
+                    "label": "Send Mediator",
+                    "description": "Hire a professional mediator ($100).",
+                    "effect": {
+                        "type": "Multiple",
+                        "effects": [
+                            {
+                                "type": "Money",
+                                "amount": -100
+                            },
+                            {
+                                "type": "RelationshipStrength",
+                                "tenant_a_id": 0,
+                                "tenant_b_id": 0,
+                                "change": 15
+                            }
+                        ]
+                    },
+                    "reputation_change": 10
+                }
+            ]
+        }
+    ],
+    "friendly": [
+        {
+            "id": "dinner_party",
+            "trigger_strength_min": 60,
+            "probability": 10,
+            "headline": "Dinner Party",
+            "description": "{tenant_a} invited {tenant_b} over for a dinner party. They seem to be getting along great.",
+            "choices": [],
+            "default_effect": {
+                "type": "RelationshipStrength",
+                "tenant_a_id": 0,
+                "tenant_b_id": 0,
+                "change": 5
+            }
+        },
+        {
+            "id": "item_borrow",
+            "trigger_strength_min": 50,
+            "probability": 20,
+            "headline": "Neighborly Help",
+            "description": "{tenant_a} helped {tenant_b} with some repairs.",
+            "choices": [],
+            "default_effect": {
+                "type": "RelationshipStrength",
+                "tenant_a_id": 0,
+                "tenant_b_id": 0,
+                "change": 3
+            }
+        }
+    ],
+    "romance": [
+        {
+            "id": "proposal",
+            "trigger_strength_min": 90,
+            "probability": 5,
+            "headline": "Moving In Together?",
+            "description": "{tenant_a} and {tenant_b} are considering moving into a single unit together.",
+            "choices": [
+                {
+                    "label": "Encourage it",
+                    "description": "Allow them to break lease to move in together (Unit vacates).",
+                    "effect": {
+                        "type": "MoveOut",
+                        "tenant_id": 0
+                    },
+                    "reputation_change": 10
+                },
+                {
+                    "label": "Enforce Lease",
+                    "description": "Remind them of lease breakage fees.",
+                    "effect": {
+                        "type": "TenantHappiness",
+                        "tenant_id": 0,
+                        "change": -10
+                    },
+                    "reputation_change": -5
+                }
+            ]
+        }
+    ]
+}

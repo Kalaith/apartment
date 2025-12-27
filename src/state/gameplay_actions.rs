@@ -4,6 +4,7 @@
  use crate::city::NeighborhoodType;
  use crate::economy::process_upgrade;
  use crate::narrative::{TenantStory, StoryImpact};
+ use crate::narrative::events::{NarrativeEffect};
  use crate::simulation::{advance_tick, GameEvent};
  use crate::ui::{UiAction, Selection, FloatingText, colors};
  
@@ -74,7 +75,12 @@
          self.city.tick();
          
          // Update tenant relationships
-         self.tenant_network.tick(&self.tenants, &self.building, &self.config.relationships);
+         let (rel_changes, rel_events) = self.tenant_network.tick(&self.tenants, &self.building, &self.config.relationships, &self.relationship_events_config);
+         self.notifications.add_relationship_changes(rel_changes);
+         for mut event in rel_events {
+             event.month = self.current_tick;
+             self.narrative_events.events.push(event);
+         }
          
          // Update compliance system (check inspection timers)
          self.compliance.tick(self.current_tick);
@@ -131,7 +137,7 @@
          for tenant in &self.tenants {
              if let Some(story) = self.tenant_stories.get_mut(&tenant.id) {
                  if macroquad::rand::gen_range(0, 100) < 10 {
-                     story.make_request(&tenant.archetype);
+                     story.make_request(&tenant.archetype, &self.tenant_events_config);
                  }
              }
          }
@@ -224,6 +230,40 @@
          let pending_count = self.dialogue_system.pending_dialogues().len();
          if pending_count > 0 {
              println!("Pending dialogues: {}", pending_count);
+         }
+         
+         
+         // Generate contextual hints
+         let total_units = self.building.apartments.len();
+         let vacancy_count = self.building.apartments.iter().filter(|a| a.is_vacant()).count();
+         let avg_condition = self.building.average_condition();
+         let any_unhappy = self.tenants.iter().any(|t| t.is_unhappy());
+         
+         self.notifications.check_context_hints(
+             self.current_tick,
+             vacancy_count,
+             total_units,
+             avg_condition,
+             self.funds.balance,
+             any_unhappy
+         );
+         
+         // Phase 5: Check for game completion
+         let duration = self.config.win_conditions.game_duration_ticks.unwrap_or(36);
+         if self.current_tick >= duration && self.game_outcome.is_none() {
+             self.game_outcome = Some(crate::simulation::GameOutcome::Victory { 
+                 score: 0, 
+                 months: self.current_tick,
+                 total_income: self.funds.total_income,
+             });
+             self.view_mode = ViewMode::CareerSummary;
+              // Check final achievements immediately
+             let new_unlocks = self.achievements.check_new_unlocks(
+                 &self.city, &self.building, &self.tenants, &self.funds, self.current_tick, &self.config
+             );
+             for id in new_unlocks {
+                 self.achievements.unlock(&id);
+             }
          }
          
          self.update_missions();
@@ -408,7 +448,7 @@
                  self.end_turn();
              }
              UiAction::ReturnToMenu => {
-                 // Handled in update() return value
+                 self.pending_quit_to_menu = true;
              }
              
              // Phase 3: City navigation
@@ -622,6 +662,11 @@
                      ));
                  }
              }
+             UiAction::ResolveEventChoice { event_id, choice_index } => {
+                 if let Some(effect) = self.narrative_events.process_choice(event_id, choice_index) {
+                     self.apply_narrative_effect(&effect);
+                 }
+             }
          }
      }
      
@@ -633,6 +678,11 @@
                  // Could show neighborhood details
              }
              CityMapAction::SelectBuilding(index) => {
+                 self.city.switch_building(index);
+                 self.sync_building();
+                 // Stay in map view, just update selection
+             }
+             CityMapAction::EnterBuilding(index) => {
                  self.city.switch_building(index);
                  self.sync_building();
                  self.view_mode = ViewMode::Building;
@@ -658,4 +708,62 @@
      pub fn update_missions(&mut self) {
         mission_system::update_missions(self);
      }
+
+
+    /// Apply a narrative effect
+    fn apply_narrative_effect(&mut self, effect: &NarrativeEffect) {
+        match effect {
+            NarrativeEffect::None => {},
+            NarrativeEffect::Money { amount } => {
+                if *amount < 0 {
+                    self.funds.deduct_expense(
+                        crate::economy::Transaction {
+                            amount: amount.abs(),
+                            transaction_type: crate::economy::TransactionType::CriticalFailure,
+                            description: "Event Consequence".to_string(),
+                            tick: self.current_tick,
+                        }
+                    );
+                } else {
+                     self.funds.add_income(
+                        crate::economy::Transaction {
+                            amount: *amount,
+                            transaction_type: crate::economy::TransactionType::Grant,
+                            description: "Event Reward".to_string(),
+                            tick: self.current_tick,
+                        }
+                    );
+                }
+            },
+            NarrativeEffect::TenantHappiness { tenant_id, change } => {
+                if let Some(tenant) = self.tenants.iter_mut().find(|t| t.id == *tenant_id) {
+                    tenant.happiness = (tenant.happiness + change).clamp(0, 100);
+                }
+            },
+            NarrativeEffect::OpinionChange { tenant_id, amount } => {
+                 if let Some(tenant) = self.tenants.iter_mut().find(|t| t.id == *tenant_id) {
+                    tenant.landlord_opinion = (tenant.landlord_opinion + amount).clamp(-100, 100);
+                }
+            },
+            NarrativeEffect::RelationshipStrength { tenant_a_id, tenant_b_id, change } => {
+                 if let Some(rel) = self.tenant_network.relationships.iter_mut().find(|r| 
+                    (r.tenant_a_id == *tenant_a_id && r.tenant_b_id == *tenant_b_id) ||
+                    (r.tenant_a_id == *tenant_b_id && r.tenant_b_id == *tenant_a_id)
+                ) {
+                    rel.strength = (rel.strength + change).clamp(0, 100);
+                }
+            },
+            NarrativeEffect::MoveOut { tenant_id } => {
+                 if let Some(tenant) = self.tenants.iter_mut().find(|t| t.id == *tenant_id) {
+                    tenant.happiness = 0; // Force leave
+                 }
+            },
+            NarrativeEffect::Multiple { effects } => {
+                 for e in effects {
+                     self.apply_narrative_effect(e);
+                 }
+            },
+            _ => {} // Ignore others
+        }
+    }
  }

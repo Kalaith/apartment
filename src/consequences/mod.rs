@@ -9,6 +9,6 @@ mod relationships;
 mod regulations;
 mod gentrification;
 
-pub use relationships::TenantNetwork;
+pub use relationships::{TenantNetwork, RelationshipType};
 pub use regulations::ComplianceSystem;
 pub use gentrification::GentrificationTracker;

@@ -1,11 +1,12 @@
 
 use macroquad::prelude::*;
 use crate::city::{City, Neighborhood, NeighborhoodType, PropertyListing};
+use crate::narrative::NarrativeEventSystem;
 use crate::ui::colors;
 use crate::assets::AssetManager;
 
 /// Draw the city map showing all neighborhoods
-pub fn draw_city_map(city: &City, assets: &AssetManager) -> Option<CityMapAction> {
+pub fn draw_city_map(city: &City, assets: &AssetManager, narrative: &NarrativeEventSystem) -> Option<CityMapAction> {
     let map_x = 20.0;
     let map_y = 80.0;
     let map_width = screen_width() * 0.5 - 40.0;
@@ -49,7 +50,7 @@ pub fn draw_city_map(city: &City, assets: &AssetManager) -> Option<CityMapAction
         let x = grid_x + col as f32 * (cell_width + padding);
         let y = grid_y + row as f32 * (cell_height + padding);
 
-        if let Some(a) = draw_neighborhood_cell(neighborhood, x, y, cell_width, cell_height, city, assets) {
+        if let Some(a) = draw_neighborhood_cell(neighborhood, x, y, cell_width, cell_height, city, assets, narrative) {
             action = Some(a);
         }
     }
@@ -66,6 +67,7 @@ fn draw_neighborhood_cell(
     height: f32,
     _city: &City,
     assets: &AssetManager,
+    narrative: &NarrativeEventSystem,
 ) -> Option<CityMapAction> {
     let mouse = mouse_position();
     let hovered = mouse.0 >= x && mouse.0 <= x + width 
@@ -180,6 +182,18 @@ fn draw_neighborhood_cell(
     );
     draw_progress_bar(x + 8.0, bar_y, bar_width, 8.0, neighborhood.reputation as f32 / 100.0, colors::POSITIVE);
 
+    // Event indicator
+    let has_event = narrative.events.iter().any(|e| 
+        !e.read && e.related_neighborhood_id == Some(neighborhood.id)
+    );
+
+    if has_event {
+        let icon_x = x + width - 30.0;
+        let icon_y = y + 30.0;
+        draw_circle(icon_x, icon_y, 12.0, colors::ACCENT);
+        draw_text("!", icon_x - 3.0, icon_y + 5.0, 20.0, colors::TEXT_BRIGHT);
+    }
+
     // Button area
     if hovered && is_mouse_button_pressed(MouseButton::Left) {
         return Some(CityMapAction::SelectNeighborhood(neighborhood.id));
@@ -245,6 +259,11 @@ pub fn draw_portfolio_panel(city: &City, selected_building: usize, assets: &Asse
 
         if is_selected {
             draw_rectangle_lines(item_x, y, item_width, item_height - 5.0, 2.0, colors::ACCENT);
+            
+            // Enter Button
+            if draw_button_mini("Enter", item_x + item_width - 70.0, y + 25.0, 60.0, 30.0) {
+                 action = Some(CityMapAction::EnterBuilding(index));
+            }
         }
 
         // Building name
@@ -292,7 +311,7 @@ pub fn draw_portfolio_panel(city: &City, selected_building: usize, assets: &Asse
         let hovered = mouse.0 >= item_x && mouse.0 <= item_x + item_width 
                    && mouse.1 >= y && mouse.1 <= y + item_height - 5.0;
 
-        if hovered && is_mouse_button_pressed(MouseButton::Left) {
+        if action.is_none() && hovered && is_mouse_button_pressed(MouseButton::Left) {
             action = Some(CityMapAction::SelectBuilding(index));
         }
 
@@ -384,7 +403,7 @@ pub fn draw_market_panel(
     }
 
     // Back button
-    if draw_button_icon("← Back to Map", panel_x + 15.0, panel_y + panel_height - 45.0, 150.0, 35.0) {
+    if draw_button_icon("← Back to Map", panel_x + 15.0, panel_y + panel_height - 60.0, 150.0, 35.0) {
         action = Some(CityMapAction::CloseMarket);
     }
 
@@ -542,6 +561,7 @@ pub enum CityMapAction {
     OpenMarket,
     CloseMarket,
     PurchaseBuilding(u32),
+    EnterBuilding(usize),
 }
 
 

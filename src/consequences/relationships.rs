@@ -1,6 +1,10 @@
 
 use serde::{Deserialize, Serialize};
 use crate::data::config::RelationshipsConfig;
+use crate::narrative::{RelationshipChange, NarrativeEvent, RelationshipEventsConfig};
+use crate::narrative::events::{NarrativeEventType, NarrativeChoice, NarrativeEffect};
+use crate::narrative::relationship_config::RelationshipEventTemplate;
+use macroquad::rand::gen_range;
 
 /// Type of relationship between tenants
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
@@ -146,9 +150,13 @@ impl TenantNetwork {
     }
 
     /// Create a new relationship
-    fn add_relationship(&mut self, tenant_a: u32, tenant_b: u32, rel_type: RelationshipType) {
+    fn add_relationship(&mut self, tenant_a: u32, tenant_b: u32, rel_type: RelationshipType) -> Option<RelationshipType> {
         if self.relationship_between(tenant_a, tenant_b).is_none() {
-            self.relationships.push(TenantRelationship::new(tenant_a, tenant_b, rel_type));
+            let rel = TenantRelationship::new(tenant_a, tenant_b, rel_type.clone());
+            self.relationships.push(rel);
+            Some(rel_type)
+        } else {
+            None
         }
     }
 
@@ -158,10 +166,17 @@ impl TenantNetwork {
         tenants: &[crate::tenant::Tenant], 
         building: &crate::building::Building,
         config: &RelationshipsConfig,
-    ) {
+        events_config: &RelationshipEventsConfig,
+    ) -> (Vec<RelationshipChange>, Vec<NarrativeEvent>) {
+        let mut changes = Vec::new();
+        let mut events = Vec::new(); // Phase 4
+        
         // Update existing relationships
         for relationship in &mut self.relationships {
             relationship.tick(config);
+            
+            // Phase 4D: Detect relationship changes (e.g. Hostile -> Neutral)
+            // This would require tracking old state, which we can add later
         }
 
         // Chance to form new relationships between neighbors
@@ -184,9 +199,131 @@ impl TenantNetwork {
                 // Chance per month for new relationship
                 if macroquad::rand::gen_range(0, 100) < config.formation_chance {
                     let rel_type = self.determine_initial_relationship(tenant_a, tenant_b, building, config);
-                    self.add_relationship(tenant_a.id, tenant_b.id, rel_type);
+                    if let Some(actual_type) = self.add_relationship(tenant_a.id, tenant_b.id, rel_type.clone()) {
+                        let is_positive = !matches!(actual_type, RelationshipType::Hostile);
+                        
+                        changes.push(RelationshipChange::NewRelationship {
+                            tenant_a_name: tenant_a.name.clone(),
+                            tenant_b_name: tenant_b.name.clone(),
+                            relationship_type: format!("{:?}", actual_type),
+                            is_positive,
+                        });
+                    }
                 }
             }
+        }
+        
+
+        
+        // Phase 4: Generate relationship events
+        for rel in &self.relationships {
+            let possible_events = match rel.relationship_type {
+                RelationshipType::Hostile => &events_config.hostile,
+                RelationshipType::Friendly => &events_config.friendly,
+                RelationshipType::Romantic | RelationshipType::Family => &events_config.romance,
+                _ => continue,
+            };
+
+            for template in possible_events {
+                // Check probability
+                if gen_range(0, 100) >= template.probability {
+                    continue;
+                }
+
+                // Check triggers
+                if let Some(min) = template.trigger_strength_min {
+                    if rel.strength < min { continue; }
+                }
+                if let Some(max) = template.trigger_strength_max {
+                    if rel.strength > max { continue; }
+                }
+
+                // Generate event
+                if let Some(event) = self.generate_event_from_template(template, rel, tenants, building) {
+                    events.push(event);
+                }
+            }
+        }
+        
+        (changes, events)
+    }
+
+    fn generate_event_from_template(
+        &self,
+        template: &RelationshipEventTemplate,
+        rel: &TenantRelationship,
+        tenants: &[crate::tenant::Tenant],
+        building: &crate::building::Building,
+    ) -> Option<NarrativeEvent> {
+        let tenant_a = tenants.iter().find(|t| t.id == rel.tenant_a_id)?;
+        let tenant_b = tenants.iter().find(|t| t.id == rel.tenant_b_id)?;
+        
+        let apt_a = tenant_a.apartment_id.and_then(|id| building.get_apartment(id))
+            .map(|a| format!("Apt {}", a.unit_number)).unwrap_or("Unknown".to_string());
+        let apt_b = tenant_b.apartment_id.and_then(|id| building.get_apartment(id))
+             .map(|a| format!("Apt {}", a.unit_number)).unwrap_or("Unknown".to_string());
+
+        let description = template.description
+            .replace("{tenant_a}", &tenant_a.name)
+            .replace("{tenant_b}", &tenant_b.name)
+            .replace("{apt_a}", &apt_a)
+            .replace("{apt_b}", &apt_b);
+
+        let choices: Vec<NarrativeChoice> = template.choices.iter().map(|c| {
+            NarrativeChoice {
+                label: c.label.replace("{tenant_a}", &tenant_a.name).replace("{tenant_b}", &tenant_b.name),
+                description: c.description.replace("{tenant_a}", &tenant_a.name).replace("{tenant_b}", &tenant_b.name),
+                effect: self.resolve_effect(&c.effect, rel.tenant_a_id, rel.tenant_b_id),
+                reputation_change: c.reputation_change,
+            }
+        }).collect();
+
+        let default_effect = template.default_effect.as_ref()
+            .map(|e| self.resolve_effect(e, rel.tenant_a_id, rel.tenant_b_id))
+            .unwrap_or(NarrativeEffect::None);
+
+        Some(NarrativeEvent {
+            id: 0, // Will be set by system
+            event_type: NarrativeEventType::RelationshipEvent,
+            month: 0, // Will be set by caller
+            headline: template.headline.clone(),
+            description,
+            choices,
+            default_effect,
+            read: false,
+            requires_response: !template.choices.is_empty(),
+            response_deadline: if !template.choices.is_empty() { Some(2) } else { None },
+            related_neighborhood_id: None, // Could link to neighborhood?
+        })
+    }
+
+    fn resolve_effect(&self, effect: &NarrativeEffect, a: u32, b: u32) -> NarrativeEffect {
+        match effect {
+            NarrativeEffect::RelationshipStrength { tenant_a_id, tenant_b_id, change } => {
+                // If IDs are 0, replace with actual
+                let ta = if *tenant_a_id == 0 { a } else { *tenant_a_id };
+                let tb = if *tenant_b_id == 0 { b } else { *tenant_b_id };
+                NarrativeEffect::RelationshipStrength { tenant_a_id: ta, tenant_b_id: tb, change: *change }
+            },
+            NarrativeEffect::TenantHappiness { tenant_id, change } => {
+
+                 let t_resolved = if *tenant_id == 0 { a } else if *tenant_id == 1 { b } else { *tenant_id };
+                 NarrativeEffect::TenantHappiness { tenant_id: t_resolved, change: *change }
+            },
+            NarrativeEffect::OpinionChange { tenant_id, amount } => {
+                 let t_resolved = if *tenant_id == 0 { a } else if *tenant_id == 1 { b } else { *tenant_id };
+                 NarrativeEffect::OpinionChange { tenant_id: t_resolved, amount: *amount }
+            },
+            NarrativeEffect::MoveOut { tenant_id } => {
+                 let t_resolved = if *tenant_id == 0 { a } else if *tenant_id == 1 { b } else { *tenant_id };
+                 NarrativeEffect::MoveOut { tenant_id: t_resolved }
+            },
+            NarrativeEffect::Multiple { effects } => {
+                NarrativeEffect::Multiple { 
+                    effects: effects.iter().map(|e| self.resolve_effect(e, a, b)).collect() 
+                }
+            },
+            _ => effect.clone()
         }
     }
 

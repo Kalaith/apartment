@@ -26,8 +26,8 @@ impl Game {
         let transition = match &mut self.state {
             GameState::Menu(s) => s.update(&self.assets, &self.config),
             GameState::Gameplay(s) => s.update(&self.assets),
-            GameState::Results(s) => s.update(&self.assets, &self.config),
         };
+
 
         if let Some(t) = transition {
             self.transition(t);
@@ -38,7 +38,6 @@ impl Game {
         match &mut self.state {
             GameState::Menu(s) => s.draw(&self.assets),
             GameState::Gameplay(s) => s.draw(&self.assets),
-            GameState::Results(s) => s.draw(&self.assets),
         }
     }
 
@@ -46,7 +45,6 @@ impl Game {
         self.state = match transition {
             StateTransition::ToMenu => GameState::Menu(MenuState::new()),
             StateTransition::ToGameplay(s) => GameState::Gameplay(s),
-            StateTransition::ToResults(s) => GameState::Results(s),
         };
     }
 }

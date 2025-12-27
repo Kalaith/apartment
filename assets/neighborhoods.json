@@ -1,0 +1,38 @@
+{
+    "Downtown": {
+        "crime_level": 40,
+        "transit_access": 95,
+        "walkability": 90,
+        "school_quality": 50,
+        "services": 95,
+        "rent_demand": 1.2,
+        "gentrification": 80
+    },
+    "Suburbs": {
+        "crime_level": 15,
+        "transit_access": 40,
+        "walkability": 30,
+        "school_quality": 85,
+        "services": 60,
+        "rent_demand": 1.0,
+        "gentrification": 20
+    },
+    "Industrial": {
+        "crime_level": 50,
+        "transit_access": 60,
+        "walkability": 50,
+        "school_quality": 35,
+        "services": 45,
+        "rent_demand": 0.9,
+        "gentrification": 60
+    },
+    "Historic": {
+        "crime_level": 25,
+        "transit_access": 70,
+        "walkability": 75,
+        "school_quality": 65,
+        "services": 80,
+        "rent_demand": 1.1,
+        "gentrification": 40
+    }
+}

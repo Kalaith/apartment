@@ -17,6 +17,24 @@
             }
         ]
     },
+    "lighting_upgrade": {
+        "id": "lighting_upgrade",
+        "name": "Upgrade Lighting",
+        "cost": 200,
+        "target": "apartment",
+        "effects": [
+            {
+                "type": "set_flag",
+                "value": "has_better_lighting"
+            }
+        ],
+        "requirements": [
+            {
+                "type": "missing_flag",
+                "value": "has_better_lighting"
+            }
+        ]
+    },
     "kitchen_renovation": {
         "id": "kitchen_renovation",
         "name": "Renovate Kitchen",

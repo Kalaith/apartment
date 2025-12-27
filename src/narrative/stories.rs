@@ -2,6 +2,7 @@
 use serde::{Deserialize, Serialize};
 use macroquad::rand::{ChooseRandom, gen_range};
 use crate::tenant::TenantArchetype;
+use crate::narrative::events_config::{TenantEventsConfig, RequestTemplate};
 
 /// A story event in a tenant's life
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -125,83 +126,62 @@ impl TenantStory {
         });
     }
 
-    /// Make a random request based on archetype
-    pub fn make_request(&mut self, archetype: &TenantArchetype) {
+    /// Make a random request based on archetype using loaded config
+    pub fn make_request(&mut self, archetype: &TenantArchetype, config: &TenantEventsConfig) {
         if self.pending_request.is_some() {
             return;
         }
 
-        let request = match archetype {
-            TenantArchetype::Student => {
-                if gen_range(0, 100) < 30 {
-                    Some(TenantRequest::Pet {
-                        pet_type: vec!["cat", "small dog", "hamster"].choose().unwrap().to_string(),
-                    })
-                } else if gen_range(0, 100) < 20 {
-                    Some(TenantRequest::Sublease)
-                } else {
-                    None
-                }
-            }
-            TenantArchetype::Professional => {
-                if gen_range(0, 100) < 20 {
-                    Some(TenantRequest::HomeBusiness {
-                        business_type: vec!["consulting", "freelance work", "tutoring"].choose().unwrap().to_string(),
-                    })
-                } else {
-                    None
-                }
-            }
-            TenantArchetype::Artist => {
-                if gen_range(0, 100) < 40 {
-                    Some(TenantRequest::HomeBusiness {
-                        business_type: vec!["art studio", "music lessons", "craft workshop"].choose().unwrap().to_string(),
-                    })
-                } else if gen_range(0, 100) < 20 {
-                    Some(TenantRequest::Modification {
-                        description: vec![
-                            "install better lighting",
-                            "add a small loft for storage",
-                            "paint the walls a different color"
-                        ].choose().unwrap().to_string(),
-                    })
-                } else {
-                    None
-                }
-            }
-            TenantArchetype::Family => {
-                if gen_range(0, 100) < 40 {
-                    Some(TenantRequest::Pet {
-                        pet_type: vec!["dog", "cat", "goldfish"].choose().unwrap().to_string(),
-                    })
-                } else if gen_range(0, 100) < 30 {
-                    Some(TenantRequest::TemporaryGuest {
-                        guest_name: format!("{} (relative)", 
-                            vec!["Grandma", "Grandpa", "Aunt", "Uncle", "Cousin"].choose().unwrap()),
-                        duration_months: gen_range(1, 4),
-                    })
-                } else {
-                    None
-                }
-            }
-            TenantArchetype::Elderly => {
-                if gen_range(0, 100) < 30 {
-                    Some(TenantRequest::Pet {
-                        pet_type: vec!["cat", "small dog", "bird"].choose().unwrap().to_string(),
-                    })
-                } else if gen_range(0, 100) < 20 {
-                    Some(TenantRequest::TemporaryGuest {
-                        guest_name: format!("{} (caregiver)", 
-                            vec!["my niece", "my nephew", "a nurse", "my friend"].choose().unwrap()),
-                        duration_months: gen_range(1, 3),
-                    })
-                } else {
-                    None
-                }
-            }
-        };
+        let archetype_key = archetype.name(); 
+        
+        if let Some(templates) = config.requests.get(archetype_key) {
+            let total_weight: u32 = templates.iter().map(|t| match t {
+                RequestTemplate::Pet { weight, .. } => *weight,
+                RequestTemplate::Sublease { weight } => *weight,
+                RequestTemplate::HomeBusiness { weight, .. } => *weight,
+                RequestTemplate::Modification { weight, .. } => *weight,
+                RequestTemplate::TemporaryGuest { weight, .. } => *weight,
+                RequestTemplate::None { weight } => *weight,
+            }).sum();
 
-        self.pending_request = request;
+            if total_weight == 0 { return; }
+
+            let mut roll = gen_range(0, total_weight);
+            
+            for template in templates {
+                let weight = match template {
+                    RequestTemplate::Pet { weight, .. } => *weight,
+                    RequestTemplate::Sublease { weight } => *weight,
+                    RequestTemplate::HomeBusiness { weight, .. } => *weight,
+                    RequestTemplate::Modification { weight, .. } => *weight,
+                    RequestTemplate::TemporaryGuest { weight, .. } => *weight,
+                    RequestTemplate::None { weight } => *weight,
+                };
+
+                if roll < weight {
+                    // Selected!
+                    self.pending_request = match template {
+                        RequestTemplate::Pet { options, .. } => Some(TenantRequest::Pet {
+                            pet_type: options.choose().unwrap_or(&"cat".to_string()).clone()
+                        }),
+                        RequestTemplate::Sublease { .. } => Some(TenantRequest::Sublease),
+                        RequestTemplate::HomeBusiness { options, .. } => Some(TenantRequest::HomeBusiness {
+                            business_type: options.choose().unwrap_or(&"consulting".to_string()).clone()
+                        }),
+                        RequestTemplate::Modification { options, .. } => Some(TenantRequest::Modification {
+                            description: options.choose().unwrap_or(&"improvement".to_string()).clone()
+                        }),
+                        RequestTemplate::TemporaryGuest { options, duration_min, duration_max, .. } => Some(TenantRequest::TemporaryGuest {
+                            guest_name: options.choose().unwrap_or(&"Guest".to_string()).clone(),
+                            duration_months: gen_range(*duration_min, *duration_max + 1)
+                        }),
+                        RequestTemplate::None { .. } => None,
+                    };
+                    return;
+                }
+                roll -= weight;
+            }
+        }
     }
 
 

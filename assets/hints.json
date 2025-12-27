@@ -1,0 +1,86 @@
+{
+    "context_hints": {
+        "full_occupancy": {
+            "priority": 1,
+            "messages": [
+                "All units are occupied! Focus on keeping your tenants happy.",
+                "Building full! Watch for relationship opportunities between tenants.",
+                "Great job filling the building! Consider upgrading apartments to boost happiness.",
+                "Full occupancy achieved. Your 3-year score depends on tenant satisfaction!"
+            ]
+        },
+        "low_condition": {
+            "priority": 2,
+            "messages": [
+                "Some apartments are getting worn down. Time for repairs!",
+                "Building condition is slipping. Happy tenants need nice spaces.",
+                "Maintenance needed! Low condition hurts tenant happiness."
+            ]
+        },
+        "high_vacancy": {
+            "priority": 3,
+            "messages": [
+                "You have vacant units. List them for lease to attract applicants!",
+                "Empty apartments earn no rent. Time to find new tenants!"
+            ]
+        },
+        "tenant_unhappy": {
+            "priority": 2,
+            "messages": [
+                "A tenant is unhappy. Check what's bothering them!",
+                "Unhappy tenants may leave. Address their concerns!"
+            ]
+        },
+        "high_funds": {
+            "priority": 5,
+            "messages": [
+                "You have savings! Consider upgrading your apartments.",
+                "Looking good financially. Maybe invest in some improvements?"
+            ]
+        },
+        "low_funds": {
+            "priority": 1,
+            "messages": [
+                "Funds are running low. Make sure you can cover expenses!",
+                "Watch your budget! Running out of money ends the game."
+            ]
+        }
+    },
+    "relationship_notifications": {
+        "new_friendly": {
+            "icon": "💚",
+            "template": "{tenant_a} and {tenant_b} have become friends!",
+            "description": "Friendly neighbors boost each other's happiness."
+        },
+        "new_hostile": {
+            "icon": "⚡",
+            "template": "Conflict brewing between {tenant_a} and {tenant_b}!",
+            "description": "Hostile relationships reduce happiness. Consider mediating."
+        },
+        "conflict_resolved": {
+            "icon": "🕊️",
+            "template": "The conflict between {tenant_a} and {tenant_b} has cooled down.",
+            "description": "Time heals some wounds."
+        },
+        "friendship_deepened": {
+            "icon": "💛",
+            "template": "{tenant_a} and {tenant_b} are becoming close friends!",
+            "description": "Strong friendships provide bigger happiness bonuses."
+        }
+    },
+    "relationship_icons": {
+        "friendly": "💚",
+        "neutral": "⚪",
+        "hostile": "⚡",
+        "romantic": "💕",
+        "family": "👨‍👩‍👧"
+    },
+    "thresholds": {
+        "low_condition": 50,
+        "high_vacancy_percent": 50,
+        "unhappy_happiness": 30,
+        "low_funds": 500,
+        "high_funds": 10000,
+        "hint_cooldown_months": 3
+    }
+}

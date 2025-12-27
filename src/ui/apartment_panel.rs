@@ -4,6 +4,10 @@ use crate::tenant::Tenant;
 
 use super::{common::*, UiAction};
 use crate::assets::AssetManager;
+use crate::consequences::TenantNetwork;
+use crate::data::config::RelationshipsConfig;
+use crate::narrative::{TenantStory, TenantRequest};
+use std::collections::HashMap;
 
 pub fn draw_apartment_panel(
     apt: &Apartment,
@@ -14,6 +18,8 @@ pub fn draw_apartment_panel(
     scroll_offset: f32,
     assets: &AssetManager,
     config: &crate::data::config::GameConfig,
+    tenant_network: &TenantNetwork,
+    stories: &HashMap<u32, TenantStory>,
 ) -> (Option<UiAction>, f32) {
     let mut action = None;
     let mut new_scroll = scroll_offset;
@@ -60,7 +66,7 @@ pub fn draw_apartment_panel(
     draw_apartment_stats(apt, assets, content_x, &mut y, panel_w, content_top, content_bottom);
     
     // === Tenant Info ===
-    if let Some(act) = draw_tenant_info(apt, tenants, assets, content_x, &mut y, panel_w, content_top, content_bottom) {
+    if let Some(act) = draw_tenant_info(apt, tenants, assets, content_x, &mut y, panel_w, content_top, content_bottom, tenant_network, &config.relationships, stories) {
         action = Some(act);
     }
     
@@ -422,7 +428,10 @@ fn draw_tenant_info(
     y: &mut f32,
     panel_w: f32,
     content_top: f32,
-    content_bottom: f32
+    content_bottom: f32,
+    network: &TenantNetwork,
+    _config: &RelationshipsConfig,
+    stories: &HashMap<u32, TenantStory>,
 ) -> Option<UiAction> {
     if *y > content_top && *y < content_bottom {
         draw_line(content_x, *y, content_x + panel_w - 30.0, *y, 1.0, colors::TEXT_DIM);
@@ -459,12 +468,72 @@ fn draw_tenant_info(
                 
                 draw_text(&tenant.name, text_x, *y + 16.0, 20.0, colors::TEXT);
                 draw_text(tenant.archetype.name(), text_x, *y + 36.0, 16.0, colors::TEXT_DIM);
+                
+                // Show relationships
+                let relationships: Vec<_> = network.relationships.iter()
+                    .filter(|r| r.tenant_a_id == tenant.id || r.tenant_b_id == tenant.id)
+                    .collect();
+                
+                if !relationships.is_empty() {
+                    let mut icon_x = text_x;
+                    let icon_y = *y + 45.0;
+                    
+                    for rel in relationships.iter().take(4) {
+                        let _other_id = if rel.tenant_a_id == tenant.id { rel.tenant_b_id } else { rel.tenant_a_id };
+                        let icon = match rel.relationship_type {
+                            crate::consequences::RelationshipType::Friendly => "💚",
+                            crate::consequences::RelationshipType::Hostile => "⚡",
+                            crate::consequences::RelationshipType::Romantic => "💕",
+                            crate::consequences::RelationshipType::Family => "👨‍👩‍👧",
+                            crate::consequences::RelationshipType::Neutral => "⚪",
+                        };
+                        
+                        draw_text(&format!("{}", icon), icon_x, icon_y + 15.0, 16.0, WHITE);
+                        icon_x += 25.0;
+                    }
+                    if relationships.len() > 4 {
+                        draw_text("+", icon_x, icon_y + 15.0, 14.0, colors::TEXT_DIM);
+                    }
+                }
+                
+                // Show pending request
+                if let Some(story) = stories.get(&tenant.id) {
+                    if let Some(request) = &story.pending_request {
+                         *y += 40.0;
+                         if *y > content_top && *y < content_bottom {
+                             draw_text("PENDING REQUEST", content_x, *y, 14.0, colors::ACCENT);
+                             *y += 40.0;
+                             
+                             let req_text = match request {
+                                 TenantRequest::Pet { pet_type } => format!("Can I keep a {}?", pet_type),
+                                 TenantRequest::TemporaryGuest { guest_name, duration_months } => format!("Can {} stay for {} months?", guest_name, duration_months),
+                                 TenantRequest::HomeBusiness { business_type } => format!("Can I start a {} business?", business_type),
+                                 TenantRequest::Modification { description } => format!("Can I {}?", description),
+                                 TenantRequest::Sublease => "Can I sublease a room?".to_string(),
+                             };
+                             
+                             draw_text(&req_text, content_x, *y, 16.0, colors::TEXT);
+                             *y += 25.0;
+                             
+                             // Approve/Deny Buttons
+                             if crate::ui::common::colored_button(content_x, *y, 100.0, 30.0, "APPROVE", true, colors::POSITIVE, colors::TEXT_BRIGHT) {
+                                 return Some(UiAction::ApproveRequest { tenant_id: tenant.id });
+                             }
+                             
+                             if crate::ui::common::colored_button(content_x + 110.0, *y, 100.0, 30.0, "DENY", true, colors::NEGATIVE, colors::TEXT_BRIGHT) {
+                                 return Some(UiAction::DenyRequest { tenant_id: tenant.id });
+                             }
+                             
+                             *y += 35.0;
+                         }
+                    }
+                }
             }
             
             if has_portrait {
                  *y += 85.0; 
             } else {
-                 *y += 60.0;
+                 *y += 75.0; // Increased to make room for relationship icons
             }
 
             if *y > content_top && *y < content_bottom {

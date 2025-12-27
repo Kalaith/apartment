@@ -170,6 +170,13 @@ impl Building {
         }
         self.decay_hallway(1);  // Even slower for shared space
     }
+    
+    /// Calculate average condition of all apartments
+    pub fn average_condition(&self) -> i32 {
+        if self.apartments.is_empty() { return 0; }
+        let total: i32 = self.apartments.iter().map(|a| a.condition).sum();
+        total / self.apartments.len() as i32
+    }
 
     /// Convert a rental unit to a condo (sell it)
     pub fn convert_unit_to_condo(&mut self, apartment_id: u32, owner_name: &str, sale_price: i32) -> bool {

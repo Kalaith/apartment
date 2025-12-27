@@ -4,6 +4,7 @@ use macroquad::rand::{ChooseRandom, gen_range};
 
 /// Types of narrative events
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[serde(tag = "type")]
 pub enum NarrativeEventType {
     /// News about the neighborhood
     NeighborhoodNews,
@@ -19,6 +20,8 @@ pub enum NarrativeEventType {
     ExternalOffer,
     /// Seasonal event
     SeasonalEvent,
+    /// Relationship event (hostile/friendly interaction)
+    RelationshipEvent,
 }
 
 /// A narrative event with context and choices
@@ -39,6 +42,8 @@ pub struct NarrativeEvent {
     pub requires_response: bool,
     /// Deadline month for response (if applicable)
     pub response_deadline: Option<u32>,
+    /// Optional related neighborhood ID
+    pub related_neighborhood_id: Option<u32>,
 }
 
 /// A choice for a narrative event
@@ -52,11 +57,12 @@ pub struct NarrativeChoice {
 
 /// Effects of narrative events/choices
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(tag = "type")]
 pub enum NarrativeEffect {
     /// No gameplay effect
     None,
     /// Money gained or lost
-    Money(i32),
+    Money { amount: i32 },
     /// Reputation in neighborhood
     NeighborhoodReputation { neighborhood_id: u32, change: i32 },
     /// Building-wide happiness change
@@ -71,8 +77,14 @@ pub enum NarrativeEffect {
     TriggerInspection { building_id: u32 },
     /// Property value change
     PropertyValue { building_id: u32, change_percent: f32 },
+    /// Change relationship strength between tenants
+    RelationshipStrength { tenant_a_id: u32, tenant_b_id: u32, change: i32 },
+    /// Change landlord opinion (how much tenant likes player)
+    OpinionChange { tenant_id: u32, amount: i32 },
+    /// Tenant moves out
+    MoveOut { tenant_id: u32 },
     /// Multiple effects
-    Multiple(Vec<NarrativeEffect>),
+    Multiple { effects: Vec<NarrativeEffect> },
 }
 
 impl NarrativeEvent {
@@ -89,6 +101,7 @@ impl NarrativeEvent {
             read: false,
             requires_response: false,
             response_deadline: None,
+            related_neighborhood_id: None,
         }
     }
 
@@ -112,6 +125,7 @@ impl NarrativeEvent {
             read: false,
             requires_response: true,
             response_deadline: Some(month + 2), // 2 months to respond
+            related_neighborhood_id: None,
         }
     }
 
@@ -271,6 +285,7 @@ impl NarrativeEventSystem {
         let (headline, description, effect) = templates.choose().cloned().unwrap();
         let mut event = NarrativeEvent::news(0, month, headline, description);
         event.default_effect = effect;
+        event.related_neighborhood_id = Some(neighborhood.id); // Set neighborhood ID
         event
     }
 
@@ -335,7 +350,7 @@ impl NarrativeEventSystem {
                 NarrativeChoice {
                     label: "Accept Offer".to_string(),
                     description: format!("Sell the building for ${}", offer),
-                    effect: NarrativeEffect::Money(offer),
+                    effect: NarrativeEffect::Money { amount: offer },
                     reputation_change: -20,
                 },
                 NarrativeChoice {

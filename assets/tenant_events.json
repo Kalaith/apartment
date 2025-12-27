@@ -1,0 +1,123 @@
+{
+    "requests": {
+        "Student": [
+            {
+                "type": "Pet",
+                "options": [
+                    "cat",
+                    "small dog",
+                    "hamster"
+                ],
+                "weight": 30
+            },
+            {
+                "type": "Sublease",
+                "weight": 20
+            },
+            {
+                "type": "None",
+                "weight": 50
+            }
+        ],
+        "Professional": [
+            {
+                "type": "HomeBusiness",
+                "options": [
+                    "consulting",
+                    "freelance work",
+                    "tutoring"
+                ],
+                "weight": 20
+            },
+            {
+                "type": "Modification",
+                "options": [
+                    "install smart home system",
+                    "upgrade lighting",
+                    "soundproof office"
+                ],
+                "weight": 15
+            },
+            {
+                "type": "None",
+                "weight": 65
+            }
+        ],
+        "Artist": [
+            {
+                "type": "HomeBusiness",
+                "options": [
+                    "art studio",
+                    "music lessons",
+                    "craft workshop"
+                ],
+                "weight": 40
+            },
+            {
+                "type": "Modification",
+                "options": [
+                    "install better lighting",
+                    "add a small loft for storage",
+                    "paint the walls"
+                ],
+                "weight": 20
+            },
+            {
+                "type": "None",
+                "weight": 40
+            }
+        ],
+        "Family": [
+            {
+                "type": "Pet",
+                "options": [
+                    "dog",
+                    "cat",
+                    "goldfish"
+                ],
+                "weight": 40
+            },
+            {
+                "type": "TemporaryGuest",
+                "options": [
+                    "Grandma (relative)",
+                    "Grandpa (relative)",
+                    "Cousin (relative)"
+                ],
+                "duration_min": 1,
+                "duration_max": 4,
+                "weight": 30
+            },
+            {
+                "type": "None",
+                "weight": 30
+            }
+        ],
+        "Elderly": [
+            {
+                "type": "Pet",
+                "options": [
+                    "cat",
+                    "small dog",
+                    "bird"
+                ],
+                "weight": 30
+            },
+            {
+                "type": "TemporaryGuest",
+                "options": [
+                    "my niece (caregiver)",
+                    "my nephew (caregiver)",
+                    "a nurse"
+                ],
+                "duration_min": 1,
+                "duration_max": 3,
+                "weight": 20
+            },
+            {
+                "type": "None",
+                "weight": 50
+            }
+        ]
+    }
+}

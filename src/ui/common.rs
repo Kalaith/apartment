@@ -98,6 +98,37 @@ pub fn button(x: f32, y: f32, w: f32, h: f32, text: &str, enabled: bool) -> bool
     clicked
 }
 
+/// Draw a button with custom colors
+pub fn colored_button(x: f32, y: f32, w: f32, h: f32, text: &str, enabled: bool, bg_color: Color, text_color: Color) -> bool {
+    let mouse = mouse_position();
+    let rect = Rect::new(x, y, w, h);
+    let hovered = rect.contains(Vec2::new(mouse.0, mouse.1));
+    let clicked = hovered && is_mouse_button_pressed(MouseButton::Left) && enabled;
+    
+    let is_pressed = hovered && is_mouse_button_down(MouseButton::Left) && enabled;
+    
+    // Dim if disabled, darken if pressed, lighten if hovered
+    let final_bg = if !enabled {
+        Color::new(0.2, 0.2, 0.2, 1.0)
+    } else if is_pressed {
+         Color::new(bg_color.r * 0.8, bg_color.g * 0.8, bg_color.b * 0.8, bg_color.a)
+    } else if hovered {
+         Color::new(bg_color.r * 1.2, bg_color.g * 1.2, bg_color.b * 1.2, bg_color.a)
+    } else {
+        bg_color
+    };
+    
+    draw_rectangle(x, y, w, h, final_bg);
+    draw_rectangle_lines(x, y, w, h, 2.0, colors::TEXT_DIM);
+    
+    let y_offset = if is_pressed { 2.0 } else { 0.0 };
+    let text_size = 20.0;
+    let text_width = measure_text(text, None, text_size as u16, 1.0).width;
+    draw_text(text, x + (w - text_width) / 2.0, y + h / 2.0 + 6.0 + y_offset, text_size, text_color);
+    
+    clicked
+}
+
 /// Draw a progress bar
 pub fn progress_bar(x: f32, y: f32, w: f32, h: f32, value: f32, max: f32, color: Color) {
     let fill_width = (value / max).clamp(0.0, 1.0) * w;

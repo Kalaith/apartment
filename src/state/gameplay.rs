@@ -1,7 +1,7 @@
 
 use macroquad::prelude::*;
 use std::collections::HashMap;
-use super::{StateTransition, ResultsState};
+use super::{StateTransition};
 use crate::building::Building;
 use crate::data::config::GameConfig;
 use crate::tenant::{Tenant, TenantApplication};
@@ -14,7 +14,7 @@ use crate::ui::layout::HEADER_HEIGHT;
 // Phase 3 imports
 use crate::city::{City, NeighborhoodType};
 use crate::consequences::{TenantNetwork, ComplianceSystem, GentrificationTracker};
-use crate::narrative::{TenantStory, NarrativeEventSystem, Mailbox, TutorialManager, MissionManager};
+use crate::narrative::{TenantStory, NarrativeEventSystem, Mailbox, TutorialManager, MissionManager, NotificationManager, TenantEventsConfig, load_events_config, RelationshipEventsConfig, load_relationship_config};
 
 use serde::{Deserialize, Serialize};
 
@@ -26,6 +26,7 @@ pub enum ViewMode {
     CityMap,        // City overview with all neighborhoods
     Market,         // Property acquisition screen
     Mail,           // Mailbox view
+    CareerSummary,  // Phase 5: Endgame result
 }
 
 #[derive(Serialize, Deserialize)]
@@ -64,10 +65,20 @@ pub struct GameplayState {
     pub mailbox: Mailbox,
     pub tenant_stories: HashMap<u32, TenantStory>,
     pub dialogue_system: crate::narrative::DialogueSystem,
+    #[serde(skip)]
+    pub tenant_events_config: TenantEventsConfig,
+    #[serde(skip)]
+    pub relationship_events_config: RelationshipEventsConfig,
     
     // Phase 4: Tutorial & Missions
     pub tutorial: TutorialManager,
     pub missions: MissionManager,
+    
+    // Phase 5: Notifications (relationship changes, hints)
+    pub notifications: NotificationManager,
+    
+    // Phase 5: Achievements
+    pub achievements: crate::narrative::AchievementSystem,
     
     // UI state - skipped from serialization
     #[serde(skip)]
@@ -133,10 +144,18 @@ impl GameplayState {
             mailbox: Mailbox::new(),
             tenant_stories: HashMap::new(),
             dialogue_system: crate::narrative::DialogueSystem::new(),
+            tenant_events_config: load_events_config(),
+            relationship_events_config: load_relationship_config(),
             
             // Phase 4: Tutorial & Missions
             tutorial: TutorialManager::new(),
             missions: MissionManager::new(),
+            
+            // Phase 5: Notifications
+            notifications: NotificationManager::new(),
+            
+            // Phase 5: Achievements
+            achievements: crate::narrative::AchievementSystem::new(),
             
             // UI state
             view_mode: ViewMode::Building,
@@ -214,18 +233,16 @@ impl GameplayState {
         self.panel_tween.update(dt);
         
         // Check if game has ended
-        if let Some(ref outcome) = self.game_outcome {
-            let won = matches!(outcome, GameOutcome::Victory { .. });
-            return Some(StateTransition::ToResults(ResultsState::career_summary(
-                self.funds.total_income,
-                self.tenants.len() as u32,
-                0, // tenants_left (placeholder)
-                won,
-                self.current_tick,
-                self.missions.completed_missions().len() as u32,
-                self.missions.legacy_events.clone(),
-                self.missions.awards.clone(),
-            )));
+        // Phase 5: Use CareerSummary view instead of StateTransition
+        if self.game_outcome.is_some() && self.view_mode != ViewMode::CareerSummary {
+             self.view_mode = ViewMode::CareerSummary;
+             // Check final achievements immediately
+             let new_unlocks = self.achievements.check_new_unlocks(
+                 &self.city, &self.building, &self.tenants, &self.funds, self.current_tick, &self.config
+             );
+             for id in new_unlocks {
+                 self.achievements.unlock(&id);
+             }
         }
         
         
@@ -251,6 +268,26 @@ impl GameplayState {
                 self.tutorial.pending_messages.remove(0);
             }
         }
+        // Handle notification "OK" button click (when tutorial is not blocking)
+        else if self.notifications.has_pending() {
+            // Button layout must match draw_notification_overlay
+            let panel_w = 550.0;
+            let panel_h = 150.0;
+            let panel_x = (screen_width() - panel_w) / 2.0;
+            let panel_y = screen_height() - panel_h - 20.0;
+            let btn_w = 100.0;
+            let btn_h = 32.0;
+            let btn_x = panel_x + panel_w - btn_w - 15.0;
+            let btn_y = panel_y + panel_h - btn_h - 12.0;
+            
+            let mouse = mouse_position();
+            if mouse.0 >= btn_x && mouse.0 <= btn_x + btn_w && 
+               mouse.1 >= btn_y && mouse.1 <= btn_y + btn_h &&
+               is_mouse_button_pressed(MouseButton::Left) {
+                self.notifications.pop();
+            }
+        }
+
         
         // Handle keyboard input for ending turn (Space)
         if is_key_pressed(KeyCode::Space) && matches!(self.view_mode, ViewMode::Building) {
@@ -264,7 +301,14 @@ impl GameplayState {
                 ViewMode::CityMap => ViewMode::Building,
                 ViewMode::Market => ViewMode::CityMap,
                 ViewMode::Mail => ViewMode::Building,
+                ViewMode::CareerSummary => ViewMode::CareerSummary,
             };
+            self.selection = Selection::None;
+        }
+        
+        // C key switches to City Map
+        if is_key_pressed(KeyCode::C) {
+            self.view_mode = ViewMode::CityMap;
             self.selection = Selection::None;
         }
         
@@ -280,6 +324,12 @@ impl GameplayState {
                 return Some(StateTransition::ToMenu);
             }
             return None;
+        }
+
+        // Global check for quit (e.g. from Career Summary)
+        if self.pending_quit_to_menu {
+             self.pending_quit_to_menu = false;
+             return Some(StateTransition::ToMenu);
         }
         
         
@@ -342,6 +392,7 @@ impl GameplayState {
             ViewMode::CityMap => "[Tab] Building View | [M] Mail",
             ViewMode::Market => "[Tab] City Map | [M] Mail",
             ViewMode::Mail => "[Tab] Return | [Esc] Return",
+            ViewMode::CareerSummary => "",
         };
 
         draw_text_ex(

@@ -15,6 +15,8 @@ mod header;
 pub mod visuals; // Make public so we can use FloatingText
 pub mod city_view; // Phase 3 city map
 pub mod ownership_panel; // Phase 3 ownership
+pub mod event_modal; // Phase 4 event modal
+pub mod career_summary; // Phase 5 career summary
 
 pub use common::*;
 pub use building_view::draw_building_view;
@@ -69,7 +71,7 @@ pub enum UiAction {
     
     // Game flow
     EndTurn,
-    ReturnToMenu,
+    ReturnToMenu, // Used by Career Summary
     
     // Phase 3: City navigation
     OpenCityMap,
@@ -94,6 +96,7 @@ pub enum UiAction {
     
     // Phase 4: Dialogue system
     ResolveDialogue { dialogue_id: u32, choice_index: usize },
+    ResolveEventChoice { event_id: u32, choice_index: usize },
     
     // Phase 4: Tenant vetting
     CreditCheck { application_index: usize },
