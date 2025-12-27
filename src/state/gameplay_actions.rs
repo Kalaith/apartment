@@ -775,13 +775,21 @@
                  }
             },
             NarrativeEffect::SellBuilding { building_id } => {
-                 // Remove building from city
-                 if let Some(pos) = self.city.buildings.iter().position(|b| self.city.get_building_id(b) == *building_id) {
-                     self.city.buildings.remove(pos);
-                 } else {
-                     // Fallback if ID lookup fails (might be active building)
-                     // Implementation note: building_id logic in city might need review, 
-                     // but for now we assume index 0 if only one building.
+                 let index = *building_id as usize;
+                 
+                 // Remove from city if valid index
+                 if index < self.city.buildings.len() {
+                     self.city.buildings.remove(index);
+                     
+                     // Update neighborhoods: Remove the ID and shift subsequent IDs down
+                     for neighborhood in &mut self.city.neighborhoods {
+                         neighborhood.building_ids.retain(|&id| id != *building_id);
+                         for id in &mut neighborhood.building_ids {
+                             if *id > *building_id {
+                                 *id -= 1;
+                             }
+                         }
+                     }
                  }
                  
                  if self.city.buildings.is_empty() {

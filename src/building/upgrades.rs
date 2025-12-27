@@ -1,5 +1,5 @@
 
-use super::{Apartment, Building, DesignType};
+use super::{Apartment, ApartmentSize, Building, DesignType};
 use serde::{Deserialize, Serialize};
 use crate::data::config::{EconomyConfig, UiConfig, UpgradeDefinition, UpgradeTarget, UpgradeRequirement};
 use std::collections::HashMap;
@@ -52,7 +52,9 @@ impl UpgradeAction {
                 let current_design_key = match apt.design {
                     DesignType::Bare => "bare_to_practical",
                     DesignType::Practical => "practical_to_cozy",
-                    DesignType::Cozy => return None,
+                    DesignType::Cozy => "cozy_to_luxury",
+                    DesignType::Luxury => "luxury_to_opulent",
+                    DesignType::Opulent => return None,
                 };
                 config.design_upgrade_costs.get(current_design_key).cloned()
             }
@@ -120,6 +122,8 @@ pub fn apply_upgrade(building: &mut Building, action: &UpgradeAction, upgrades: 
                                     "Bare" => apt.design = DesignType::Bare,
                                     "Practical" => apt.design = DesignType::Practical,
                                     "Cozy" => apt.design = DesignType::Cozy,
+                                    "Luxury" => apt.design = DesignType::Luxury,
+                                    "Opulent" => apt.design = DesignType::Opulent,
                                     _ => {}
                                 }
                             }
@@ -218,6 +222,8 @@ fn check_requirements(reqs: &[UpgradeRequirement], apt: &Apartment, _building: O
                     DesignType::Bare => "Bare",
                     DesignType::Practical => "Practical",
                     DesignType::Cozy => "Cozy",
+                    DesignType::Luxury => "Luxury",
+                    DesignType::Opulent => "Opulent",
                 };
                 if current != design_str { return false; }
             }
@@ -226,8 +232,28 @@ fn check_requirements(reqs: &[UpgradeRequirement], apt: &Apartment, _building: O
                     DesignType::Bare => "Bare",
                     DesignType::Practical => "Practical",
                     DesignType::Cozy => "Cozy",
+                    DesignType::Luxury => "Luxury",
+                    DesignType::Opulent => "Opulent",
                 };
                 if current == design_str { return false; }
+            }
+            UpgradeRequirement::MinSize(size_str) => {
+                let current_val = match apt.size {
+                    ApartmentSize::Small => 0,
+                    ApartmentSize::Medium => 1,
+                    ApartmentSize::Large => 2,
+                    ApartmentSize::Penthouse => 3,
+                };
+                
+                let req_val = match size_str.to_lowercase().as_str() {
+                    "small" => 0,
+                    "medium" => 1,
+                    "large" => 2,
+                    "penthouse" => 3,
+                    _ => 0, // Fallback
+                };
+                
+                if current_val < req_val { return false; }
             }
              _ => {} // Implement generic stat checks later if needed
         }

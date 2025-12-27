@@ -1,0 +1,89 @@
+
+use serde::{Deserialize, Serialize};
+use std::fs;
+use crate::building::{ApartmentSize, NoiseLevel, DesignType};
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct BuildingTemplates {
+    pub templates: Vec<BuildingTemplate>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct BuildingTemplate {
+    pub id: String,
+    pub name: String,
+    pub floors: u32,
+    pub units_per_floor: u32,
+    pub hallway_condition: i32,
+    pub apartments: Vec<ApartmentTemplate>,
+    pub initial_tenant: Option<InitialTenantData>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ApartmentTemplate {
+    pub unit_number: String,
+    pub floor: u32,
+    #[serde(rename = "size")]
+    pub size_str: String,
+    #[serde(rename = "base_noise")]
+    pub base_noise_str: String,
+    pub initial_condition: i32,
+    pub initial_design: String,
+    pub initial_rent: i32,
+}
+
+impl ApartmentTemplate {
+    pub fn size(&self) -> ApartmentSize {
+        match self.size_str.to_lowercase().as_str() {
+            "small" => ApartmentSize::Small,
+            "medium" => ApartmentSize::Medium,
+            "large" => ApartmentSize::Large,
+            "penthouse" => ApartmentSize::Penthouse,
+            _ => ApartmentSize::Medium,
+        }
+    }
+
+    pub fn base_noise(&self) -> NoiseLevel {
+        match self.base_noise_str.to_lowercase().as_str() {
+            "low" => NoiseLevel::Low,
+            "high" => NoiseLevel::High,
+            _ => NoiseLevel::Low,  // Default to Low for unknown values
+        }
+    }
+
+    pub fn initial_design(&self) -> DesignType {
+        match self.initial_design.to_lowercase().as_str() {
+            "bare" => DesignType::Bare,
+            "practical" => DesignType::Practical,
+            "cozy" => DesignType::Cozy,
+            "luxury" => DesignType::Luxury,
+            "opulent" => DesignType::Opulent,
+            _ => DesignType::Bare,
+        }
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct InitialTenantData {
+    pub apartment_unit: String,
+    pub archetype: String,
+    pub name: String,
+}
+
+pub fn load_templates() -> Option<BuildingTemplates> {
+    match fs::read_to_string("assets/building_templates.json") {
+        Ok(json) => {
+            match serde_json::from_str::<BuildingTemplates>(&json) {
+                Ok(templates) => Some(templates),
+                Err(e) => {
+                    eprintln!("Failed to parse building_templates.json: {}", e);
+                    None
+                }
+            }
+        }
+        Err(e) => {
+            eprintln!("Failed to load building_templates.json: {}", e);
+            None
+        }
+    }
+}

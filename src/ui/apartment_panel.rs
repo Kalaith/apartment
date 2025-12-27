@@ -350,6 +350,8 @@ fn draw_apartment_stats(
             DesignType::Bare => "Bare",
             DesignType::Practical => "Practical",
             DesignType::Cozy => "Cozy",
+            DesignType::Luxury => "Luxury",
+            DesignType::Opulent => "Opulent",
         };
         draw_text(&format!("Design: {}", design_text), content_x, *y, 18.0, colors::TEXT);
     }
@@ -360,6 +362,8 @@ fn draw_apartment_stats(
         let size_text = match apt.size {
             ApartmentSize::Small => "Small",
             ApartmentSize::Medium => "Medium",
+            ApartmentSize::Large => "Large",
+            ApartmentSize::Penthouse => "Penthouse",
         };
         draw_text(&format!("Size: {}", size_text), content_x, *y, 18.0, colors::TEXT);
     }

@@ -21,6 +21,18 @@ impl TenantArchetype {
         }
     }
     
+    /// Get archetype from string ID
+    pub fn from_id(id: &str) -> Option<Self> {
+        match id.to_lowercase().as_str() {
+            "student" => Some(TenantArchetype::Student),
+            "professional" => Some(TenantArchetype::Professional),
+            "artist" => Some(TenantArchetype::Artist),
+            "family" => Some(TenantArchetype::Family),
+            "elderly" => Some(TenantArchetype::Elderly),
+            _ => None,
+        }
+    }
+
     /// Get the ID used in JSON files
     pub fn id(&self) -> &'static str {
         match self {

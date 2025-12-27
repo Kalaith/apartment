@@ -88,11 +88,19 @@ pub fn calculate_match_score(tenant: &Tenant, apartment: &Apartment, config: &Ma
     
     // Size bonus (everyone likes more space)
     match apartment.size {
+        crate::building::ApartmentSize::Small => {}
         crate::building::ApartmentSize::Medium => {
             score += config.size_medium_bonus;
             reasons.push("Good space".to_string());
         }
-        crate::building::ApartmentSize::Small => {}
+        crate::building::ApartmentSize::Large => {
+            score += config.size_medium_bonus + 5;
+            reasons.push("Great space".to_string());
+        }
+        crate::building::ApartmentSize::Penthouse => {
+            score += config.size_medium_bonus + 15;
+            reasons.push("Luxurious space".to_string());
+        }
     }
     
     MatchResult {

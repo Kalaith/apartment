@@ -73,6 +73,7 @@ pub enum UpgradeRequirement {
     MaxStat { stat: String, value: i32 },
     HasDesign(String),
     MissingDesign(String),
+    MinSize(String),
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

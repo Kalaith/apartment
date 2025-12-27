@@ -38,6 +38,7 @@ pub struct GameplayState {
     #[serde(skip)]
     pub building: Building,
 
+    #[serde(skip)]
     pub config: GameConfig,
     
     // Tenants
@@ -110,7 +111,7 @@ impl GameplayState {
     /// Create a new game with a starter building in a specific neighborhood
     pub fn new_in_neighborhood(neighborhood_index: usize, config: GameConfig) -> Self {
         // Create city with starter building
-        let city = City::with_starter_building("Metropolis", neighborhood_index);
+        let (city, initial_tenant_data) = City::with_starter_building("Metropolis", neighborhood_index);
         
         // Clone the first building for backwards-compatible `building` field
         let building = city.buildings.first().cloned().unwrap_or_else(Building::default_mvp);
@@ -168,6 +169,30 @@ impl GameplayState {
             is_fullscreen: false,
             pending_quit_to_menu: false,
         };
+
+        // Handle initial tenant if present in template
+        if let Some(data) = initial_tenant_data {
+            if let Some(archetype) = crate::tenant::TenantArchetype::from_id(&data.archetype) {
+                // Find target apartment by unit number
+                if let Some(apt) = state.building.apartments.iter_mut().find(|a| a.unit_number == data.apartment_unit) {
+                    let tenant_id = state.next_tenant_id;
+                    state.next_tenant_id += 1;
+                    
+                    let mut tenant = Tenant::new(tenant_id, &data.name, archetype);
+                    tenant.move_into(apt.id);
+                    apt.move_in(tenant_id);
+                    
+                    state.tenants.push(tenant);
+                    
+                    // Also update the city's building instance
+                    if let Some(city_building) = state.city.active_building_mut() {
+                        if let Some(city_apt) = city_building.apartments.iter_mut().find(|a| a.id == apt.id) {
+                            city_apt.move_in(tenant_id);
+                        }
+                    }
+                }
+            }
+        }
         
         // Generate initial applications for the starter building
         state.applications = crate::tenant::generate_applications(

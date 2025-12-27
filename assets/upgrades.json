@@ -250,5 +250,57 @@
                 "value": "Cozy"
             }
         ]
+    },
+    "upgrade_to_luxury": {
+        "id": "upgrade_to_luxury",
+        "name": "Upgrade to Luxury",
+        "cost": 25000,
+        "target": "apartment",
+        "effects": [
+            {
+                "type": "set_design",
+                "value": "Luxury"
+            }
+        ],
+        "requirements": [
+            {
+                "type": "missing_design",
+                "value": "Luxury"
+            },
+            {
+                "type": "has_design",
+                "value": "Cozy"
+            },
+            {
+                "type": "min_size",
+                "value": "Penthouse"
+            }
+        ]
+    },
+    "upgrade_to_opulent": {
+        "id": "upgrade_to_opulent",
+        "name": "Upgrade to Opulent",
+        "cost": 50000,
+        "target": "apartment",
+        "effects": [
+            {
+                "type": "set_design",
+                "value": "Opulent"
+            }
+        ],
+        "requirements": [
+            {
+                "type": "missing_design",
+                "value": "Opulent"
+            },
+            {
+                "type": "has_design",
+                "value": "Luxury"
+            },
+            {
+                "type": "min_size",
+                "value": "Penthouse"
+            }
+        ]
     }
 }

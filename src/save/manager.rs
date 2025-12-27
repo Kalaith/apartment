@@ -3,6 +3,7 @@ use std::fs;
 use std::path::Path;
 use serde_json;
 use crate::state::GameplayState;
+use crate::data::config::load_config;
 
 const SAVE_FILE_PATH: &str = "savegame.json";
 
@@ -19,6 +20,7 @@ pub fn load_game() -> std::io::Result<GameplayState> {
     let mut state: GameplayState = serde_json::from_str(&json)?;
     
     // Restore non-serialized fields
+    state.config = load_config();
     state.sync_building();
     
     Ok(state)

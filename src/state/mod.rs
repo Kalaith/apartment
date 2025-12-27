@@ -26,5 +26,4 @@ pub enum GameState {
 pub enum StateTransition {
     ToMenu,
     ToGameplay(GameplayState),
-
 }

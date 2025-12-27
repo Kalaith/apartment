@@ -101,6 +101,44 @@ impl Building {
         }
     }
     
+    /// Create a building from a template
+    pub fn from_template(template: &crate::data::templates::BuildingTemplate) -> Self {
+        let mut apartments = Vec::new();
+        let mut id = 0;
+        
+        for apt_template in &template.apartments {
+            let mut apt = Apartment::new(
+                id, 
+                &apt_template.unit_number, 
+                apt_template.floor, 
+                apt_template.size(), 
+                apt_template.base_noise()
+            );
+            
+            // Apply template specifics
+            apt.condition = apt_template.initial_condition;
+            apt.rent_price = apt_template.initial_rent;
+            apt.design = apt_template.initial_design();
+            
+            apartments.push(apt);
+            id += 1;
+        }
+
+        Self {
+            name: template.name.clone(),
+            apartments,
+            hallway_condition: template.hallway_condition,
+            rent_multiplier: 1.0,
+            has_laundry: false, // Could be in template?
+            ownership_model: OwnershipType::FullRental,
+            utilities_included: false,
+            insurance_active: false,
+            marketing_strategy: MarketingType::None,
+            open_house_remaining: 0,
+            flags: HashSet::new(),
+        }
+    }
+    
 
 
     /// Create the default MVP building (6 units, 3 floors, 2 per floor)

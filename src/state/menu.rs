@@ -18,7 +18,7 @@ impl MenuState {
         let button_w = 200.0;
         let button_h = 50.0;
         let center_x = screen_width() / 2.0 - button_w / 2.0;
-        let start_y = screen_height() / 2.0;
+        let start_y = screen_height() * 0.55;  // Moved down slightly
         
         // Continue Game Button (if save exists)
         if self.has_save {
@@ -46,6 +46,16 @@ impl MenuState {
                 && my >= start_y && my <= start_y + button_h
             {
                 return Some(StateTransition::ToGameplay(GameplayState::new(_config.clone())));
+            }
+        }
+        // Quit Button
+        let quit_y = start_y + 70.0;
+        if is_mouse_button_pressed(MouseButton::Left) {
+            let (mx, my) = mouse_position();
+            if mx >= center_x && mx <= center_x + button_w
+                && my >= quit_y && my <= quit_y + button_h
+            {
+                std::process::exit(0);
             }
         }
 
@@ -99,7 +109,7 @@ impl MenuState {
         let button_w = 200.0;
         let button_h = 50.0;
         let center_x = screen_width() / 2.0 - button_w / 2.0;
-        let start_y = screen_height() / 2.0;
+        let start_y = screen_height() * 0.55;  // Moved down slightly
 
         // Continue Button
         if self.has_save {
@@ -128,6 +138,21 @@ impl MenuState {
             label,
             center_x + button_w / 2.0 - label_width / 2.0,
             start_y + button_h / 2.0 + 10.0,
+            label_size,
+            WHITE,
+        );
+
+        // Quit Button
+        let quit_y = start_y + 70.0;
+        draw_rectangle(center_x, quit_y, button_w, button_h, Color::from_rgba(90, 50, 50, 255));
+
+        let label = "Quit Game";
+        let label_size = 30.0;
+        let label_width = measure_text(label, None, label_size as u16, 1.0).width;
+        draw_text(
+            label,
+            center_x + button_w / 2.0 - label_width / 2.0,
+            quit_y + button_h / 2.0 + 10.0,
             label_size,
             WHITE,
         );

@@ -179,6 +179,8 @@ fn draw_apartment_unit(
         DesignType::Bare => "design_bare",
         DesignType::Practical => "design_practical",
         DesignType::Cozy => "design_cozy",
+        DesignType::Luxury => "design_luxury",
+        DesignType::Opulent => "design_opulent",
     };
     
     if let Some(tex) = assets.get_texture(design_id) {
@@ -210,6 +212,8 @@ fn draw_apartment_unit(
     let size_text = match apt.size {
         ApartmentSize::Small => "S",
         ApartmentSize::Medium => "M",
+        ApartmentSize::Large => "L",
+        ApartmentSize::Penthouse => "PH",
     };
     draw_text(size_text, x + w - 20.0, y + 18.0, 16.0, colors::TEXT_DIM);
     

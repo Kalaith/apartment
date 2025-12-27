@@ -112,6 +112,8 @@ pub fn process_upgrade(
                                     crate::building::DesignType::Bare => "Bare",
                                     crate::building::DesignType::Practical => "Practical",
                                     crate::building::DesignType::Cozy => "Cozy",
+                                    crate::building::DesignType::Luxury => "Luxury",
+                                    crate::building::DesignType::Opulent => "Opulent",
                                 };
                                 if current != design_str { return Err(format!("Requirement failed: Design must be {}", design_str)); }
                             }
@@ -120,6 +122,8 @@ pub fn process_upgrade(
                                     crate::building::DesignType::Bare => "Bare",
                                     crate::building::DesignType::Practical => "Practical",
                                     crate::building::DesignType::Cozy => "Cozy",
+                                    crate::building::DesignType::Luxury => "Luxury",
+                                    crate::building::DesignType::Opulent => "Opulent",
                                 };
                                 if current == design_str { return Err(format!("Requirement failed: Design cannot be {}", design_str)); }
                             }

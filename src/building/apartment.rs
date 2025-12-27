@@ -6,6 +6,8 @@ pub enum DesignType {
     Bare,
     Practical,
     Cozy,
+    Luxury,
+    Opulent,
 }
 
 impl DesignType {
@@ -14,7 +16,9 @@ impl DesignType {
         match self {
             DesignType::Bare => Some(DesignType::Practical),
             DesignType::Practical => Some(DesignType::Cozy),
-            DesignType::Cozy => None, // Max level
+            DesignType::Cozy => Some(DesignType::Luxury),
+            DesignType::Luxury => Some(DesignType::Opulent),
+            DesignType::Opulent => None,
         }
     }
     
@@ -24,6 +28,8 @@ impl DesignType {
             DesignType::Bare => 0,
             DesignType::Practical => 20,
             DesignType::Cozy => 40,
+            DesignType::Luxury => 65,
+            DesignType::Opulent => 90,
         }
     }
 }
@@ -32,6 +38,8 @@ impl DesignType {
 pub enum ApartmentSize {
     Small,
     Medium,
+    Large,
+    Penthouse,
 }
 
 impl ApartmentSize {
@@ -39,6 +47,8 @@ impl ApartmentSize {
         match self {
             ApartmentSize::Small => 600,
             ApartmentSize::Medium => 850,
+            ApartmentSize::Large => 1200,
+            ApartmentSize::Penthouse => 2500,
         }
     }
     
@@ -46,6 +56,8 @@ impl ApartmentSize {
         match self {
             ApartmentSize::Small => 0,
             ApartmentSize::Medium => 15,
+            ApartmentSize::Large => 30,
+            ApartmentSize::Penthouse => 50,
         }
     }
 }
@@ -179,6 +191,8 @@ impl Apartment {
         let base_price = match self.size {
             ApartmentSize::Small => 50_000,
             ApartmentSize::Medium => 75_000,
+            ApartmentSize::Large => 120_000,
+            ApartmentSize::Penthouse => 250_000,
         };
         
         // Condition bonus: +$500 per point above 50, -$300 per point below 50
@@ -193,6 +207,8 @@ impl Apartment {
             DesignType::Bare => 0,
             DesignType::Practical => 5_000,
             DesignType::Cozy => 15_000,
+            DesignType::Luxury => 30_000,
+            DesignType::Opulent => 60_000,
         };
         
         // Kitchen bonus

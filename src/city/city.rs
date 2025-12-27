@@ -49,11 +49,20 @@ impl City {
     }
 
     /// Create a city with a starting building in a given neighborhood
-    pub fn with_starter_building(name: &str, neighborhood_index: usize) -> Self {
+    pub fn with_starter_building(name: &str, neighborhood_index: usize) -> (Self, Option<crate::data::templates::InitialTenantData>) {
         let mut city = Self::new(name);
         
-        // Create starter building
-        let building = Building::default_mvp();
+        // Try to load template
+        let (building, initial_tenant) = if let Some(templates) = crate::data::templates::load_templates() {
+            if let Some(template) = templates.templates.first() {
+                (Building::from_template(template), template.initial_tenant.clone())
+            } else {
+                (Building::default_mvp(), None)
+            }
+        } else {
+            (Building::default_mvp(), None)
+        };
+        
         let building_id = 0;
         
         city.buildings.push(building);
@@ -64,7 +73,7 @@ impl City {
             neighborhood.add_building(building_id);
         }
         
-        city
+        (city, initial_tenant)
     }
 
     /// Get the currently active building
@@ -171,7 +180,7 @@ mod tests {
 
     #[test]
     fn test_starter_building() {
-        let city = City::with_starter_building("Test City", 0);
+        let (city, _) = City::with_starter_building("Test City", 0);
         assert_eq!(city.buildings.len(), 1);
         assert!(city.neighborhoods[0].building_ids.contains(&0));
     }

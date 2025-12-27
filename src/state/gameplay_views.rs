@@ -262,7 +262,7 @@ impl GameplayState {
         
         // Menu panel
         let panel_w = 300.0;
-        let panel_h = 280.0;
+        let panel_h = 330.0;
         let panel_x = (screen_width() - panel_w) / 2.0;
         let panel_y = (screen_height() - panel_h) / 2.0;
         
@@ -307,9 +307,15 @@ impl GameplayState {
         }
         btn_y += 50.0;
         
-        // Quit button
+        // Quit to Menu button
         if self.menu_button(btn_x, btn_y, btn_w, btn_h, "Quit to Menu") {
             self.pending_quit_to_menu = true;
+        }
+        btn_y += 50.0;
+        
+        // Quit Game button (exits completely)
+        if self.menu_button(btn_x, btn_y, btn_w, btn_h, "Quit Game") {
+            std::process::exit(0);
         }
         
         // ESC hint
