@@ -74,6 +74,7 @@ if ($buildWebGL) {
     $currentStep++
     if (-not $SkipBuild) {
         Write-Host "[$currentStep/$totalSteps] Building WebGL release..." -ForegroundColor Yellow
+        Write-Host "Note: WebGL build requires 'rand' crate to be replaced with macroquad::rand" -ForegroundColor DarkYellow
         
         # Check if wasm32 target is installed
         $targets = rustup target list --installed
@@ -109,35 +110,59 @@ if ($buildWebGL) {
     $AssetsPath = Join-Path $ProjectRoot "assets"
     Copy-Item $AssetsPath -Destination $WebGLPackageDir -Recurse
 
+    # Download mq_js_bundle.js locally (so we don't rely on CDN)
+    $JsBundlePath = Join-Path $WebGLPackageDir "mq_js_bundle.js"
+    Write-Host "Downloading mq_js_bundle.js..." -ForegroundColor Gray
+    try {
+        Invoke-WebRequest -Uri "https://not-fl3.github.io/miniquad-samples/mq_js_bundle.js" -OutFile $JsBundlePath
+    } catch {
+        Write-Warning "Could not download mq_js_bundle.js - will use CDN reference"
+    }
+    $UseLocalJs = Test-Path $JsBundlePath
+
     # Create HTML wrapper
+    # Note: For itch.io, set viewport dimensions to 1280x720 in upload settings
     $HtmlContent = @"
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=1280, height=720, initial-scale=1.0">
     <title>Apartment Manager</title>
+    <!-- itch.io: Set viewport to 1280x720 in Embed Options -->
     <style>
-        body {
+        html, body {
             margin: 0;
             padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
             background: #1a1a2e;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
         }
         canvas {
+            width: 100%;
+            height: 100%;
             display: block;
-            max-width: 100%;
-            max-height: 100vh;
+        }
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-family: sans-serif;
+            font-size: 24px;
         }
     </style>
 </head>
 <body>
+    <div id="loading">Loading...</div>
     <canvas id="glcanvas" tabindex="1"></canvas>
-    <script src="https://not-fl3.github.io/miniquad-samples/mq_js_bundle.js"></script>
-    <script>load("apartment.wasm");</script>
+    <script src="mq_js_bundle.js"></script>
+    <script>
+        document.getElementById('loading').style.display = 'none';
+        load("apartment.wasm");
+    </script>
 </body>
 </html>
 "@

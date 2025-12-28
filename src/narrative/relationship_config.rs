@@ -46,16 +46,15 @@ impl Default for RelationshipEventsConfig {
 }
 
 pub fn load_relationship_config() -> RelationshipEventsConfig {
-    match std::fs::read_to_string("assets/relationship_events.json") {
-        Ok(json) => {
-            serde_json::from_str(&json).unwrap_or_else(|e| {
-                eprintln!("Failed to parse relationship_events.json: {}", e);
-                RelationshipEventsConfig::default()
-            })
-        }
-        Err(e) => {
-            eprintln!("Failed to load relationship_events.json: {}", e);
-            RelationshipEventsConfig::default()
-        }
-    }
+    #[cfg(target_arch = "wasm32")]
+    let json = include_str!("../../assets/relationship_events.json");
+    
+    #[cfg(not(target_arch = "wasm32"))]
+    let json = std::fs::read_to_string("assets/relationship_events.json")
+        .unwrap_or_else(|_| include_str!("../../assets/relationship_events.json").to_string());
+    
+    serde_json::from_str(&json).unwrap_or_else(|e| {
+        eprintln!("Failed to parse relationship_events.json: {}", e);
+        RelationshipEventsConfig::default()
+    })
 }

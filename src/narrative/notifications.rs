@@ -197,18 +197,17 @@ impl Default for HintThresholds {
 
 /// Load hints config from JSON file
 pub fn load_hints_config() -> HintsConfig {
-    match std::fs::read_to_string("assets/hints.json") {
-        Ok(json) => {
-            serde_json::from_str(&json).unwrap_or_else(|e| {
-                eprintln!("Failed to parse hints.json: {}", e);
-                HintsConfig::default()
-            })
-        }
-        Err(e) => {
-            eprintln!("Failed to load hints.json: {}", e);
-            HintsConfig::default()
-        }
-    }
+    #[cfg(target_arch = "wasm32")]
+    let json = include_str!("../../assets/hints.json");
+    
+    #[cfg(not(target_arch = "wasm32"))]
+    let json = std::fs::read_to_string("assets/hints.json")
+        .unwrap_or_else(|_| include_str!("../../assets/hints.json").to_string());
+    
+    serde_json::from_str(&json).unwrap_or_else(|e| {
+        eprintln!("Failed to parse hints.json: {}", e);
+        HintsConfig::default()
+    })
 }
 
 /// Manages pending game notifications

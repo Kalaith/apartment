@@ -638,34 +638,29 @@ impl Default for GameConfig {
 }
 
 pub fn load_config() -> GameConfig {
-    let mut config = match std::fs::read_to_string("assets/config.json") {
-        Ok(json) => {
-            serde_json::from_str(&json).unwrap_or_else(|e| {
-                eprintln!("Failed to parse config.json: {}", e);
-                GameConfig::default()
-            })
-        }
-        Err(e) => {
-            eprintln!("Failed to load config.json: {}", e);
-            GameConfig::default()
-        }
-    };
+    // For WASM, embed configs at compile time
+    #[cfg(target_arch = "wasm32")]
+    let config_json = include_str!("../../assets/config.json");
     
-    // Load upgrades from separate file (allows adding upgrades without touching Rust code)
-    match std::fs::read_to_string("assets/upgrades.json") {
-        Ok(json) => {
-            match serde_json::from_str::<HashMap<String, UpgradeDefinition>>(&json) {
-                Ok(upgrades) => {
-                    config.upgrades = upgrades;
-                }
-                Err(e) => {
-                    eprintln!("Failed to parse upgrades.json: {}", e);
-                }
-            }
-        }
-        Err(e) => {
-            eprintln!("Failed to load upgrades.json: {}", e);
-        }
+    #[cfg(not(target_arch = "wasm32"))]
+    let config_json = std::fs::read_to_string("assets/config.json")
+        .unwrap_or_else(|_| include_str!("../../assets/config.json").to_string());
+    
+    let mut config: GameConfig = serde_json::from_str(&config_json).unwrap_or_else(|e| {
+        eprintln!("Failed to parse config.json: {}", e);
+        GameConfig::default()
+    });
+    
+    // Load upgrades from separate file
+    #[cfg(target_arch = "wasm32")]
+    let upgrades_json = include_str!("../../assets/upgrades.json");
+    
+    #[cfg(not(target_arch = "wasm32"))]
+    let upgrades_json = std::fs::read_to_string("assets/upgrades.json")
+        .unwrap_or_else(|_| include_str!("../../assets/upgrades.json").to_string());
+    
+    if let Ok(upgrades) = serde_json::from_str::<HashMap<String, UpgradeDefinition>>(&upgrades_json) {
+        config.upgrades = upgrades;
     }
     
     config

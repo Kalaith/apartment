@@ -46,25 +46,23 @@ pub struct ArchetypeRegistry {
 impl ArchetypeRegistry {
     /// Load archetypes from JSON file
     pub fn load() -> Self {
-        match std::fs::read_to_string("assets/tenant_archetypes.json") {
-            Ok(json) => {
-                match serde_json::from_str::<ArchetypeData>(&json) {
-                    Ok(data) => {
-                        let mut definitions = HashMap::new();
-                        for archetype in data.archetypes {
-                            definitions.insert(archetype.id.clone(), archetype);
-                        }
-                        println!("Loaded {} archetypes from JSON", definitions.len());
-                        Self { definitions }
-                    }
-                    Err(e) => {
-                        eprintln!("Failed to parse tenant_archetypes.json: {}", e);
-                        Self::default()
-                    }
+        #[cfg(target_arch = "wasm32")]
+        let json = include_str!("../../assets/tenant_archetypes.json");
+        
+        #[cfg(not(target_arch = "wasm32"))]
+        let json = std::fs::read_to_string("assets/tenant_archetypes.json")
+            .unwrap_or_else(|_| include_str!("../../assets/tenant_archetypes.json").to_string());
+        
+        match serde_json::from_str::<ArchetypeData>(&json) {
+            Ok(data) => {
+                let mut definitions = HashMap::new();
+                for archetype in data.archetypes {
+                    definitions.insert(archetype.id.clone(), archetype);
                 }
+                Self { definitions }
             }
             Err(e) => {
-                eprintln!("Failed to load tenant_archetypes.json: {}", e);
+                eprintln!("Failed to parse tenant_archetypes.json: {}", e);
                 Self::default()
             }
         }

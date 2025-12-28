@@ -77,18 +77,20 @@ pub struct InitialTenantData {
 }
 
 pub fn load_templates() -> Option<BuildingTemplates> {
-    match fs::read_to_string("assets/building_templates.json") {
-        Ok(json) => {
-            match serde_json::from_str::<BuildingTemplates>(&json) {
-                Ok(templates) => Some(templates),
-                Err(e) => {
-                    eprintln!("Failed to parse building_templates.json: {}", e);
-                    None
-                }
-            }
-        }
+    // For WASM, embed at compile time
+    #[cfg(target_arch = "wasm32")]
+    let json = include_str!("../../assets/building_templates.json");
+    
+    #[cfg(not(target_arch = "wasm32"))]
+    let json = match fs::read_to_string("assets/building_templates.json") {
+        Ok(s) => s,
+        Err(_) => include_str!("../../assets/building_templates.json").to_string(),
+    };
+    
+    match serde_json::from_str::<BuildingTemplates>(&json) {
+        Ok(templates) => Some(templates),
         Err(e) => {
-            eprintln!("Failed to load building_templates.json: {}", e);
+            eprintln!("Failed to parse building_templates.json: {}", e);
             None
         }
     }

@@ -28,16 +28,15 @@ impl Default for TenantEventsConfig {
 }
 
 pub fn load_events_config() -> TenantEventsConfig {
-    match std::fs::read_to_string("assets/tenant_events.json") {
-        Ok(json) => {
-            serde_json::from_str(&json).unwrap_or_else(|e| {
-                eprintln!("Failed to parse tenant_events.json: {}", e);
-                TenantEventsConfig::default()
-            })
-        }
-        Err(e) => {
-            eprintln!("Failed to load tenant_events.json: {}", e);
-            TenantEventsConfig::default()
-        }
-    }
+    #[cfg(target_arch = "wasm32")]
+    let json = include_str!("../../assets/tenant_events.json");
+    
+    #[cfg(not(target_arch = "wasm32"))]
+    let json = std::fs::read_to_string("assets/tenant_events.json")
+        .unwrap_or_else(|_| include_str!("../../assets/tenant_events.json").to_string());
+    
+    serde_json::from_str(&json).unwrap_or_else(|e| {
+        eprintln!("Failed to parse tenant_events.json: {}", e);
+        TenantEventsConfig::default()
+    })
 }

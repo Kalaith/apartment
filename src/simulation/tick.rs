@@ -242,17 +242,17 @@ impl GameTick {
         current_tick: u32,
         result: &mut TickResult
     ) {
-        use rand::Rng;
-        let mut rng = rand::thread_rng();
+        use macroquad::rand::gen_range;
         
-        let mut prob = 0.005;
+        let base_prob = 5; // 0.5% as integer (out of 1000)
+        let mut prob = base_prob;
         // Security reduces failure probability
         if building.flags.contains("staff_security") {
-            prob *= 0.5;
+            prob /= 2;
         }
         
-        // Boiler Failure
-        if rng.gen_bool(prob) {
+        // Boiler Failure (prob out of 1000)
+        if gen_range(0, 1000) < prob {
             let cost = 1500;
             if funds.can_afford(cost) {
                 funds.deduct_expense(Transaction::expense(TransactionType::CriticalFailure, cost, "Boiler Emergency Repair", current_tick));
@@ -267,7 +267,7 @@ impl GameTick {
         }
         
         // Structural Issue
-        if rng.gen_bool(prob) {
+        if gen_range(0, 1000) < prob {
              let cost = 2500;
              let tx = Transaction::expense(TransactionType::CriticalFailure, cost, "Structural Reinforcement", current_tick);
              if funds.deduct_expense(tx) {

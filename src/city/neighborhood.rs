@@ -203,10 +203,12 @@ mod tests {
 }
 
 fn load_neighborhood_config() -> HashMap<String, NeighborhoodStats> {
-    match std::fs::read_to_string("assets/neighborhoods.json") {
-        Ok(json) => {
-            serde_json::from_str(&json).unwrap_or_default()
-        }
-        Err(_) => HashMap::new()
-    }
+    #[cfg(target_arch = "wasm32")]
+    let json = include_str!("../../assets/neighborhoods.json");
+    
+    #[cfg(not(target_arch = "wasm32"))]
+    let json = std::fs::read_to_string("assets/neighborhoods.json")
+        .unwrap_or_else(|_| include_str!("../../assets/neighborhoods.json").to_string());
+    
+    serde_json::from_str(&json).unwrap_or_default()
 }

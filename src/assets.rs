@@ -90,25 +90,22 @@ impl AssetManager {
 
         for id in asset_ids {
             let path = format!("assets/textures/{}.png", id);
-            // In Macroquad, load_texture is async.
-            // We verify if file exists first to avoid crash? 
-            // Macroquad's load_texture usually returns a dummy texture if failed or errors out?
-            // checking if file exists is safer locally.
-            if std::path::Path::new(&path).exists() {
-                 match load_texture(&path).await {
-                    Ok(texture) => {
-                        texture.set_filter(FilterMode::Nearest);
-                        self.textures.insert(id.to_string(), texture);
-                    },
-                    Err(e) => {
-                        println!("Failed to load texture {}: {}", id, e);
-                    }
+            // In WASM, we can't check if file exists - just try to load
+            // Macroquad will handle missing files gracefully
+            match load_texture(&path).await {
+                Ok(texture) => {
+                    texture.set_filter(FilterMode::Nearest);
+                    self.textures.insert(id.to_string(), texture);
+                },
+                Err(_e) => {
+                    // Silently skip missing textures - game uses fallback rendering
+                    #[cfg(not(target_arch = "wasm32"))]
+                    println!("Texture not found: {}", path);
                 }
-            } else {
-                println!("Texture file missing: {}", path);
             }
         }
         
+        #[cfg(not(target_arch = "wasm32"))]
         println!("Assets loaded: {} textures", self.textures.len());
         self.loaded = true;
     }
