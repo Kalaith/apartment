@@ -1,26 +1,29 @@
 
 use macroquad::prelude::*;
 
-/// Color palette
+// Import toolkit utilities
+pub use macroquad_toolkit::input::{is_hovered, was_clicked};
+pub use macroquad_toolkit::ui::progress_bar;
+
+/// Color palette (extends toolkit colors with game-specific colors)
 pub mod colors {
     use macroquad::prelude::Color;
-    
-    pub const BACKGROUND: Color = Color::new(0.12, 0.12, 0.14, 1.0);
-    pub const PANEL: Color = Color::new(0.18, 0.18, 0.22, 1.0);
-    pub const PANEL_HEADER: Color = Color::new(0.22, 0.22, 0.28, 1.0);
-    pub const TEXT: Color = Color::new(0.9, 0.9, 0.9, 1.0);
+
+    // Re-export common colors from toolkit
+    pub use macroquad_toolkit::colors::dark::{
+        BACKGROUND, PANEL, PANEL_HEADER, TEXT, TEXT_DIM,
+        ACCENT, POSITIVE, NEGATIVE
+    };
+
+    // Game-specific colors that toolkit doesn't have
     pub const TEXT_BRIGHT: Color = Color::new(1.0, 1.0, 1.0, 1.0);  // Pure white
-    pub const TEXT_DIM: Color = Color::new(0.6, 0.6, 0.6, 1.0);
-    pub const ACCENT: Color = Color::new(0.3, 0.6, 0.9, 1.0);
-    pub const POSITIVE: Color = Color::new(0.3, 0.8, 0.4, 1.0);
     pub const WARNING: Color = Color::new(0.9, 0.7, 0.2, 1.0);
-    pub const NEGATIVE: Color = Color::new(0.9, 0.3, 0.3, 1.0);
-    
+
     pub const VACANT: Color = Color::new(0.3, 0.3, 0.35, 1.0);
     pub const OCCUPIED: Color = Color::new(0.25, 0.35, 0.45, 1.0);
     pub const SELECTED: Color = Color::new(0.35, 0.5, 0.7, 1.0);
     pub const HOVERED: Color = Color::new(0.3, 0.4, 0.55, 1.0);
-    
+
     // Archetype colors
     pub const STUDENT: Color = Color::new(0.8, 0.5, 0.3, 1.0);      // Orange-ish
     pub const PROFESSIONAL: Color = Color::new(0.3, 0.5, 0.8, 1.0); // Blue-ish
@@ -65,48 +68,42 @@ pub mod layout {
 }
 
 /// Draw a simple button, returns true if clicked
+///
+/// Wrapper around toolkit button that maintains apartment's API (enabled parameter)
+/// and click behavior (triggers on press, not release)
 pub fn button(x: f32, y: f32, w: f32, h: f32, text: &str, enabled: bool) -> bool {
-    let mouse = mouse_position();
-    let rect = Rect::new(x, y, w, h);
-    let hovered = rect.contains(Vec2::new(mouse.0, mouse.1));
-    let clicked = hovered && is_mouse_button_pressed(MouseButton::Left) && enabled;
-    
-    let is_pressed = hovered && is_mouse_button_down(MouseButton::Left) && enabled;
-    
-    let bg_color = if !enabled {
-        Color::new(0.2, 0.2, 0.2, 1.0)
-    } else if is_pressed {
-        Color::new(0.25, 0.35, 0.5, 1.0) // Darker when pressed
-    } else if hovered {
-        colors::HOVERED
-    } else {
-        colors::PANEL
+    if !enabled {
+        // Draw disabled button
+        let style = macroquad_toolkit::ui::ButtonStyle {
+            normal: Color::new(0.2, 0.2, 0.2, 1.0),
+            hovered: Color::new(0.2, 0.2, 0.2, 1.0),
+            pressed: Color::new(0.2, 0.2, 0.2, 1.0),
+            border: colors::ACCENT,
+            text_color: colors::TEXT_DIM,
+        };
+        macroquad_toolkit::ui::button_on_press(x, y, w, h, text, &style);
+        return false; // Disabled buttons never trigger
+    }
+
+    // Enabled button with apartment's color scheme
+    let style = macroquad_toolkit::ui::ButtonStyle {
+        normal: colors::PANEL,
+        hovered: colors::HOVERED,
+        pressed: Color::new(0.25, 0.35, 0.5, 1.0),
+        border: colors::ACCENT,
+        text_color: colors::TEXT,
     };
-    
-    // Draw background
-    draw_rectangle(x, y, w, h, bg_color);
-    draw_rectangle_lines(x, y, w, h, 2.0, colors::ACCENT);
-    
-    // Text offset
-    let y_offset = if is_pressed { 2.0 } else { 0.0 };
-    
-    let text_color = if enabled { colors::TEXT } else { colors::TEXT_DIM };
-    let text_size = 20.0;
-    let text_width = measure_text(text, None, text_size as u16, 1.0).width;
-    draw_text(text, x + (w - text_width) / 2.0, y + h / 2.0 + 6.0 + y_offset, text_size, text_color);
-    
-    clicked
+
+    macroquad_toolkit::ui::button_on_press(x, y, w, h, text, &style)
 }
 
 /// Draw a button with custom colors
 pub fn colored_button(x: f32, y: f32, w: f32, h: f32, text: &str, enabled: bool, bg_color: Color, text_color: Color) -> bool {
-    let mouse = mouse_position();
-    let rect = Rect::new(x, y, w, h);
-    let hovered = rect.contains(Vec2::new(mouse.0, mouse.1));
+    let hovered = is_hovered(x, y, w, h);
     let clicked = hovered && is_mouse_button_pressed(MouseButton::Left) && enabled;
-    
+
     let is_pressed = hovered && is_mouse_button_down(MouseButton::Left) && enabled;
-    
+
     // Dim if disabled, darken if pressed, lighten if hovered
     let final_bg = if !enabled {
         Color::new(0.2, 0.2, 0.2, 1.0)
@@ -117,50 +114,23 @@ pub fn colored_button(x: f32, y: f32, w: f32, h: f32, text: &str, enabled: bool,
     } else {
         bg_color
     };
-    
+
     draw_rectangle(x, y, w, h, final_bg);
     draw_rectangle_lines(x, y, w, h, 2.0, colors::TEXT_DIM);
-    
+
     let y_offset = if is_pressed { 2.0 } else { 0.0 };
     let text_size = 20.0;
     let text_width = measure_text(text, None, text_size as u16, 1.0).width;
     draw_text(text, x + (w - text_width) / 2.0, y + h / 2.0 + 6.0 + y_offset, text_size, text_color);
-    
+
     clicked
 }
 
-/// Draw a progress bar
-pub fn progress_bar(x: f32, y: f32, w: f32, h: f32, value: f32, max: f32, color: Color) {
-    let fill_width = (value / max).clamp(0.0, 1.0) * w;
-    
-    draw_rectangle(x, y, w, h, Color::new(0.15, 0.15, 0.15, 1.0));
-    draw_rectangle(x, y, fill_width, h, color);
-    draw_rectangle_lines(x, y, w, h, 1.0, colors::TEXT_DIM);
-}
-
 /// Draw a panel with header
+///
+/// Wrapper around toolkit panel that maintains apartment's API (title is not optional)
 pub fn panel(x: f32, y: f32, w: f32, h: f32, title: &str) {
-    // Background
-    draw_rectangle(x, y, w, h, colors::PANEL);
-    
-    // Header
-    draw_rectangle(x, y, w, 30.0, colors::PANEL_HEADER);
-    draw_text(title, x + 10.0, y + 22.0, 20.0, colors::TEXT);
-    
-    // Border
-    draw_rectangle_lines(x, y, w, h, 1.0, colors::TEXT_DIM);
-}
-
-/// Check if mouse is over a rectangle
-pub fn is_hovered(x: f32, y: f32, w: f32, h: f32) -> bool {
-    let mouse = mouse_position();
-    let rect = Rect::new(x, y, w, h);
-    rect.contains(Vec2::new(mouse.0, mouse.1))
-}
-
-/// Check if rectangle was clicked
-pub fn was_clicked(x: f32, y: f32, w: f32, h: f32) -> bool {
-    is_hovered(x, y, w, h) && is_mouse_button_pressed(MouseButton::Left)
+    macroquad_toolkit::ui::panel(x, y, w, h, Some(title));
 }
 
 /// Get color for condition value
