@@ -71,59 +71,68 @@ pub mod layout {
 ///
 /// Wrapper around toolkit button that maintains apartment's API (enabled parameter)
 /// and click behavior (triggers on press, not release)
+/// Draw a simple button, returns true if clicked
+///
+/// Wrapper around toolkit button that maintains apartment's API (enabled parameter)
+/// and click behavior (triggers on press, not release)
 pub fn button(x: f32, y: f32, w: f32, h: f32, text: &str, enabled: bool) -> bool {
-    if !enabled {
-        // Draw disabled button
-        let style = macroquad_toolkit::ui::ButtonStyle {
-            normal: Color::new(0.2, 0.2, 0.2, 1.0),
-            hovered: Color::new(0.2, 0.2, 0.2, 1.0),
-            pressed: Color::new(0.2, 0.2, 0.2, 1.0),
+    // If disabled, use a disabled style but don't check for clicks
+    let style = if !enabled {
+        macroquad_toolkit::ui::ButtonStyle {
+             normal: Color::new(0.2, 0.2, 0.2, 1.0),
+             hovered: Color::new(0.2, 0.2, 0.2, 1.0),
+             pressed: Color::new(0.2, 0.2, 0.2, 1.0),
+             border: colors::ACCENT,
+             text_color: colors::TEXT_DIM,
+             disabled: Color::new(0.1, 0.1, 0.1, 1.0),
+        }
+    } else {
+        macroquad_toolkit::ui::ButtonStyle {
+            normal: colors::PANEL,
+            hovered: colors::HOVERED,
+            pressed: Color::new(0.25, 0.35, 0.5, 1.0),
             border: colors::ACCENT,
-            text_color: colors::TEXT_DIM,
-        };
-        macroquad_toolkit::ui::button_on_press(x, y, w, h, text, &style);
-        return false; // Disabled buttons never trigger
-    }
-
-    // Enabled button with apartment's color scheme
-    let style = macroquad_toolkit::ui::ButtonStyle {
-        normal: colors::PANEL,
-        hovered: colors::HOVERED,
-        pressed: Color::new(0.25, 0.35, 0.5, 1.0),
-        border: colors::ACCENT,
-        text_color: colors::TEXT,
+            text_color: colors::TEXT,
+            disabled: Color::new(0.1, 0.1, 0.1, 1.0),
+        }
     };
+
+    if !enabled {
+         macroquad_toolkit::ui::button_on_press(x, y, w, h, text, &style);
+         return false;
+    }
 
     macroquad_toolkit::ui::button_on_press(x, y, w, h, text, &style)
 }
 
 /// Draw a button with custom colors
 pub fn colored_button(x: f32, y: f32, w: f32, h: f32, text: &str, enabled: bool, bg_color: Color, text_color: Color) -> bool {
-    let hovered = is_hovered(x, y, w, h);
-    let clicked = hovered && is_mouse_button_pressed(MouseButton::Left) && enabled;
-
-    let is_pressed = hovered && is_mouse_button_down(MouseButton::Left) && enabled;
-
-    // Dim if disabled, darken if pressed, lighten if hovered
-    let final_bg = if !enabled {
-        Color::new(0.2, 0.2, 0.2, 1.0)
-    } else if is_pressed {
-         Color::new(bg_color.r * 0.8, bg_color.g * 0.8, bg_color.b * 0.8, bg_color.a)
-    } else if hovered {
-         Color::new(bg_color.r * 1.2, bg_color.g * 1.2, bg_color.b * 1.2, bg_color.a)
-    } else {
-        bg_color
+    if !enabled {
+        // Draw disabled version using generic button logic logic above or custom draw
+        draw_rectangle(x, y, w, h, Color::new(0.2, 0.2, 0.2, 1.0));
+        draw_rectangle_lines(x, y, w, h, 2.0, colors::TEXT_DIM);
+        
+        let text_size = 20.0;
+        let text_width = measure_text(text, None, text_size as u16, 1.0).width;
+        draw_text(text, x + (w - text_width) / 2.0, y + h / 2.0 + 6.0, text_size, colors::TEXT_DIM);
+        return false;
+    }
+    
+    // Use toolkit's colored_button logic but we need to respect the text_color param
+    // Toolkit's colored_button uses standard text colors. 
+    // Since this needs custom text color, we'll manually construct the style and call button_on_release (or press to match apartment)
+    
+    // Apartment uses "on press" mostly
+    let style = macroquad_toolkit::ui::ButtonStyle {
+        normal: bg_color,
+        hovered: Color::new(bg_color.r * 1.2, bg_color.g * 1.2, bg_color.b * 1.2, bg_color.a),
+        pressed: Color::new(bg_color.r * 0.8, bg_color.g * 0.8, bg_color.b * 0.8, bg_color.a),
+        border: colors::TEXT_DIM,
+        text_color: text_color,
+        disabled: Color::new(0.1, 0.1, 0.1, 1.0),
     };
-
-    draw_rectangle(x, y, w, h, final_bg);
-    draw_rectangle_lines(x, y, w, h, 2.0, colors::TEXT_DIM);
-
-    let y_offset = if is_pressed { 2.0 } else { 0.0 };
-    let text_size = 20.0;
-    let text_width = measure_text(text, None, text_size as u16, 1.0).width;
-    draw_text(text, x + (w - text_width) / 2.0, y + h / 2.0 + 6.0 + y_offset, text_size, text_color);
-
-    clicked
+    
+    macroquad_toolkit::ui::button_on_press(x, y, w, h, text, &style)
 }
 
 /// Draw a panel with header

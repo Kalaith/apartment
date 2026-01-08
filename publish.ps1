@@ -1,35 +1,79 @@
-# Apartment Manager - Itch.io Publish Script
-# Creates distributable packages for Windows and WebGL
+# Apartment Manager - Game Publishing Script
+# Builds WebGL package and deploys to preview/production servers
 
 param(
     [switch]$SkipBuild = $false,
     [switch]$WindowsOnly = $false,
     [switch]$WebGLOnly = $false,
-    [string]$OutputName = "apartment_manager"
+    [switch]$DeployOnly = $false,
+    [Alias('p')] [switch]$Production = $false,
+    [switch]$DryRun = $false
 )
 
 $ErrorActionPreference = "Stop"
 $ProjectRoot = $PSScriptRoot
 $DistDir = Join-Path $ProjectRoot "dist"
+$CargoToml = Join-Path $ProjectRoot "Cargo.toml"
 
-Write-Host "=== Apartment Manager Publisher ===" -ForegroundColor Cyan
+# Deployment paths
+$PreviewRoot = "H:\xampp\htdocs"
+$ProductionRoot = "F:\WebHatchery"
+
+# Parse project name from Cargo.toml
+if (-not (Test-Path $CargoToml)) {
+    Write-Error "Cargo.toml not found at: $CargoToml"
+    exit 1
+}
+
+$CargoContent = Get-Content $CargoToml -Raw
+if ($CargoContent -match 'name\s*=\s*"([^"]+)"') {
+    $ProjectName = $matches[1]
+} else {
+    Write-Error "Could not parse project name from Cargo.toml"
+    exit 1
+}
+
+$ProjectTitle = ($ProjectName -replace '_', ' ').ToUpper()
+
+Write-Host "=== $ProjectTitle Publisher ===" -ForegroundColor Cyan
+Write-Host "Project: $ProjectName"
 Write-Host ""
 
-# Calculate steps based on what we're building
-$buildWindows = -not $WebGLOnly
+# Determine deployment target
+$DeployRoot = $PreviewRoot
+$Environment = "Preview"
+if ($Production) {
+    $DeployRoot = $ProductionRoot
+    $Environment = "Production"
+}
+$DeployDir = Join-Path $DeployRoot "games\$ProjectName"
+
+Write-Host "Target: $Environment ($DeployDir)" -ForegroundColor Magenta
+Write-Host ""
+
+# Skip build and just deploy?
+if ($DeployOnly) {
+    Write-Host "Deploy-only mode: Skipping build, deploying existing files..." -ForegroundColor Yellow
+    $SkipBuild = $true
+}
+
+# Calculate steps
+$buildWindows = -not $WebGLOnly -and -not $DeployOnly
 $buildWebGL = -not $WindowsOnly
-$totalSteps = 2  # Clean + Summary
-if ($buildWindows) { $totalSteps += 2 }  # Build + Package
-if ($buildWebGL) { $totalSteps += 2 }     # Build + Package
+$totalSteps = 3  # Clean + Deploy + Summary
+if ($buildWindows) { $totalSteps += 2 }
+if ($buildWebGL) { $totalSteps += 2 }
 $currentStep = 0
 
-# Step: Clean dist folder
-$currentStep++
-Write-Host "[$currentStep/$totalSteps] Preparing dist folder..." -ForegroundColor Yellow
-if (Test-Path $DistDir) {
-    Remove-Item $DistDir -Recurse -Force
+# Step: Prepare dist folder
+if (-not $DeployOnly) {
+    $currentStep++
+    Write-Host "[$currentStep/$totalSteps] Preparing dist folder..." -ForegroundColor Yellow
+    if (Test-Path $DistDir) {
+        Remove-Item $DistDir -Recurse -Force
+    }
+    New-Item -ItemType Directory -Path $DistDir -Force | Out-Null
 }
-New-Item -ItemType Directory -Path $DistDir -Force | Out-Null
 
 # === WINDOWS BUILD ===
 if ($buildWindows) {
@@ -51,20 +95,19 @@ if ($buildWindows) {
     $WindowsPackageDir = Join-Path $DistDir "windows"
     New-Item -ItemType Directory -Path $WindowsPackageDir -Force | Out-Null
 
-    # Copy executable
-    $ExePath = Join-Path $ProjectRoot "target\release\apartment.exe"
+    $ExePath = Join-Path $ProjectRoot "..\target\release\$ProjectName.exe"
     if (-not (Test-Path $ExePath)) {
         Write-Error "Executable not found at: $ExePath"
         exit 1
     }
     Copy-Item $ExePath $WindowsPackageDir
 
-    # Copy assets folder
     $AssetsPath = Join-Path $ProjectRoot "assets"
-    Copy-Item $AssetsPath -Destination $WindowsPackageDir -Recurse
+    if (Test-Path $AssetsPath) {
+        Copy-Item $AssetsPath -Destination $WindowsPackageDir -Recurse
+    }
 
-    # Create Windows zip
-    $WindowsZipPath = Join-Path $DistDir "${OutputName}_windows.zip"
+    $WindowsZipPath = Join-Path $DistDir "${ProjectName}_windows.zip"
     Compress-Archive -Path "$WindowsPackageDir\*" -DestinationPath $WindowsZipPath -CompressionLevel Optimal
     Write-Host "Windows package created!" -ForegroundColor Green
 }
@@ -74,9 +117,7 @@ if ($buildWebGL) {
     $currentStep++
     if (-not $SkipBuild) {
         Write-Host "[$currentStep/$totalSteps] Building WebGL release..." -ForegroundColor Yellow
-        Write-Host "Note: WebGL build requires 'rand' crate to be replaced with macroquad::rand" -ForegroundColor DarkYellow
         
-        # Check if wasm32 target is installed
         $targets = rustup target list --installed
         if ($targets -notcontains "wasm32-unknown-unknown") {
             Write-Host "Installing wasm32-unknown-unknown target..." -ForegroundColor Yellow
@@ -99,18 +140,20 @@ if ($buildWebGL) {
     New-Item -ItemType Directory -Path $WebGLPackageDir -Force | Out-Null
 
     # Copy WASM file
-    $WasmPath = Join-Path $ProjectRoot "target\wasm32-unknown-unknown\release\apartment.wasm"
+    $WasmPath = Join-Path $ProjectRoot "..\target\wasm32-unknown-unknown\release\$ProjectName.wasm"
     if (-not (Test-Path $WasmPath)) {
         Write-Error "WASM file not found at: $WasmPath"
         exit 1
     }
     Copy-Item $WasmPath $WebGLPackageDir
 
-    # Copy assets folder
+    # Copy assets
     $AssetsPath = Join-Path $ProjectRoot "assets"
-    Copy-Item $AssetsPath -Destination $WebGLPackageDir -Recurse
+    if (Test-Path $AssetsPath) {
+        Copy-Item $AssetsPath -Destination $WebGLPackageDir -Recurse
+    }
 
-    # Download mq_js_bundle.js locally (so we don't rely on CDN)
+    # Download mq_js_bundle.js
     $JsBundlePath = Join-Path $WebGLPackageDir "mq_js_bundle.js"
     Write-Host "Downloading mq_js_bundle.js..." -ForegroundColor Gray
     try {
@@ -118,91 +161,107 @@ if ($buildWebGL) {
     } catch {
         Write-Warning "Could not download mq_js_bundle.js - will use CDN reference"
     }
-    $UseLocalJs = Test-Path $JsBundlePath
 
-    # Create HTML wrapper
-    # Note: For itch.io, set viewport dimensions to 1280x720 in upload settings
-    $HtmlContent = @"
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=1280, height=720, initial-scale=1.0">
-    <title>Apartment Manager</title>
-    <!-- itch.io: Set viewport to 1280x720 in Embed Options -->
-    <style>
-        html, body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background: #1a1a2e;
-        }
-        canvas {
-            width: 100%;
-            height: 100%;
-            display: block;
-        }
-        #loading {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: white;
-            font-family: sans-serif;
-            font-size: 24px;
-        }
-    </style>
-</head>
-<body>
-    <div id="loading">Loading...</div>
-    <canvas id="glcanvas" tabindex="1"></canvas>
-    <script src="mq_js_bundle.js"></script>
-    <script>
-        document.getElementById('loading').style.display = 'none';
-        load("apartment.wasm");
-    </script>
-</body>
-</html>
-"@
-    $HtmlPath = Join-Path $WebGLPackageDir "index.html"
-    Set-Content -Path $HtmlPath -Value $HtmlContent
-
-    # Create WebGL zip
-    $WebGLZipPath = Join-Path $DistDir "${OutputName}_webgl.zip"
+    # Create WebGL zip (for itch.io uploads)
+    $WebGLZipPath = Join-Path $DistDir "${ProjectName}_webgl.zip"
     Compress-Archive -Path "$WebGLPackageDir\*" -DestinationPath $WebGLZipPath -CompressionLevel Optimal
     Write-Host "WebGL package created!" -ForegroundColor Green
+}
+
+# === DEPLOY ===
+$currentStep++
+Write-Host ""
+Write-Host "[$currentStep/$totalSteps] Deploying to $Environment..." -ForegroundColor Yellow
+
+if ($DryRun) {
+    Write-Host "[DRY-RUN] Would deploy to: $DeployDir" -ForegroundColor DarkYellow
+} else {
+    # Ensure deploy directory exists
+    if (-not (Test-Path $DeployDir)) {
+        New-Item -ItemType Directory -Path $DeployDir -Force | Out-Null
+    }
+
+    # Copy index.html from project root
+    $IndexPath = Join-Path $ProjectRoot "index.html"
+    if (Test-Path $IndexPath) {
+        Copy-Item $IndexPath $DeployDir -Force
+        Write-Host "  Copied: index.html" -ForegroundColor Gray
+    } else {
+        Write-Warning "index.html not found in project root!"
+    }
+
+    # Copy WebGL files
+    $WebGLSourceDir = Join-Path $DistDir "webgl"
+    if (Test-Path $WebGLSourceDir) {
+        # Copy WASM
+        $wasmFile = Join-Path $WebGLSourceDir "$ProjectName.wasm"
+        if (Test-Path $wasmFile) {
+            Copy-Item $wasmFile $DeployDir -Force
+            Write-Host "  Copied: $ProjectName.wasm" -ForegroundColor Gray
+        }
+        
+        # Copy mq_js_bundle.js
+        $jsBundle = Join-Path $WebGLSourceDir "mq_js_bundle.js"
+        if (Test-Path $jsBundle) {
+            Copy-Item $jsBundle $DeployDir -Force
+            Write-Host "  Copied: mq_js_bundle.js" -ForegroundColor Gray
+        }
+        
+        # Copy assets folder
+        $assetsDir = Join-Path $WebGLSourceDir "assets"
+        if (Test-Path $assetsDir) {
+            $destAssets = Join-Path $DeployDir "assets"
+            if (Test-Path $destAssets) {
+                Remove-Item $destAssets -Recurse -Force
+            }
+            Copy-Item $assetsDir -Destination $DeployDir -Recurse
+            Write-Host "  Copied: assets/" -ForegroundColor Gray
+        }
+    }
+
+    Write-Host "Deployed to: $DeployDir" -ForegroundColor Green
 }
 
 # Summary
 $currentStep++
 Write-Host ""
-Write-Host "=== Package Complete ===" -ForegroundColor Cyan
+Write-Host "=== Complete ===" -ForegroundColor Cyan
 
 if ($buildWindows) {
-    $WindowsZipPath = Join-Path $DistDir "${OutputName}_windows.zip"
-    $WinSize = [math]::Round((Get-Item $WindowsZipPath).Length / 1MB, 2)
-    Write-Host "Windows: $WindowsZipPath (${WinSize} MB)" -ForegroundColor Green
+    $WindowsZipPath = Join-Path $DistDir "${ProjectName}_windows.zip"
+    if (Test-Path $WindowsZipPath) {
+        $WinSize = [math]::Round((Get-Item $WindowsZipPath).Length / 1MB, 2)
+        Write-Host "Windows: $WindowsZipPath (${WinSize} MB)" -ForegroundColor Green
+    }
 }
 
 if ($buildWebGL) {
-    $WebGLZipPath = Join-Path $DistDir "${OutputName}_webgl.zip"
-    $WebSize = [math]::Round((Get-Item $WebGLZipPath).Length / 1MB, 2)
-    Write-Host "WebGL:   $WebGLZipPath (${WebSize} MB)" -ForegroundColor Green
+    $WebGLZipPath = Join-Path $DistDir "${ProjectName}_webgl.zip"
+    if (Test-Path $WebGLZipPath) {
+        $WebSize = [math]::Round((Get-Item $WebGLZipPath).Length / 1MB, 2)
+        Write-Host "WebGL:   $WebGLZipPath (${WebSize} MB)" -ForegroundColor Green
+    }
 }
 
 Write-Host ""
-Write-Host "Next steps for itch.io:" -ForegroundColor Yellow
-Write-Host "  1. Go to https://itch.io/dashboard" -ForegroundColor White
-Write-Host "  2. Create/edit your project" -ForegroundColor White
-if ($buildWindows) {
-    Write-Host "  3. Upload Windows zip, mark as 'Windows'" -ForegroundColor White
-}
-if ($buildWebGL) {
-    Write-Host "  4. Upload WebGL zip, mark as 'Play in browser'" -ForegroundColor White
-}
+Write-Host "Deployed to: $DeployDir" -ForegroundColor Green
+Write-Host ""
+Write-Host "Options:" -ForegroundColor Yellow
+Write-Host "  -SkipBuild    : Use existing builds"
+Write-Host "  -WebGLOnly    : Build only WebGL version"
+Write-Host "  -WindowsOnly  : Build only Windows version"
+Write-Host "  -DeployOnly   : Just deploy existing builds"
+Write-Host "  -Production   : Deploy to production (F:\WebHatchery)"
+Write-Host "  -DryRun       : Show what would happen"
+Write-Host ""
+Write-Host "Examples:" -ForegroundColor Cyan
+Write-Host "  .\publish.ps1                    # Build all + deploy to preview"
+Write-Host "  .\publish.ps1 -WebGLOnly         # Build WebGL + deploy to preview"
+Write-Host "  .\publish.ps1 -Production        # Build all + deploy to production"
+Write-Host "  .\publish.ps1 -DeployOnly -p     # Deploy existing to production"
 Write-Host ""
 
-# Open dist folder
-explorer $DistDir
+# Open dist folder if we built something
+if (-not $DeployOnly -and (Test-Path $DistDir)) {
+    # explorer $DistDir
+}

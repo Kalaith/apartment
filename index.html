@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1280, height=720, initial-scale=1.0">
+    <title>Apartment Manager | Web Hatchery Games</title>
+    <link rel="stylesheet" href="../shared.css">
+    <style>
+        .game-container canvas {
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="game-page">
+        <header class="game-header">
+            <h1>🏢 Apartment Manager</h1>
+            <a href="../" class="back-link">← All Games</a>
+        </header>
+
+        <!-- Game Canvas -->
+        <div class="game-container" id="game-container">
+            <div class="loading-overlay" id="loading">
+                <div class="loading-spinner"></div>
+                <p>Loading game...</p>
+            </div>
+            <canvas id="glcanvas" tabindex="1"></canvas>
+        </div>
+
+        <!-- Controls Bar -->
+        <div class="game-controls">
+            <button class="btn btn-secondary btn-icon" onclick="toggleFullscreen()" title="Fullscreen">⛶</button>
+            <button class="btn btn-secondary" onclick="focusGame()">🎮 Focus Game</button>
+            <span style="flex: 1;"></span>
+            <span style="color: var(--text-muted); font-size: 0.85rem;">Click the game canvas to start</span>
+        </div>
+
+        <!-- Info Section -->
+        <div class="game-info">
+            <div class="info-main">
+                <section class="info-section">
+                    <h2>About This Game</h2>
+                    <p>
+                        You're not a property tycoon — you're the custodian of a half-dead apartment building
+                        with flickering lights, stained carpets, and stubborn tenants. Repair one thing at a time.
+                        Watch the building slowly remember what it was meant to be.
+                    </p>
+                    <p>
+                        Manage tenants, handle requests, upgrade apartments, and survive 3 years of building management.
+                        Complete a building to unlock the next challenge!
+                    </p>
+                </section>
+
+                <section class="info-section" style="margin-top: 1rem;">
+                    <h2>Controls</h2>
+                    <ul class="controls-list">
+                        <li><kbd>Space</kbd><span>End turn / Advance time</span></li>
+                        <li><kbd>Esc</kbd><span>Pause menu (save, quit)</span></li>
+                        <li><kbd>Mouse</kbd><span>Select apartments, click buttons</span></li>
+                    </ul>
+                </section>
+
+                <section class="info-section" style="margin-top: 1rem;">
+                    <h2>Features</h2>
+                    <p>
+                        • <strong>Progressive Building Unlock</strong> - Complete challenges to unlock harder
+                        properties<br>
+                        • <strong>Three Unique Buildings</strong> - From starter apartments to historic manor
+                        estates<br>
+                        • <strong>Tenant System</strong> - Diverse archetypes with unique needs and stories<br>
+                        • <strong>Building Upgrades</strong> - Improve hallways, install facilities, upgrade designs
+                    </p>
+                </section>
+            </div>
+
+            <aside class="game-sidebar">
+                <div class="sidebar-section">
+                    <h3>Status</h3>
+                    <span class="status-badge playable">✓ Playable</span>
+                </div>
+
+                <div class="sidebar-section">
+                    <h3>Details</h3>
+                    <ul class="meta-list">
+                        <li><span class="label">Genre</span><span class="value">Simulation</span></li>
+                        <li><span class="label">Engine</span><span class="value">Macroquad</span></li>
+                        <li><span class="label">Platform</span><span class="value">Browser, Windows</span></li>
+                    </ul>
+                </div>
+
+                <div class="sidebar-section">
+                    <h3>Downloads</h3>
+                    <a href="#" class="btn btn-secondary" style="width: 100%; justify-content: center;">
+                        📥 Windows Build
+                    </a>
+                </div>
+            </aside>
+        </div>
+
+        <footer class="game-footer">
+            <p>Built with Rust + Macroquad | <a href="/">Web Hatchery</a></p>
+        </footer>
+    </div>
+
+    <!-- Macroquad JS Bundle -->
+    <script src="mq_js_bundle.js"></script>
+    <script>
+        document.getElementById('loading').style.display = 'none';
+        load("apartment.wasm");
+
+        function toggleFullscreen() {
+            const container = document.getElementById('game-container');
+            if (!document.fullscreenElement) {
+                container.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        function focusGame() {
+            document.getElementById('glcanvas').focus();
+        }
+    </script>
+</body>
+
+</html>
