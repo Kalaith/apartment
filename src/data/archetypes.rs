@@ -1,7 +1,6 @@
-
+use crate::building::DesignType;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use crate::building::DesignType;
 
 /// Loaded archetype data from JSON
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -48,11 +47,11 @@ impl ArchetypeRegistry {
     pub fn load() -> Self {
         #[cfg(target_arch = "wasm32")]
         let json = include_str!("../../assets/tenant_archetypes.json");
-        
+
         #[cfg(not(target_arch = "wasm32"))]
         let json = std::fs::read_to_string("assets/tenant_archetypes.json")
             .unwrap_or_else(|_| include_str!("../../assets/tenant_archetypes.json").to_string());
-        
+
         match serde_json::from_str::<ArchetypeData>(&json) {
             Ok(data) => {
                 let mut definitions = HashMap::new();
@@ -67,12 +66,12 @@ impl ArchetypeRegistry {
             }
         }
     }
-    
+
     /// Get archetype definition by ID
     pub fn get(&self, id: &str) -> Option<&ArchetypeDefinition> {
         self.definitions.get(id)
     }
-    
+
     /// Convert preferences data to the runtime preferences struct
     pub fn to_preferences(prefs: &ArchetypePreferencesData) -> crate::tenant::ArchetypePreferences {
         crate::tenant::ArchetypePreferences {
@@ -83,11 +82,17 @@ impl ArchetypeRegistry {
             ideal_rent_max: prefs.ideal_rent_max,
             min_acceptable_condition: prefs.min_acceptable_condition,
             prefers_quiet: prefs.prefers_quiet,
-            preferred_design: prefs.preferred_design.as_ref().and_then(|s| Self::parse_design(s)),
-            hates_design: prefs.hates_design.as_ref().and_then(|s| Self::parse_design(s)),
+            preferred_design: prefs
+                .preferred_design
+                .as_ref()
+                .and_then(|s| Self::parse_design(s)),
+            hates_design: prefs
+                .hates_design
+                .as_ref()
+                .and_then(|s| Self::parse_design(s)),
         }
     }
-    
+
     fn parse_design(design_str: &str) -> Option<DesignType> {
         match design_str.to_lowercase().as_str() {
             "bare" => Some(DesignType::Bare),

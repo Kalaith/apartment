@@ -1,8 +1,11 @@
+use super::{decay, win_condition, EventLog, EventSystem, GameEvent, GameOutcome};
 use crate::building::Building;
-use crate::tenant::{Tenant, TenantApplication, calculate_happiness, generate_applications, process_departures};
-use crate::economy::{PlayerFunds, FinancialLedger, collect_rent, OperatingCosts, Transaction, TransactionType};
-use super::{GameEvent, EventLog, decay, win_condition, GameOutcome, EventSystem};
-
+use crate::economy::{
+    collect_rent, FinancialLedger, OperatingCosts, PlayerFunds, Transaction, TransactionType,
+};
+use crate::tenant::{
+    calculate_happiness, generate_applications, process_departures, Tenant, TenantApplication,
+};
 
 use serde::{Deserialize, Serialize};
 
@@ -39,10 +42,10 @@ impl GameTick {
             new_applications: 0,
             outcome: None,
         };
-        
+
         // 1. Collect Rent
         Self::collect_rent(building, tenants, funds, current_tick, &mut result);
-        
+
         // 2. Operating Costs & Staff
         Self::process_operating_costs(building, funds, current_tick, &mut result, config);
         Self::process_staff_effects(building, tenants);
@@ -52,17 +55,17 @@ impl GameTick {
         let mut event_system = EventSystem::new();
         let random_events = event_system.check_events(building, funds, current_tick);
         result.events.extend(random_events);
-        
+
         // 4. Decay & Ownership
         if building.update_ownership(current_tick) {
             // Logic for handling ownership updates could go here
         }
         let decay_events = decay::apply_decay(building, &config.thresholds);
         result.events.extend(decay_events);
-        
+
         // 5. Tenant Happiness & Updates
         Self::update_tenants(building, tenants, &mut result, &config.happiness);
-        
+
         // 6. Move-outs
         let departure_notices = process_departures(tenants, building);
         for notice in departure_notices {
@@ -71,7 +74,7 @@ impl GameTick {
             });
             result.tenants_moved_out.push(notice);
         }
-        
+
         // 7. Applications
         applications.retain(|app| !app.is_expired(current_tick));
         let new_apps = generate_applications(
@@ -82,29 +85,30 @@ impl GameTick {
             &config.matching,
         );
         result.new_applications = new_apps.len();
-        
+
         for app in &new_apps {
             result.events.push(GameEvent::NewApplication {
                 tenant_name: app.tenant.name.clone(),
                 archetype: format!("{:?}", app.tenant.archetype),
-                apartment_unit: building.get_apartment(app.apartment_id)
+                apartment_unit: building
+                    .get_apartment(app.apartment_id)
                     .map(|a| a.unit_number.clone())
                     .unwrap_or_default(),
             });
         }
         applications.extend(new_apps);
-        
+
         // 8. Monthly Report
         let tick_transactions: Vec<_> = funds.transactions_for_tick(current_tick);
         let report = ledger.generate_report(current_tick, &tick_transactions, funds.balance);
-        
+
         result.events.push(GameEvent::MonthEnd {
             tick: current_tick,
             income: report.rent_income,
             expenses: report.repair_costs + report.upgrade_costs,
             balance: report.ending_balance,
         });
-        
+
         // 9. Win/Lose check
         result.outcome = win_condition::check_win_condition(
             building,
@@ -115,18 +119,18 @@ impl GameTick {
             &config.happiness,
             &config.thresholds,
         );
-        
+
         if let Some(ref outcome) = result.outcome {
             result.events.push(GameEvent::GameEnded {
                 outcome: outcome.clone(),
             });
         }
-        
+
         // Log all events
         for event in &result.events {
             event_log.log(event.clone(), current_tick);
         }
-        
+
         result
     }
 
@@ -139,14 +143,14 @@ impl GameTick {
     ) {
         let rent_result = collect_rent(tenants, building, funds, current_tick);
         result.rent_collected = rent_result.total_collected;
-        
+
         for payment in &rent_result.payments {
             result.events.push(GameEvent::RentPaid {
                 tenant_name: payment.tenant_name.clone(),
                 amount: payment.amount,
             });
         }
-        
+
         for missed in &rent_result.missed_payments {
             result.events.push(GameEvent::RentMissed {
                 tenant_name: missed.tenant_name.clone(),
@@ -167,13 +171,13 @@ impl GameTick {
         if marketing_cost > 0 {
             if !funds.spend(marketing_cost) {
                 building.marketing_strategy = crate::building::MarketingType::None;
-                result.events.push(GameEvent::Notification { 
+                result.events.push(GameEvent::Notification {
                     message: "Marketing campaign cancelled due to lack of funds.".to_string(),
-                    level: crate::simulation::NotificationLevel::Warning 
+                    level: crate::simulation::NotificationLevel::Warning,
                 });
             }
         }
-        
+
         if building.open_house_remaining > 0 {
             building.open_house_remaining -= 1;
             if building.open_house_remaining == 0 {
@@ -183,41 +187,65 @@ impl GameTick {
                 });
             }
         }
-        
+
         // Taxes & Expenses
-        let tax = OperatingCosts::calculate_property_tax(building, result.rent_collected, &config.operating_costs);
+        let tax = OperatingCosts::calculate_property_tax(
+            building,
+            result.rent_collected,
+            &config.operating_costs,
+        );
         if tax > 0 {
-            funds.deduct_expense(Transaction::expense(TransactionType::PropertyTax, tax, "Monthly Property Tax", current_tick));
+            funds.deduct_expense(Transaction::expense(
+                TransactionType::PropertyTax,
+                tax,
+                "Monthly Property Tax",
+                current_tick,
+            ));
         }
-        
+
         let utilities = OperatingCosts::calculate_utilities(building, &config.operating_costs);
         if utilities > 0 {
-            funds.deduct_expense(Transaction::expense(TransactionType::Utilities, utilities, "Utility Bills", current_tick));
+            funds.deduct_expense(Transaction::expense(
+                TransactionType::Utilities,
+                utilities,
+                "Utility Bills",
+                current_tick,
+            ));
         }
-        
+
         let insurance = OperatingCosts::calculate_insurance(building, &config.operating_costs);
         if insurance > 0 {
-            funds.deduct_expense(Transaction::expense(TransactionType::Insurance, insurance, "Property Insurance", current_tick));
+            funds.deduct_expense(Transaction::expense(
+                TransactionType::Insurance,
+                insurance,
+                "Property Insurance",
+                current_tick,
+            ));
         }
-        
+
         // Staff Salaries - Data Driven
         let salaries = OperatingCosts::calculate_staff_salaries(building, &config.economy);
         if salaries > 0 {
-            funds.deduct_expense(Transaction::expense(TransactionType::StaffSalary, salaries, "Staff Salaries", current_tick));
+            funds.deduct_expense(Transaction::expense(
+                TransactionType::StaffSalary,
+                salaries,
+                "Staff Salaries",
+                current_tick,
+            ));
         }
     }
 
     fn process_staff_effects(building: &mut Building, tenants: &mut Vec<Tenant>) {
         // Janitor: Auto-repair small decay
         if building.flags.contains("staff_janitor") {
-             for apt in &mut building.apartments {
-                 if apt.condition < 90 && apt.condition > 50 {
-                     apt.condition += 1;
-                 }
-             }
-             if building.hallway_condition < 90 && building.hallway_condition > 50 {
-                 building.hallway_condition += 1;
-             }
+            for apt in &mut building.apartments {
+                if apt.condition < 90 && apt.condition > 50 {
+                    apt.condition += 1;
+                }
+            }
+            if building.hallway_condition < 90 && building.hallway_condition > 50 {
+                building.hallway_condition += 1;
+            }
         }
 
         // Security: Boost happiness
@@ -226,10 +254,10 @@ impl GameTick {
                 t.happiness = (t.happiness + 2).min(100);
             }
         }
-        
+
         // Manager: Bonus happiness (simplification of "handles issues")
         if building.flags.contains("staff_manager") {
-             for t in tenants.iter_mut() {
+            for t in tenants.iter_mut() {
                 t.happiness = (t.happiness + 1).min(100);
             }
         }
@@ -240,43 +268,69 @@ impl GameTick {
         tenants: &mut Vec<Tenant>,
         funds: &mut PlayerFunds,
         current_tick: u32,
-        result: &mut TickResult
+        result: &mut TickResult,
     ) {
         use macroquad::rand::gen_range;
-        
+
         let base_prob = 5; // 0.5% as integer (out of 1000)
         let mut prob = base_prob;
         // Security reduces failure probability
         if building.flags.contains("staff_security") {
             prob /= 2;
         }
-        
+
         // Boiler Failure (prob out of 1000)
         if gen_range(0, 1000) < prob {
             let cost = 1500;
             if funds.can_afford(cost) {
-                funds.deduct_expense(Transaction::expense(TransactionType::CriticalFailure, cost, "Boiler Emergency Repair", current_tick));
+                funds.deduct_expense(Transaction::expense(
+                    TransactionType::CriticalFailure,
+                    cost,
+                    "Boiler Emergency Repair",
+                    current_tick,
+                ));
                 result.events.push(GameEvent::BoilerFailure { cost });
             } else {
-                 result.events.push(GameEvent::TenantUnhappy { tenant_name: "ALL TENANTS".to_string(), happiness: 0 }); 
-                 for t in tenants.iter_mut() {
-                     t.happiness = (t.happiness - 30).max(0);
-                 }
-                 result.events.push(GameEvent::InsufficientFunds { action: "Fix Boiler".to_string(), needed: cost, available: funds.balance });
-             }
+                result.events.push(GameEvent::TenantUnhappy {
+                    tenant_name: "ALL TENANTS".to_string(),
+                    happiness: 0,
+                });
+                for t in tenants.iter_mut() {
+                    t.happiness = (t.happiness - 30).max(0);
+                }
+                result.events.push(GameEvent::InsufficientFunds {
+                    action: "Fix Boiler".to_string(),
+                    needed: cost,
+                    available: funds.balance,
+                });
+            }
         }
-        
+
         // Structural Issue
         if gen_range(0, 1000) < prob {
-             let cost = 2500;
-             let tx = Transaction::expense(TransactionType::CriticalFailure, cost, "Structural Reinforcement", current_tick);
-             if funds.deduct_expense(tx) {
-                  result.events.push(GameEvent::StructuralIssue { cost, description: "Foundation Crack".to_string() });
-             } else {
-                  building.hallway_condition = (building.hallway_condition - 20).max(0);
-                  result.events.push(GameEvent::HallwayDeteriorating { condition: building.hallway_condition });
-                  result.events.push(GameEvent::InsufficientFunds { action: "Fix Foundation".to_string(), needed: cost, available: funds.balance });
-             }
+            let cost = 2500;
+            let tx = Transaction::expense(
+                TransactionType::CriticalFailure,
+                cost,
+                "Structural Reinforcement",
+                current_tick,
+            );
+            if funds.deduct_expense(tx) {
+                result.events.push(GameEvent::StructuralIssue {
+                    cost,
+                    description: "Foundation Crack".to_string(),
+                });
+            } else {
+                building.hallway_condition = (building.hallway_condition - 20).max(0);
+                result.events.push(GameEvent::HallwayDeteriorating {
+                    condition: building.hallway_condition,
+                });
+                result.events.push(GameEvent::InsufficientFunds {
+                    action: "Fix Foundation".to_string(),
+                    needed: cost,
+                    available: funds.balance,
+                });
+            }
         }
     }
 
@@ -293,14 +347,14 @@ impl GameTick {
                     let old_happiness = tenant.happiness;
                     let new_happiness = factors.total();
                     tenant.set_happiness(new_happiness);
-                    
+
                     if new_happiness < 30 && old_happiness >= 30 {
                         result.events.push(GameEvent::TenantUnhappy {
                             tenant_name: tenant.name.clone(),
                             happiness: new_happiness,
                         });
                     }
-                    
+
                     if factors.noise_factor < -10 {
                         result.events.push(GameEvent::NoiseComplaint {
                             tenant_name: tenant.name.clone(),
@@ -332,7 +386,7 @@ pub fn advance_tick(
     config: &crate::data::config::GameConfig,
 ) -> TickResult {
     *current_tick += 1;
-    
+
     GameTick::process(
         building,
         tenants,

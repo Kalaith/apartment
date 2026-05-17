@@ -1,7 +1,6 @@
-
+use super::{happiness, Tenant};
 use crate::building::Apartment;
 use crate::data::config::MatchingConfig;
-use super::{Tenant, happiness};
 
 /// Result of matching a tenant to an apartment
 use serde::{Deserialize, Serialize};
@@ -9,27 +8,31 @@ use serde::{Deserialize, Serialize};
 /// Result of matching a tenant to an apartment
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MatchResult {
-    pub score: i32,              // 0-100, higher = better match
-    pub meets_minimum: bool,     // Would tenant even consider this?
-    pub reasons: Vec<String>,    // Why this score
+    pub score: i32,           // 0-100, higher = better match
+    pub meets_minimum: bool,  // Would tenant even consider this?
+    pub reasons: Vec<String>, // Why this score
 }
 
 /// Calculate how well a tenant matches an apartment
-pub fn calculate_match_score(tenant: &Tenant, apartment: &Apartment, config: &MatchingConfig) -> MatchResult {
+pub fn calculate_match_score(
+    tenant: &Tenant,
+    apartment: &Apartment,
+    config: &MatchingConfig,
+) -> MatchResult {
     let mut score = config.base_score;
     let mut reasons = Vec::new();
-    
+
     let prefs = tenant.archetype.preferences();
-    
+
     // Check minimum requirements
     let meets_minimum = happiness::apartment_meets_minimum(tenant, apartment);
-    
+
     // Penalize but don't strictly forbid (allows "desperate" or "unqualified" applicants)
     if !meets_minimum {
         score += config.desperate_penalty;
         reasons.push("Does not meet requirements (Desperate/Unqualified)".to_string());
     }
-    
+
     // Rent scoring
     let rent_diff = prefs.ideal_rent_max - apartment.rent_price;
     if rent_diff > config.rent_great_threshold {
@@ -45,7 +48,7 @@ pub fn calculate_match_score(tenant: &Tenant, apartment: &Apartment, config: &Ma
         score += config.rent_unaffordable_penalty;
         reasons.push("Cannot afford established budget".to_string());
     }
-    
+
     // Condition scoring
     if apartment.condition >= config.condition_excellent_threshold {
         let bonus = (config.condition_excellent_bonus as f32 * prefs.condition_sensitivity) as i32;
@@ -60,7 +63,7 @@ pub fn calculate_match_score(tenant: &Tenant, apartment: &Apartment, config: &Ma
         score -= penalty;
         reasons.push("Poor condition".to_string());
     }
-    
+
     // Noise scoring
     match apartment.effective_noise() {
         crate::building::NoiseLevel::Low => {
@@ -76,7 +79,7 @@ pub fn calculate_match_score(tenant: &Tenant, apartment: &Apartment, config: &Ma
             reasons.push("Too noisy".to_string());
         }
     }
-    
+
     // Design scoring
     if let Some(ref preferred) = prefs.preferred_design {
         if &apartment.design == preferred {
@@ -85,7 +88,7 @@ pub fn calculate_match_score(tenant: &Tenant, apartment: &Apartment, config: &Ma
             reasons.push(format!("Loves the {:?} style", apartment.design));
         }
     }
-    
+
     // Size bonus (everyone likes more space)
     match apartment.size {
         crate::building::ApartmentSize::Small => {}
@@ -102,7 +105,7 @@ pub fn calculate_match_score(tenant: &Tenant, apartment: &Apartment, config: &Ma
             reasons.push("Luxurious space".to_string());
         }
     }
-    
+
     MatchResult {
         score: score.clamp(0, 100),
         meets_minimum: true, // We now allow everyone to "match", just with low scores
@@ -112,7 +115,7 @@ pub fn calculate_match_score(tenant: &Tenant, apartment: &Apartment, config: &Ma
 
 /// Find the best apartment match for a tenant from available options
 pub fn find_best_match<'a>(
-    tenant: &Tenant, 
+    tenant: &Tenant,
     apartments: &'a [&'a Apartment],
     config: &MatchingConfig,
 ) -> Option<(&'a Apartment, MatchResult)> {
@@ -124,15 +127,13 @@ pub fn find_best_match<'a>(
         .max_by_key(|(_, result)| result.score)
 }
 
-
-
 /// Parameters for a lease offer
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct LeaseOffer {
     pub rent_price: i32,
-    pub security_deposit_months: u32,  // 1, 2, or 3
-    pub lease_duration_months: u32,    // Usually 6 or 12
-    pub cleaning_fee: i32,             // 0 or more
+    pub security_deposit_months: u32, // 1, 2, or 3
+    pub lease_duration_months: u32,   // Usually 6 or 12
+    pub cleaning_fee: i32,            // 0 or more
 }
 
 use crate::data::config::LeaseDefaultsConfig;
@@ -152,15 +153,19 @@ impl LeaseOffer {
 use crate::data::config::LeaseAcceptanceConfig;
 
 /// Calculate probability of tenant accepting a lease offer (0.0 to 1.0)
-pub fn evaluate_lease_offer(tenant: &Tenant, offer: &LeaseOffer, config: &LeaseAcceptanceConfig) -> f32 {
+pub fn evaluate_lease_offer(
+    tenant: &Tenant,
+    offer: &LeaseOffer,
+    config: &LeaseAcceptanceConfig,
+) -> f32 {
     let prefs = tenant.archetype.preferences();
     let mut probability = 1.0;
-    
+
     // 1. Rent affordability (Hard limit)
     if offer.rent_price > tenant.rent_tolerance {
         return 0.0;
     }
-    
+
     // 2. Security Deposit Impact
     // High deposit hurts budget-conscious tenants (Students, Artists)
     // Rent sensitivity serves as a proxy for "budget consciousness"
@@ -171,7 +176,7 @@ pub fn evaluate_lease_offer(tenant: &Tenant, offer: &LeaseOffer, config: &LeaseA
         };
         probability -= deposit_penalty;
     }
-    
+
     // 3. Lease Duration
     // Students/Artists might prefer shorter leases (6 months)
     // Families/Elderly/Professionals prefer stability (12 months)
@@ -182,7 +187,7 @@ pub fn evaluate_lease_offer(tenant: &Tenant, offer: &LeaseOffer, config: &LeaseA
             } else if offer.lease_duration_months > 12 {
                 probability -= config.short_lease_bonus; // Too long
             }
-        },
+        }
         _ => {
             // Stability seekers
             if offer.lease_duration_months < 12 {
@@ -190,23 +195,23 @@ pub fn evaluate_lease_offer(tenant: &Tenant, offer: &LeaseOffer, config: &LeaseA
             }
         }
     }
-    
+
     // 4. Cleaning Fee
     if offer.cleaning_fee > 0 {
         // Flat penalty relative to rent
         let fee_ratio = offer.cleaning_fee as f32 / offer.rent_price as f32;
         probability -= fee_ratio * prefs.rent_sensitivity;
     }
-    
+
     // 5. Rent Value (Deal vs Rip-off)
     let rent_diff = prefs.ideal_rent_max - offer.rent_price;
     if rent_diff < 0 {
         // Slightly above comfortable max (but below absolute tolerance)
-        probability -= config.expensive_penalty; 
+        probability -= config.expensive_penalty;
     } else if rent_diff > 100 {
         // Good deal
-        probability += config.good_deal_bonus; 
+        probability += config.good_deal_bonus;
     }
-    
+
     probability.clamp(0.0, 1.0)
 }

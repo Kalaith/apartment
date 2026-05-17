@@ -1,4 +1,3 @@
-
 use macroquad::prelude::*;
 
 // Import toolkit utilities
@@ -11,12 +10,11 @@ pub mod colors {
 
     // Re-export common colors from toolkit
     pub use macroquad_toolkit::colors::dark::{
-        BACKGROUND, PANEL, PANEL_HEADER, TEXT, TEXT_DIM,
-        ACCENT, POSITIVE, NEGATIVE
+        ACCENT, BACKGROUND, NEGATIVE, PANEL, PANEL_HEADER, POSITIVE, TEXT, TEXT_DIM,
     };
 
     // Game-specific colors that toolkit doesn't have
-    pub const TEXT_BRIGHT: Color = Color::new(1.0, 1.0, 1.0, 1.0);  // Pure white
+    pub const TEXT_BRIGHT: Color = Color::new(1.0, 1.0, 1.0, 1.0); // Pure white
     pub const WARNING: Color = Color::new(0.9, 0.7, 0.2, 1.0);
 
     pub const VACANT: Color = Color::new(0.3, 0.3, 0.35, 1.0);
@@ -25,9 +23,9 @@ pub mod colors {
     pub const HOVERED: Color = Color::new(0.3, 0.4, 0.55, 1.0);
 
     // Archetype colors
-    pub const STUDENT: Color = Color::new(0.8, 0.5, 0.3, 1.0);      // Orange-ish
+    pub const STUDENT: Color = Color::new(0.8, 0.5, 0.3, 1.0); // Orange-ish
     pub const PROFESSIONAL: Color = Color::new(0.3, 0.5, 0.8, 1.0); // Blue-ish
-    pub const ARTIST: Color = Color::new(0.8, 0.3, 0.7, 1.0);       // Purple-ish
+    pub const ARTIST: Color = Color::new(0.8, 0.3, 0.7, 1.0); // Purple-ish
 }
 
 use crate::tenant::TenantArchetype;
@@ -38,8 +36,8 @@ pub fn archetype_color(archetype: &TenantArchetype) -> macroquad::prelude::Color
         TenantArchetype::Student => colors::STUDENT,
         TenantArchetype::Professional => colors::PROFESSIONAL,
         TenantArchetype::Artist => colors::ARTIST,
-        TenantArchetype::Family => Color::new(0.4, 0.8, 0.4, 1.0),   // Green-ish
-        TenantArchetype::Elderly => Color::new(0.7, 0.7, 0.7, 1.0),  // Grey-ish
+        TenantArchetype::Family => Color::new(0.4, 0.8, 0.4, 1.0), // Green-ish
+        TenantArchetype::Elderly => Color::new(0.7, 0.7, 0.7, 1.0), // Grey-ish
     }
 }
 
@@ -59,7 +57,7 @@ pub fn happiness_icon(happiness: i32) -> &'static str {
 pub mod layout {
     pub const HEADER_HEIGHT: f32 = 60.0;
     pub const FOOTER_HEIGHT: f32 = 100.0;
-    pub const PANEL_SPLIT: f32 = 0.6;  // Building view takes 60%
+    pub const PANEL_SPLIT: f32 = 0.6; // Building view takes 60%
     pub const PADDING: f32 = 10.0;
     pub const UNIT_WIDTH: f32 = 120.0;
     pub const UNIT_HEIGHT: f32 = 80.0;
@@ -79,12 +77,12 @@ pub fn button(x: f32, y: f32, w: f32, h: f32, text: &str, enabled: bool) -> bool
     // If disabled, use a disabled style but don't check for clicks
     let style = if !enabled {
         macroquad_toolkit::ui::ButtonStyle {
-             normal: Color::new(0.2, 0.2, 0.2, 1.0),
-             hovered: Color::new(0.2, 0.2, 0.2, 1.0),
-             pressed: Color::new(0.2, 0.2, 0.2, 1.0),
-             border: colors::ACCENT,
-             text_color: colors::TEXT_DIM,
-             disabled: Color::new(0.1, 0.1, 0.1, 1.0),
+            normal: Color::new(0.2, 0.2, 0.2, 1.0),
+            hovered: Color::new(0.2, 0.2, 0.2, 1.0),
+            pressed: Color::new(0.2, 0.2, 0.2, 1.0),
+            border: colors::ACCENT,
+            text_color: colors::TEXT_DIM,
+            disabled: Color::new(0.1, 0.1, 0.1, 1.0),
         }
     } else {
         macroquad_toolkit::ui::ButtonStyle {
@@ -98,40 +96,65 @@ pub fn button(x: f32, y: f32, w: f32, h: f32, text: &str, enabled: bool) -> bool
     };
 
     if !enabled {
-         macroquad_toolkit::ui::button_on_press(x, y, w, h, text, &style);
-         return false;
+        macroquad_toolkit::ui::button_on_press(x, y, w, h, text, &style);
+        return false;
     }
 
     macroquad_toolkit::ui::button_on_press(x, y, w, h, text, &style)
 }
 
 /// Draw a button with custom colors
-pub fn colored_button(x: f32, y: f32, w: f32, h: f32, text: &str, enabled: bool, bg_color: Color, text_color: Color) -> bool {
+pub fn colored_button(
+    x: f32,
+    y: f32,
+    w: f32,
+    h: f32,
+    text: &str,
+    enabled: bool,
+    bg_color: Color,
+    text_color: Color,
+) -> bool {
     if !enabled {
         // Draw disabled version using generic button logic logic above or custom draw
         draw_rectangle(x, y, w, h, Color::new(0.2, 0.2, 0.2, 1.0));
         draw_rectangle_lines(x, y, w, h, 2.0, colors::TEXT_DIM);
-        
+
         let text_size = 20.0;
         let text_width = measure_text(text, None, text_size as u16, 1.0).width;
-        draw_text(text, x + (w - text_width) / 2.0, y + h / 2.0 + 6.0, text_size, colors::TEXT_DIM);
+        draw_text(
+            text,
+            x + (w - text_width) / 2.0,
+            y + h / 2.0 + 6.0,
+            text_size,
+            colors::TEXT_DIM,
+        );
         return false;
     }
-    
+
     // Use toolkit's colored_button logic but we need to respect the text_color param
-    // Toolkit's colored_button uses standard text colors. 
+    // Toolkit's colored_button uses standard text colors.
     // Since this needs custom text color, we'll manually construct the style and call button_on_release (or press to match apartment)
-    
+
     // Apartment uses "on press" mostly
     let style = macroquad_toolkit::ui::ButtonStyle {
         normal: bg_color,
-        hovered: Color::new(bg_color.r * 1.2, bg_color.g * 1.2, bg_color.b * 1.2, bg_color.a),
-        pressed: Color::new(bg_color.r * 0.8, bg_color.g * 0.8, bg_color.b * 0.8, bg_color.a),
+        hovered: Color::new(
+            bg_color.r * 1.2,
+            bg_color.g * 1.2,
+            bg_color.b * 1.2,
+            bg_color.a,
+        ),
+        pressed: Color::new(
+            bg_color.r * 0.8,
+            bg_color.g * 0.8,
+            bg_color.b * 0.8,
+            bg_color.a,
+        ),
         border: colors::TEXT_DIM,
         text_color: text_color,
         disabled: Color::new(0.1, 0.1, 0.1, 1.0),
     };
-    
+
     macroquad_toolkit::ui::button_on_press(x, y, w, h, text, &style)
 }
 

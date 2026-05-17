@@ -37,11 +37,18 @@ pub struct Mission {
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub enum MissionGoal {
     /// House a specific number of tenants of a type
-    HouseTenants { count: u32, archetype: Option<String> },
+    HouseTenants {
+        count: u32,
+        archetype: Option<String>,
+    },
     /// Reach a certain occupancy rate
     ReachOccupancy { percentage: f32 },
     /// Maintain happiness above a threshold for X months
-    MaintainHappiness { threshold: f32, months: u32, current_months: u32 },
+    MaintainHappiness {
+        threshold: f32,
+        months: u32,
+        current_months: u32,
+    },
     /// Collect rent without issues for X months
     PerfectCollection { months: u32, current_months: u32 },
     /// Repair all issues in a building
@@ -72,23 +79,23 @@ impl Mission {
             started_month: None,
         }
     }
-    
+
     /// Start the mission
     pub fn start(&mut self, current_month: u32) {
         self.status = MissionStatus::Active;
         self.started_month = Some(current_month);
     }
-    
+
     /// Complete the mission
     pub fn complete(&mut self) {
         self.status = MissionStatus::Completed;
     }
-    
+
     /// Fail the mission
     pub fn fail(&mut self) {
         self.status = MissionStatus::Failed;
     }
-    
+
     /// Check if mission has expired
     pub fn check_expired(&mut self, current_month: u32) -> bool {
         if let Some(deadline) = self.deadline {
@@ -138,7 +145,7 @@ impl MissionManager {
             awards: Vec::new(),
         }
     }
-    
+
     /// Add a new mission
     pub fn add_mission(&mut self, mut mission: Mission) -> u32 {
         let id = self.next_mission_id;
@@ -147,28 +154,31 @@ impl MissionManager {
         self.missions.push(mission);
         id
     }
-    
+
     /// Get available missions
     pub fn available_missions(&self) -> Vec<&Mission> {
-        self.missions.iter()
+        self.missions
+            .iter()
             .filter(|m| m.status == MissionStatus::Available)
             .collect()
     }
-    
+
     /// Get active missions
     pub fn active_missions(&self) -> Vec<&Mission> {
-        self.missions.iter()
+        self.missions
+            .iter()
             .filter(|m| m.status == MissionStatus::Active)
             .collect()
     }
-    
+
     /// Get completed missions
     pub fn completed_missions(&self) -> Vec<&Mission> {
-        self.missions.iter()
+        self.missions
+            .iter()
             .filter(|m| m.status == MissionStatus::Completed)
             .collect()
     }
-    
+
     /// Accept a mission by ID
     pub fn accept_mission(&mut self, mission_id: u32, current_month: u32) -> bool {
         if let Some(mission) = self.missions.iter_mut().find(|m| m.id == mission_id) {
@@ -179,14 +189,14 @@ impl MissionManager {
         }
         false
     }
-    
+
     /// Check all active missions for expiration
     pub fn check_expirations(&mut self, current_month: u32) {
         for mission in &mut self.missions {
             mission.check_expired(current_month);
         }
     }
-    
+
     /// Record a legacy event
     pub fn record_legacy_event(&mut self, month: u32, title: &str, description: &str) {
         let year = 2024 + (month / 12);
@@ -197,7 +207,7 @@ impl MissionManager {
             description: description.to_string(),
         });
     }
-    
+
     /// Award a building award
     pub fn grant_award(&mut self, year: u32, title: &str, building_name: &str) {
         self.awards.push(BuildingAward {
@@ -206,7 +216,7 @@ impl MissionManager {
             building_name: building_name.to_string(),
         });
     }
-    
+
     /// Check for annual awards (call at end of each year / month 12, 24, etc.)
     pub fn check_for_awards(
         &mut self,
@@ -220,34 +230,46 @@ impl MissionManager {
         if current_month % 12 != 0 || current_month == 0 {
             return;
         }
-        
+
         let year = 2024 + (current_month / 12);
-        
+
         // Check if we already have an award for this year
         if self.awards.iter().any(|a| a.year == year) {
             return;
         }
-        
+
         // Best Managed Property - high happiness
         if avg_happiness >= 80.0 {
             self.grant_award(year, "Best Managed Property", building_name);
-            self.record_legacy_event(current_month, "Award Won!", 
-                &format!("Won 'Best Managed Property {}' for {}", year, building_name));
+            self.record_legacy_event(
+                current_month,
+                "Award Won!",
+                &format!("Won 'Best Managed Property {}' for {}", year, building_name),
+            );
         }
         // Full Occupancy Achievement
         else if occupancy_rate >= 1.0 {
             self.grant_award(year, "Perfect Occupancy", building_name);
-            self.record_legacy_event(current_month, "Award Won!", 
-                &format!("Achieved 100% occupancy at {} in {}", building_name, year));
+            self.record_legacy_event(
+                current_month,
+                "Award Won!",
+                &format!("Achieved 100% occupancy at {} in {}", building_name, year),
+            );
         }
         // Community Builder - housed many tenants
         else if total_tenants_housed >= 20 {
             self.grant_award(year, "Community Builder", building_name);
-            self.record_legacy_event(current_month, "Award Won!", 
-                &format!("Housed {} tenants at {} by {}", total_tenants_housed, building_name, year));
+            self.record_legacy_event(
+                current_month,
+                "Award Won!",
+                &format!(
+                    "Housed {} tenants at {} by {}",
+                    total_tenants_housed, building_name, year
+                ),
+            );
         }
     }
-    
+
     /// Generate initial missions from the council member
     pub fn generate_starter_missions(&mut self) {
         // Mission from Councilwoman Reyes
@@ -256,12 +278,18 @@ impl MissionManager {
             "Student Housing Initiative",
             "The city needs affordable student housing. House 3 students in your buildings.",
             2, // Councilwoman Reyes NPC ID
-            MissionGoal::HouseTenants { count: 3, archetype: Some("Student".to_string()) },
-            MissionReward::TaxBreak { months: 6, percentage: 0.15 },
+            MissionGoal::HouseTenants {
+                count: 3,
+                archetype: Some("Student".to_string()),
+            },
+            MissionReward::TaxBreak {
+                months: 6,
+                percentage: 0.15,
+            },
             Some(12), // 12 month deadline
         );
         self.add_mission(student_housing);
-        
+
         let full_occupancy = Mission::new(
             0,
             "Full House",
@@ -272,20 +300,23 @@ impl MissionManager {
             None,
         );
         self.add_mission(full_occupancy);
-        
+
         // Senior Housing - for diverse community
         let senior_housing = Mission::new(
             0,
             "Senior Care Housing",
             "House 2 elderly tenants to support our senior community.",
             2, // Councilwoman Reyes
-            MissionGoal::HouseTenants { count: 2, archetype: Some("Elderly".to_string()) },
+            MissionGoal::HouseTenants {
+                count: 2,
+                archetype: Some("Elderly".to_string()),
+            },
             MissionReward::Reputation(25),
             Some(18),
         );
         self.add_mission(senior_housing);
     }
-    
+
     /// Generate missions that appear later in the game
     pub fn generate_late_game_missions(&mut self, current_month: u32) {
         // Magnuson Corp rivalry mission - appears after month 6
@@ -301,7 +332,7 @@ impl MissionManager {
             );
             self.add_mission(expansion);
         }
-        
+
         // Family housing - appears after month 12
         if current_month >= 12 && !self.missions.iter().any(|m| m.title == "Family Friendly") {
             let family = Mission::new(
@@ -309,8 +340,14 @@ impl MissionManager {
                 "Family Friendly",
                 "Create a family-friendly environment. House 3 family tenants.",
                 2, // Councilwoman Reyes
-                MissionGoal::HouseTenants { count: 3, archetype: Some("Family".to_string()) },
-                MissionReward::TaxBreak { months: 12, percentage: 0.10 },
+                MissionGoal::HouseTenants {
+                    count: 3,
+                    archetype: Some("Family".to_string()),
+                },
+                MissionReward::TaxBreak {
+                    months: 12,
+                    percentage: 0.10,
+                },
                 Some(current_month + 18),
             );
             self.add_mission(family);
@@ -327,11 +364,11 @@ impl Default for MissionManager {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_mission_lifecycle() {
         let mut manager = MissionManager::new();
-        
+
         let mission = Mission::new(
             0,
             "Test Mission",
@@ -341,19 +378,19 @@ mod tests {
             MissionReward::Money(1000),
             Some(10),
         );
-        
+
         let id = manager.add_mission(mission);
         assert_eq!(manager.available_missions().len(), 1);
-        
+
         manager.accept_mission(id, 1);
         assert_eq!(manager.active_missions().len(), 1);
         assert_eq!(manager.available_missions().len(), 0);
     }
-    
+
     #[test]
     fn test_mission_expiration() {
         let mut manager = MissionManager::new();
-        
+
         let mission = Mission::new(
             0,
             "Expiring Mission",
@@ -363,23 +400,23 @@ mod tests {
             MissionReward::Money(1000),
             Some(5),
         );
-        
+
         let id = manager.add_mission(mission);
         manager.accept_mission(id, 1);
-        
+
         manager.check_expirations(10);
-        
+
         let mission = manager.missions.iter().find(|m| m.id == id).unwrap();
         assert_eq!(mission.status, MissionStatus::Expired);
     }
-    
+
     #[test]
     fn test_legacy_system() {
         let mut manager = MissionManager::new();
-        
+
         manager.record_legacy_event(15, "The Great Fire", "A fire broke out in Building A.");
         manager.grant_award(2025, "Best Managed Property", "Sunset Apartments");
-        
+
         assert_eq!(manager.legacy_events.len(), 1);
         assert_eq!(manager.awards.len(), 1);
         assert_eq!(manager.awards[0].year, 2025);

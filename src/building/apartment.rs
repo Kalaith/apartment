@@ -21,7 +21,7 @@ impl DesignType {
             DesignType::Opulent => None,
         }
     }
-    
+
     /// Design appeal score (affects tenant happiness)
     pub fn appeal_score(&self) -> i32 {
         match self {
@@ -51,7 +51,7 @@ impl ApartmentSize {
             ApartmentSize::Penthouse => 2500,
         }
     }
-    
+
     pub fn space_score(&self) -> i32 {
         match self {
             ApartmentSize::Small => 0,
@@ -82,35 +82,41 @@ use crate::tenant::TenantArchetype;
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Apartment {
     pub id: u32,
-    pub unit_number: String,        // e.g., "1A", "2B"
+    pub unit_number: String, // e.g., "1A", "2B"
     pub floor: u32,
-    
+
     // Core stats
-    pub condition: i32,             // 0-100
+    pub condition: i32, // 0-100
     pub design: DesignType,
     pub size: ApartmentSize,
-    pub base_noise: NoiseLevel,     // Inherent noise (street-facing, etc.)
+    pub base_noise: NoiseLevel, // Inherent noise (street-facing, etc.)
     pub has_soundproofing: bool,
-    pub kitchen_level: i32,         // 0=Basic, 1=Renovated, 2=Luxury
+    pub kitchen_level: i32, // 0=Basic, 1=Renovated, 2=Luxury
     pub rent_price: i32,
-    
+
     // Occupancy
     pub tenant_id: Option<u32>,
     pub flags: HashSet<String>,
-    
+
     // Leasing
     pub is_listed_for_lease: bool,
     pub preferred_archetype: Option<TenantArchetype>,
 }
 
 impl Apartment {
-    pub fn new(id: u32, unit_number: &str, floor: u32, size: ApartmentSize, base_noise: NoiseLevel) -> Self {
+    pub fn new(
+        id: u32,
+        unit_number: &str,
+        floor: u32,
+        size: ApartmentSize,
+        base_noise: NoiseLevel,
+    ) -> Self {
         let rent_price = size.base_rent();
         Self {
             id,
             unit_number: unit_number.to_string(),
             floor,
-            condition: 50,  // Start at half condition
+            condition: 50, // Start at half condition
             design: DesignType::Bare,
             size,
             base_noise,
@@ -123,7 +129,7 @@ impl Apartment {
             preferred_archetype: None,
         }
     }
-    
+
     /// Current effective noise level (considers soundproofing)
     pub fn effective_noise(&self) -> NoiseLevel {
         if self.has_soundproofing {
@@ -134,12 +140,12 @@ impl Apartment {
             self.base_noise.clone()
         }
     }
-    
+
     /// Is the apartment currently vacant?
     pub fn is_vacant(&self) -> bool {
         self.tenant_id.is_none()
     }
-    
+
     /// Calculate overall apartment quality score (0-100)
     pub fn quality_score(&self) -> i32 {
         let base = self.condition;
@@ -147,20 +153,20 @@ impl Apartment {
         let noise_mod = self.effective_noise().noise_penalty();
         let space_bonus = self.size.space_score();
         let kitchen_bonus = self.kitchen_level * 15;
-        
+
         (base + design_bonus + noise_mod + space_bonus + kitchen_bonus).clamp(0, 100)
     }
-    
+
     /// Apply condition decay (called each tick)
     pub fn decay_condition(&mut self, amount: i32) {
         self.condition = (self.condition - amount).max(0);
     }
-    
+
     /// Repair the apartment
     pub fn repair(&mut self, amount: i32) {
         self.condition = (self.condition + amount).min(100);
     }
-    
+
     /// Upgrade design to next level
     pub fn upgrade_design(&mut self) -> bool {
         if let Some(next) = self.design.next_upgrade() {
@@ -171,19 +177,18 @@ impl Apartment {
         }
     }
 
-    
     /// Move a tenant in
     pub fn move_in(&mut self, tenant_id: u32) {
         self.tenant_id = Some(tenant_id);
         self.is_listed_for_lease = false;
         self.preferred_archetype = None;
     }
-    
+
     /// Move tenant out
     pub fn move_out(&mut self) {
         self.tenant_id = None;
     }
-    
+
     /// Calculate market value for selling the unit
     /// Takes into account: size, condition, design, kitchen, floor, soundproofing
     pub fn market_value(&self) -> i32 {
@@ -194,14 +199,14 @@ impl Apartment {
             ApartmentSize::Large => 120_000,
             ApartmentSize::Penthouse => 250_000,
         };
-        
+
         // Condition bonus: +$500 per point above 50, -$300 per point below 50
         let condition_bonus = if self.condition > 50 {
             (self.condition - 50) * 500
         } else {
             (self.condition - 50) * 300 // Negative bonus for poor condition
         };
-        
+
         // Design bonus
         let design_bonus = match self.design {
             DesignType::Bare => 0,
@@ -210,85 +215,98 @@ impl Apartment {
             DesignType::Luxury => 30_000,
             DesignType::Opulent => 60_000,
         };
-        
+
         // Kitchen bonus
         let kitchen_bonus = match self.kitchen_level {
             0 => 0,
             1 => 8_000,
             _ => 15_000, // Level 2+
         };
-        
+
         // Floor bonus: higher floors worth more (+$2000 per floor)
         let floor_bonus = (self.floor as i32) * 2_000;
-        
+
         // Soundproofing bonus
         let soundproofing_bonus = if self.has_soundproofing { 3_000 } else { 0 };
-        
+
         // Noise penalty for noisy units without soundproofing
         let noise_penalty = match self.base_noise {
             NoiseLevel::High if !self.has_soundproofing => -5_000,
             _ => 0,
         };
-        
-        (base_price + condition_bonus + design_bonus + kitchen_bonus + floor_bonus + soundproofing_bonus + noise_penalty).max(10_000)
+
+        (base_price
+            + condition_bonus
+            + design_bonus
+            + kitchen_bonus
+            + floor_bonus
+            + soundproofing_bonus
+            + noise_penalty)
+            .max(10_000)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_apartment_quality_score() {
         let mut apt = Apartment::new(0, "1A", 1, ApartmentSize::Small, NoiseLevel::Low);
         apt.condition = 50;
         apt.design = DesignType::Bare;
-        assert_eq!(apt.quality_score(), 50);  // 50 condition, no bonuses
-        
+        assert_eq!(apt.quality_score(), 50); // 50 condition, no bonuses
+
         apt.design = DesignType::Cozy;
-        assert_eq!(apt.quality_score(), 90);  // 50 + 40 design
+        assert_eq!(apt.quality_score(), 90); // 50 + 40 design
     }
-    
+
     #[test]
     fn test_soundproofing_effect() {
         let mut apt = Apartment::new(0, "1A", 1, ApartmentSize::Small, NoiseLevel::High);
         assert_eq!(apt.effective_noise(), NoiseLevel::High);
-        
+
         apt.has_soundproofing = true;
         assert_eq!(apt.effective_noise(), NoiseLevel::Low);
     }
-    
+
     #[test]
     fn test_design_upgrade() {
         let mut apt = Apartment::new(0, "1A", 1, ApartmentSize::Small, NoiseLevel::Low);
         assert_eq!(apt.design, DesignType::Bare);
-        
+
         assert!(apt.upgrade_design());
         assert_eq!(apt.design, DesignType::Practical);
-        
+
         assert!(apt.upgrade_design());
         assert_eq!(apt.design, DesignType::Cozy);
-        
-        assert!(!apt.upgrade_design());  // Already at max
-        assert_eq!(apt.design, DesignType::Cozy);
+
+        assert!(apt.upgrade_design());
+        assert_eq!(apt.design, DesignType::Luxury);
+
+        assert!(apt.upgrade_design());
+        assert_eq!(apt.design, DesignType::Opulent);
+
+        assert!(!apt.upgrade_design()); // Already at max
+        assert_eq!(apt.design, DesignType::Opulent);
     }
-    
+
     #[test]
     fn test_condition_decay_and_repair() {
         let mut apt = Apartment::new(0, "1A", 1, ApartmentSize::Small, NoiseLevel::Low);
         apt.condition = 50;
-        
+
         apt.decay_condition(10);
         assert_eq!(apt.condition, 40);
-        
+
         apt.repair(25);
         assert_eq!(apt.condition, 65);
-        
-        apt.repair(100);  // Should clamp to 100
+
+        apt.repair(100); // Should clamp to 100
         assert_eq!(apt.condition, 100);
-        
+
         apt.condition = 5;
-        apt.decay_condition(10);  // Should clamp to 0
+        apt.decay_condition(10); // Should clamp to 0
         assert_eq!(apt.condition, 0);
     }
 }

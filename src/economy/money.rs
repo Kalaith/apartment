@@ -1,4 +1,3 @@
-
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
@@ -14,31 +13,41 @@ pub enum TransactionType {
     Insurance,
     StaffSalary,
     CriticalFailure,
-    Grant,  // Mission rewards, grants, bonuses
+    Grant, // Mission rewards, grants, bonuses
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Transaction {
     pub transaction_type: TransactionType,
-    pub amount: i32,  // Positive = income, negative = expense
+    pub amount: i32, // Positive = income, negative = expense
     pub description: String,
     pub tick: u32,
 }
 
 impl Transaction {
-    pub fn income(transaction_type: TransactionType, amount: i32, description: &str, tick: u32) -> Self {
+    pub fn income(
+        transaction_type: TransactionType,
+        amount: i32,
+        description: &str,
+        tick: u32,
+    ) -> Self {
         Self {
             transaction_type,
-            amount: amount.abs(),  // Ensure positive
+            amount: amount.abs(), // Ensure positive
             description: description.to_string(),
             tick,
         }
     }
-    
-    pub fn expense(transaction_type: TransactionType, amount: i32, description: &str, tick: u32) -> Self {
+
+    pub fn expense(
+        transaction_type: TransactionType,
+        amount: i32,
+        description: &str,
+        tick: u32,
+    ) -> Self {
         Self {
             transaction_type,
-            amount: -amount.abs(),  // Ensure negative
+            amount: -amount.abs(), // Ensure negative
             description: description.to_string(),
             tick,
         }
@@ -62,12 +71,12 @@ impl PlayerFunds {
             transactions: Vec::new(),
         }
     }
-    
+
     /// Check if player can afford an expense
     pub fn can_afford(&self, cost: i32) -> bool {
         self.balance >= cost
     }
-    
+
     /// Add income to balance
     pub fn add_income(&mut self, transaction: Transaction) {
         let amount = transaction.amount.abs();
@@ -75,20 +84,20 @@ impl PlayerFunds {
         self.total_income += amount;
         self.transactions.push(transaction);
     }
-    
+
     /// Deduct expense from balance (returns false if insufficient funds)
     pub fn deduct_expense(&mut self, transaction: Transaction) -> bool {
         let cost = transaction.amount.abs();
         if self.balance < cost {
             return false;
         }
-        
+
         self.balance -= cost;
         self.total_expenses += cost;
         self.transactions.push(transaction);
         true
     }
-    
+
     /// Spend money without a specific transaction type (used by random events)
     /// Returns true if successful, false if insufficient funds
     pub fn spend(&mut self, amount: i32) -> bool {
@@ -99,20 +108,23 @@ impl PlayerFunds {
         self.total_expenses += amount;
         true
     }
-    
+
     /// Check if player is bankrupt
     pub fn is_bankrupt(&self) -> bool {
         self.balance < 0
     }
-    
+
     /// Get transactions for a specific tick
     pub fn transactions_for_tick(&self, tick: u32) -> Vec<&Transaction> {
-        self.transactions.iter().filter(|t| t.tick == tick).collect()
+        self.transactions
+            .iter()
+            .filter(|t| t.tick == tick)
+            .collect()
     }
 }
 
 impl Default for PlayerFunds {
     fn default() -> Self {
-        Self::new(5000)  // Default starting funds
+        Self::new(5000) // Default starting funds
     }
 }

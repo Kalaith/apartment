@@ -1,11 +1,11 @@
+use crate::building::Building;
+use crate::city::City;
+use crate::data::config::GameConfig;
+use crate::economy::PlayerFunds;
+use crate::tenant::Tenant;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::fs;
-use crate::building::Building;
-use crate::city::City;
-use crate::tenant::Tenant;
-use crate::economy::PlayerFunds;
-use crate::data::config::GameConfig;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(tag = "type")]
@@ -48,13 +48,14 @@ impl AchievementSystem {
         self.unlocked.contains(id)
     }
 
-    pub fn check_new_unlocks(&self, 
-        city: &City, 
-        building: &Building, 
-        tenants: &[Tenant], 
-        funds: &PlayerFunds, 
+    pub fn check_new_unlocks(
+        &self,
+        city: &City,
+        building: &Building,
+        tenants: &[Tenant],
+        funds: &PlayerFunds,
         current_tick: u32,
-        config: &GameConfig
+        config: &GameConfig,
     ) -> Vec<String> {
         let mut new_ids = Vec::new();
 
@@ -64,25 +65,22 @@ impl AchievementSystem {
             }
 
             let condition_met = match &achievement.condition {
-                AchievementCondition::TotalTenants { min } => {
-                    tenants.len() >= *min
-                },
-                AchievementCondition::Funds { min } => {
-                    funds.balance >= *min
-                },
+                AchievementCondition::TotalTenants { min } => tenants.len() >= *min,
+                AchievementCondition::Funds { min } => funds.balance >= *min,
                 AchievementCondition::AvgHappiness { max } => {
                     // Only check if we have tenants to avoid instant slumlord on empty building
                     if tenants.is_empty() {
                         false
                     } else {
-                        let avg = tenants.iter().map(|t| t.happiness).sum::<i32>() / tenants.len() as i32;
+                        let avg =
+                            tenants.iter().map(|t| t.happiness).sum::<i32>() / tenants.len() as i32;
                         avg <= *max
                     }
-                },
+                }
                 AchievementCondition::MaxReputation { min } => {
                     // Check all neighborhoods
                     city.neighborhoods.iter().any(|n| n.reputation >= *min)
-                },
+                }
                 AchievementCondition::FullOccupancy => {
                     // Check if all apartments have a tenant
                     // Assuming building has apartments list
@@ -90,8 +88,9 @@ impl AchievementSystem {
                     // Need to verify how to check occupancy from state.
                     // state.building.apartments is Vec<Apartment>.
                     // Apartment.is_vacant().
-                    !building.apartments.is_empty() && building.apartments.iter().all(|a| !a.is_vacant())
-                },
+                    !building.apartments.is_empty()
+                        && building.apartments.iter().all(|a| !a.is_vacant())
+                }
                 AchievementCondition::GameComplete => {
                     current_tick >= config.win_conditions.game_duration_ticks.unwrap_or(36)
                 }

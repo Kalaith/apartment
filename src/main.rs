@@ -1,13 +1,13 @@
 use macroquad::prelude::*;
 
-mod game;
-mod state;
 mod building;
-mod tenant;
-mod economy;
-mod simulation;
-mod ui;
 mod data;
+mod economy;
+mod game;
+mod simulation;
+mod state;
+mod tenant;
+mod ui;
 
 mod assets;
 mod save;

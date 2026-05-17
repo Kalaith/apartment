@@ -1,7 +1,6 @@
-
+use crate::building::{ApartmentSize, DesignType, NoiseLevel};
 use serde::{Deserialize, Serialize};
 use std::fs;
-use crate::building::{ApartmentSize, NoiseLevel, DesignType};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct BuildingTemplates {
@@ -53,7 +52,7 @@ impl ApartmentTemplate {
         match self.base_noise_str.to_lowercase().as_str() {
             "low" => NoiseLevel::Low,
             "high" => NoiseLevel::High,
-            _ => NoiseLevel::Low,  // Default to Low for unknown values
+            _ => NoiseLevel::Low, // Default to Low for unknown values
         }
     }
 
@@ -80,13 +79,13 @@ pub fn load_templates() -> Option<BuildingTemplates> {
     // For WASM, embed at compile time
     #[cfg(target_arch = "wasm32")]
     let json = include_str!("../../assets/building_templates.json");
-    
+
     #[cfg(not(target_arch = "wasm32"))]
     let json = match fs::read_to_string("assets/building_templates.json") {
         Ok(s) => s,
         Err(_) => include_str!("../../assets/building_templates.json").to_string(),
     };
-    
+
     match serde_json::from_str::<BuildingTemplates>(&json) {
         Ok(templates) => Some(templates),
         Err(e) => {

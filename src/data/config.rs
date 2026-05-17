@@ -1,4 +1,3 @@
-
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -137,7 +136,7 @@ pub struct HappinessConfig {
     pub design_preferred_bonus: i32,
     pub design_hated_penalty: i32,
     pub design_style_modifiers: HashMap<String, i32>,
-    
+
     // Hallway
     pub hallway_condition_base: i32,
     pub hallway_condition_multiplier: f32,
@@ -363,7 +362,7 @@ impl Default for RelationshipsConfig {
         happiness_modifiers.insert("hostile".to_string(), -10);
         happiness_modifiers.insert("romantic".to_string(), 8);
         happiness_modifiers.insert("family".to_string(), 10);
-        
+
         Self {
             happiness_modifiers,
             formation_chance: 5,
@@ -612,14 +611,23 @@ impl Default for GameConfig {
                 upgrade_labels: {
                     let mut m = HashMap::new();
                     m.insert("repair_fmt".to_string(), "Repair +{}".to_string());
-                    m.insert("repair_hallway_fmt".to_string(), "Repair Hallway +{}".to_string());
-                    m.insert("upgrade_design_fmt".to_string(), "Upgrade to {}".to_string());
+                    m.insert(
+                        "repair_hallway_fmt".to_string(),
+                        "Repair Hallway +{}".to_string(),
+                    );
+                    m.insert(
+                        "upgrade_design_fmt".to_string(),
+                        "Upgrade to {}".to_string(),
+                    );
                     m.insert("max_design".to_string(), "Max Design".to_string());
                     m.insert("soundproofing".to_string(), "Add Soundproofing".to_string());
-                    m.insert("kitchen_renovation".to_string(), "Renovate Kitchen".to_string());
+                    m.insert(
+                        "kitchen_renovation".to_string(),
+                        "Renovate Kitchen".to_string(),
+                    );
                     m.insert("install_laundry".to_string(), "Install Laundry".to_string());
                     m
-                }
+                },
             },
             upgrades: HashMap::new(),
             matching: MatchingConfig::default(),
@@ -641,27 +649,28 @@ pub fn load_config() -> GameConfig {
     // For WASM, embed configs at compile time
     #[cfg(target_arch = "wasm32")]
     let config_json = include_str!("../../assets/config.json");
-    
+
     #[cfg(not(target_arch = "wasm32"))]
     let config_json = std::fs::read_to_string("assets/config.json")
         .unwrap_or_else(|_| include_str!("../../assets/config.json").to_string());
-    
+
     let mut config: GameConfig = serde_json::from_str(&config_json).unwrap_or_else(|e| {
         eprintln!("Failed to parse config.json: {}", e);
         GameConfig::default()
     });
-    
+
     // Load upgrades from separate file
     #[cfg(target_arch = "wasm32")]
     let upgrades_json = include_str!("../../assets/upgrades.json");
-    
+
     #[cfg(not(target_arch = "wasm32"))]
     let upgrades_json = std::fs::read_to_string("assets/upgrades.json")
         .unwrap_or_else(|_| include_str!("../../assets/upgrades.json").to_string());
-    
-    if let Ok(upgrades) = serde_json::from_str::<HashMap<String, UpgradeDefinition>>(&upgrades_json) {
+
+    if let Ok(upgrades) = serde_json::from_str::<HashMap<String, UpgradeDefinition>>(&upgrades_json)
+    {
         config.upgrades = upgrades;
     }
-    
+
     config
 }

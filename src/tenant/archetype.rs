@@ -1,4 +1,3 @@
-
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Hash)]
@@ -20,7 +19,7 @@ impl TenantArchetype {
             TenantArchetype::Elderly => "Elderly",
         }
     }
-    
+
     /// Get archetype from string ID
     pub fn from_id(id: &str) -> Option<Self> {
         match id.to_lowercase().as_str() {
@@ -43,20 +42,22 @@ impl TenantArchetype {
             TenantArchetype::Elderly => "elderly",
         }
     }
-    
+
     /// Get the preferences for this archetype
     /// Attempts to load from JSON registry first, falls back to hardcoded defaults
     pub fn preferences(&self) -> ArchetypePreferences {
         // Try to load from JSON registry
         let registry = crate::data::archetypes::archetypes();
         if let Some(definition) = registry.get(self.id()) {
-            return crate::data::archetypes::ArchetypeRegistry::to_preferences(&definition.preferences);
+            return crate::data::archetypes::ArchetypeRegistry::to_preferences(
+                &definition.preferences,
+            );
         }
-        
+
         // Fallback to hardcoded values
         self.default_preferences()
     }
-    
+
     /// Hardcoded default preferences (fallback if JSON fails to load)
     fn default_preferences(&self) -> ArchetypePreferences {
         match self {
@@ -65,7 +66,7 @@ impl TenantArchetype {
                 condition_sensitivity: 0.3, // Low - tolerates some wear
                 noise_sensitivity: 0.4,     // Low - can deal with noise
                 design_sensitivity: 0.2,    // Doesn't care much
-                
+
                 ideal_rent_max: 750,
                 min_acceptable_condition: 30,
                 prefers_quiet: false,
@@ -77,7 +78,7 @@ impl TenantArchetype {
                 condition_sensitivity: 0.8, // Values good condition
                 noise_sensitivity: 0.9,     // Hates noise
                 design_sensitivity: 0.5,    // Moderate
-                
+
                 ideal_rent_max: 1200,
                 min_acceptable_condition: 60,
                 prefers_quiet: true,
@@ -89,7 +90,7 @@ impl TenantArchetype {
                 condition_sensitivity: 0.5, // Moderate
                 noise_sensitivity: 0.5,     // Moderate
                 design_sensitivity: 0.95,   // Very design focused
-                
+
                 ideal_rent_max: 900,
                 min_acceptable_condition: 40,
                 prefers_quiet: false,
@@ -101,7 +102,7 @@ impl TenantArchetype {
                 condition_sensitivity: 0.7, // Needs decent condition
                 noise_sensitivity: 1.0,     // Hates noise (kids sleeping)
                 design_sensitivity: 0.4,    // Moderate
-                
+
                 ideal_rent_max: 1100,
                 min_acceptable_condition: 50,
                 prefers_quiet: true,
@@ -113,7 +114,7 @@ impl TenantArchetype {
                 condition_sensitivity: 0.6, // Moderate
                 noise_sensitivity: 0.9,     // Hates noise
                 design_sensitivity: 0.3,    // Low
-                
+
                 ideal_rent_max: 800,
                 min_acceptable_condition: 45,
                 prefers_quiet: true,
@@ -131,14 +132,13 @@ pub struct ArchetypePreferences {
     pub condition_sensitivity: f32,
     pub noise_sensitivity: f32,
     pub design_sensitivity: f32,
-    
+
     // Thresholds
     pub ideal_rent_max: i32,
     pub min_acceptable_condition: i32,
     pub prefers_quiet: bool,
-    
+
     // Design preferences
     pub preferred_design: Option<crate::building::DesignType>,
     pub hates_design: Option<crate::building::DesignType>,
 }
-

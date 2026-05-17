@@ -67,17 +67,13 @@ impl TutorialManager {
     pub fn new() -> Self {
         // Create Uncle Artie as the mentor
         let mentor = NarrativeNpc::new(0, "Uncle Artie", NpcRole::Mentor);
-        
+
         // Create initial rivals
-        let rivals = vec![
-            NarrativeNpc::new(1, "Magnuson Corp", NpcRole::Rival),
-        ];
-        
+        let rivals = vec![NarrativeNpc::new(1, "Magnuson Corp", NpcRole::Rival)];
+
         // Create initial allies
-        let allies = vec![
-            NarrativeNpc::new(2, "Councilwoman Reyes", NpcRole::Ally),
-        ];
-        
+        let allies = vec![NarrativeNpc::new(2, "Councilwoman Reyes", NpcRole::Ally)];
+
         Self {
             active: true,
             current_milestone: Some(TutorialMilestone::InheritedMess),
@@ -86,41 +82,53 @@ impl TutorialManager {
             rivals,
             allies,
             pending_messages: vec![
-                "Welcome! I'm your Uncle Artie. I've left you this building in my will.".to_string(),
+                "Welcome! I'm your Uncle Artie. I've left you this building in my will."
+                    .to_string(),
                 "It's a bit of a mess, but nothing we can't fix together.".to_string(),
                 "First, select the Hallway and repair it to fix up the place.".to_string(),
             ],
             rival_introduced: false,
         }
     }
-    
+
     /// Check if a milestone is completed
     pub fn is_milestone_complete(&self, milestone: &TutorialMilestone) -> bool {
         self.completed_milestones.contains(milestone)
     }
-    
+
     /// Complete a milestone and advance to the next
     pub fn complete_milestone(&mut self, milestone: TutorialMilestone) {
         if !self.is_milestone_complete(&milestone) {
             self.completed_milestones.push(milestone.clone());
-            
+
             // Advance to next milestone
             self.current_milestone = match milestone {
                 TutorialMilestone::InheritedMess => {
-                    self.pending_messages.push("Great job cleaning up! Now let's find your first tenant.".to_string());
+                    self.pending_messages.push(
+                        "Great job cleaning up! Now let's find your first tenant.".to_string(),
+                    );
                     self.pending_messages.push("Select an apartment, adjust the Rent if needed, and click 'List for Lease'.".to_string());
-                    self.pending_messages.push("Then click 'End Month' to let time pass. Applicants will arrive!".to_string());
+                    self.pending_messages.push(
+                        "Then click 'End Month' to let time pass. Applicants will arrive!"
+                            .to_string(),
+                    );
                     Some(TutorialMilestone::FirstResident)
                 }
                 TutorialMilestone::FirstResident => {
-                    self.pending_messages.push("Excellent! You've got your first resident.".to_string());
-                    self.pending_messages.push("But uh-oh, looks like there's a leak in one of the units...".to_string());
+                    self.pending_messages
+                        .push("Excellent! You've got your first resident.".to_string());
+                    self.pending_messages.push(
+                        "But uh-oh, looks like there's a leak in one of the units...".to_string(),
+                    );
                     Some(TutorialMilestone::TheLeak)
                 }
                 TutorialMilestone::TheLeak => {
-                    self.pending_messages.push("You handled that like a pro!".to_string());
-                    self.pending_messages.push("I think you're ready to manage on your own now.".to_string());
-                    self.pending_messages.push("Good luck, and remember - treat your tenants well!".to_string());
+                    self.pending_messages
+                        .push("You handled that like a pro!".to_string());
+                    self.pending_messages
+                        .push("I think you're ready to manage on your own now.".to_string());
+                    self.pending_messages
+                        .push("Good luck, and remember - treat your tenants well!".to_string());
                     Some(TutorialMilestone::Complete)
                 }
                 TutorialMilestone::Complete => {
@@ -130,14 +138,12 @@ impl TutorialManager {
             };
         }
     }
-    
 
-    
     /// Check if tutorial is complete
     pub fn is_complete(&self) -> bool {
         self.is_milestone_complete(&TutorialMilestone::Complete)
     }
-    
+
     /// Get NPC by ID
     pub fn get_npc(&self, id: u32) -> Option<&NarrativeNpc> {
         if self.mentor.id == id {
@@ -151,7 +157,7 @@ impl TutorialManager {
         }
         None
     }
-    
+
     /// Modify relationship with an NPC
     pub fn modify_relationship(&mut self, npc_id: u32, change: i32) {
         if self.mentor.id == npc_id {
@@ -166,7 +172,7 @@ impl TutorialManager {
             npc.relationship = (npc.relationship + change).clamp(-100, 100);
         }
     }
-    
+
     /// Get a contextual hint for the current milestone
     pub fn get_hint(&self) -> Option<&'static str> {
         match &self.current_milestone {
@@ -182,7 +188,7 @@ impl TutorialManager {
             Some(TutorialMilestone::Complete) | None => None,
         }
     }
-    
+
     /// Check if the player should see the rival introduction
     pub fn should_introduce_rival(&self, month: u32) -> bool {
         // Introduce Magnuson Corp after first 6 months
@@ -199,32 +205,41 @@ impl Default for TutorialManager {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_tutorial_progression() {
         let mut tutorial = TutorialManager::new();
         assert!(tutorial.active);
-        assert_eq!(tutorial.current_milestone, Some(TutorialMilestone::InheritedMess));
-        
+        assert_eq!(
+            tutorial.current_milestone,
+            Some(TutorialMilestone::InheritedMess)
+        );
+
         tutorial.complete_milestone(TutorialMilestone::InheritedMess);
-        assert_eq!(tutorial.current_milestone, Some(TutorialMilestone::FirstResident));
-        
+        assert_eq!(
+            tutorial.current_milestone,
+            Some(TutorialMilestone::FirstResident)
+        );
+
         tutorial.complete_milestone(TutorialMilestone::FirstResident);
         assert_eq!(tutorial.current_milestone, Some(TutorialMilestone::TheLeak));
-        
+
         tutorial.complete_milestone(TutorialMilestone::TheLeak);
-        assert_eq!(tutorial.current_milestone, Some(TutorialMilestone::Complete));
-        
+        assert_eq!(
+            tutorial.current_milestone,
+            Some(TutorialMilestone::Complete)
+        );
+
         tutorial.complete_milestone(TutorialMilestone::Complete);
         assert!(!tutorial.active);
         assert!(tutorial.is_complete());
     }
-    
+
     #[test]
     fn test_npc_relationship() {
         let mut tutorial = TutorialManager::new();
         let mentor_id = tutorial.mentor.id;
-        
+
         assert_eq!(tutorial.mentor.relationship, 50);
         tutorial.modify_relationship(mentor_id, 20);
         assert_eq!(tutorial.mentor.relationship, 70);

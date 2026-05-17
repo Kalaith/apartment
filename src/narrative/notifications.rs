@@ -39,7 +39,7 @@ impl GameNotification {
             category: NotificationCategory::Positive,
         }
     }
-    
+
     pub fn warning(icon: &str, message: &str) -> Self {
         Self {
             icon: icon.to_string(),
@@ -48,9 +48,7 @@ impl GameNotification {
             category: NotificationCategory::Warning,
         }
     }
-    
 
-    
     pub fn hint(message: &str) -> Self {
         Self {
             icon: "💡".to_string(),
@@ -59,8 +57,6 @@ impl GameNotification {
             category: NotificationCategory::Hint,
         }
     }
-    
-
 }
 
 /// Relationship change event returned from tick
@@ -73,36 +69,42 @@ pub enum RelationshipChange {
         relationship_type: String,
         is_positive: bool,
     },
-
 }
 
 impl RelationshipChange {
     /// Convert to a game notification
     pub fn to_notification(&self, config: &HintsConfig) -> GameNotification {
         match self {
-            RelationshipChange::NewRelationship { 
-                tenant_a_name, 
-                tenant_b_name, 
+            RelationshipChange::NewRelationship {
+                tenant_a_name,
+                tenant_b_name,
                 relationship_type,
                 is_positive,
             } => {
-                let key = if *is_positive { "new_friendly" } else { "new_hostile" };
+                let key = if *is_positive {
+                    "new_friendly"
+                } else {
+                    "new_hostile"
+                };
                 if let Some(template) = config.relationship_notifications.get(key) {
-                    let message = template.template
+                    let message = template
+                        .template
                         .replace("{tenant_a}", tenant_a_name)
                         .replace("{tenant_b}", tenant_b_name);
-                    
+
                     let mut notif = if *is_positive {
                         GameNotification::positive(&template.icon, &message)
                     } else {
                         GameNotification::warning(&template.icon, &message)
                     };
-                    
+
                     notif.description = Some(template.description.clone());
                     notif
                 } else {
-                    let msg = format!("{} and {} formed a {} relationship", 
-                        tenant_a_name, tenant_b_name, relationship_type);
+                    let msg = format!(
+                        "{} and {} formed a {} relationship",
+                        tenant_a_name, tenant_b_name, relationship_type
+                    );
                     if *is_positive {
                         GameNotification::positive("💚", &msg)
                     } else {
@@ -149,30 +151,39 @@ pub struct HintThresholds {
 impl Default for HintsConfig {
     fn default() -> Self {
         let mut context_hints = HashMap::new();
-        context_hints.insert("full_occupancy".to_string(), ContextHint {
-            priority: 1,
-            messages: vec!["All units occupied! Focus on keeping tenants happy.".to_string()],
-        });
-        
+        context_hints.insert(
+            "full_occupancy".to_string(),
+            ContextHint {
+                priority: 1,
+                messages: vec!["All units occupied! Focus on keeping tenants happy.".to_string()],
+            },
+        );
+
         let mut relationship_notifications = HashMap::new();
-        relationship_notifications.insert("new_friendly".to_string(), RelationshipNotificationTemplate {
-            icon: "💚".to_string(),
-            template: "{tenant_a} and {tenant_b} have become friends!".to_string(),
-            description: "Friendly neighbors boost each other's happiness.".to_string(),
-        });
-        relationship_notifications.insert("new_hostile".to_string(), RelationshipNotificationTemplate {
-            icon: "⚡".to_string(),
-            template: "Conflict brewing between {tenant_a} and {tenant_b}!".to_string(),
-            description: "Hostile relationships reduce happiness.".to_string(),
-        });
-        
+        relationship_notifications.insert(
+            "new_friendly".to_string(),
+            RelationshipNotificationTemplate {
+                icon: "💚".to_string(),
+                template: "{tenant_a} and {tenant_b} have become friends!".to_string(),
+                description: "Friendly neighbors boost each other's happiness.".to_string(),
+            },
+        );
+        relationship_notifications.insert(
+            "new_hostile".to_string(),
+            RelationshipNotificationTemplate {
+                icon: "⚡".to_string(),
+                template: "Conflict brewing between {tenant_a} and {tenant_b}!".to_string(),
+                description: "Hostile relationships reduce happiness.".to_string(),
+            },
+        );
+
         let mut relationship_icons = HashMap::new();
         relationship_icons.insert("friendly".to_string(), "💚".to_string());
         relationship_icons.insert("neutral".to_string(), "⚪".to_string());
         relationship_icons.insert("hostile".to_string(), "⚡".to_string());
         relationship_icons.insert("romantic".to_string(), "💕".to_string());
         relationship_icons.insert("family".to_string(), "👨‍👩‍👧".to_string());
-        
+
         Self {
             context_hints,
             relationship_notifications,
@@ -199,11 +210,11 @@ impl Default for HintThresholds {
 pub fn load_hints_config() -> HintsConfig {
     #[cfg(target_arch = "wasm32")]
     let json = include_str!("../../assets/hints.json");
-    
+
     #[cfg(not(target_arch = "wasm32"))]
     let json = std::fs::read_to_string("assets/hints.json")
         .unwrap_or_else(|_| include_str!("../../assets/hints.json").to_string());
-    
+
     serde_json::from_str(&json).unwrap_or_else(|e| {
         eprintln!("Failed to parse hints.json: {}", e);
         HintsConfig::default()
@@ -227,9 +238,7 @@ impl NotificationManager {
             hints_config: Some(load_hints_config()),
         }
     }
-    
 
-    
     /// Add relationship changes as notifications
     pub fn add_relationship_changes(&mut self, changes: Vec<RelationshipChange>) {
         let config = self.hints_config.clone().unwrap_or_default();
@@ -237,7 +246,7 @@ impl NotificationManager {
             self.pending.push(change.to_notification(&config));
         }
     }
-    
+
     /// Check game state and add contextual hints if appropriate
     pub fn check_context_hints(
         &mut self,
@@ -249,15 +258,15 @@ impl NotificationManager {
         any_unhappy: bool,
     ) {
         let config = self.hints_config.clone().unwrap_or_default();
-        
+
         // Respect cooldown
         if current_month < self.last_hint_month + config.thresholds.hint_cooldown_months {
             return;
         }
-        
+
         // Find the highest priority applicable hint
         let mut best_hint: Option<(&str, i32)> = None;
-        
+
         // Full occupancy check
         if vacancy_count == 0 {
             if let Some(hint) = config.context_hints.get("full_occupancy") {
@@ -266,7 +275,7 @@ impl NotificationManager {
                 }
             }
         }
-        
+
         // Low condition check
         if avg_condition < config.thresholds.low_condition {
             if let Some(hint) = config.context_hints.get("low_condition") {
@@ -275,12 +284,12 @@ impl NotificationManager {
                 }
             }
         }
-        
+
         // High vacancy check
-        let vacancy_percent = if total_units > 0 { 
-            (vacancy_count * 100) / total_units 
-        } else { 
-            0 
+        let vacancy_percent = if total_units > 0 {
+            (vacancy_count * 100) / total_units
+        } else {
+            0
         };
         if vacancy_percent >= config.thresholds.high_vacancy_percent as usize {
             if let Some(hint) = config.context_hints.get("high_vacancy") {
@@ -289,7 +298,7 @@ impl NotificationManager {
                 }
             }
         }
-        
+
         // Unhappy tenant check
         if any_unhappy {
             if let Some(hint) = config.context_hints.get("tenant_unhappy") {
@@ -298,7 +307,7 @@ impl NotificationManager {
                 }
             }
         }
-        
+
         // Funds check
         if funds < config.thresholds.low_funds {
             if let Some(hint) = config.context_hints.get("low_funds") {
@@ -313,19 +322,20 @@ impl NotificationManager {
                 }
             }
         }
-        
+
         // Generate the hint if we found one
         if let Some((hint_key, _)) = best_hint {
             if let Some(hint) = config.context_hints.get(hint_key) {
                 if !hint.messages.is_empty() {
                     let idx = macroquad::rand::gen_range(0, hint.messages.len());
-                    self.pending.push(GameNotification::hint(&hint.messages[idx]));
+                    self.pending
+                        .push(GameNotification::hint(&hint.messages[idx]));
                     self.last_hint_month = current_month;
                 }
             }
         }
     }
-    
+
     /// Get the next pending notification (if any)
     pub fn pop(&mut self) -> Option<GameNotification> {
         if self.pending.is_empty() {
@@ -334,12 +344,9 @@ impl NotificationManager {
             Some(self.pending.remove(0))
         }
     }
-    
+
     /// Check if there are pending notifications
     pub fn has_pending(&self) -> bool {
         !self.pending.is_empty()
     }
-    
-
-
 }

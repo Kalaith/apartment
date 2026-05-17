@@ -1,7 +1,6 @@
-
-use serde::{Deserialize, Serialize};
 use super::{Neighborhood, NeighborhoodType, PropertyMarket};
 use crate::building::Building;
+use serde::{Deserialize, Serialize};
 
 /// The city contains all neighborhoods and provides the top-level game world
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -10,15 +9,15 @@ pub struct City {
     pub neighborhoods: Vec<Neighborhood>,
     pub buildings: Vec<Building>,
     pub market: PropertyMarket,
-    
+
     /// Currently selected building index
     pub active_building_index: usize,
-    
+
     /// Global economic factors
-    pub economy_health: f32,        // 0.5 = recession, 1.0 = normal, 1.5 = boom
-    pub interest_rate: f32,         // Affects loan costs
-    pub inflation_rate: f32,        // Affects rent expectations
-    
+    pub economy_health: f32, // 0.5 = recession, 1.0 = normal, 1.5 = boom
+    pub interest_rate: f32,  // Affects loan costs
+    pub inflation_rate: f32, // Affects rent expectations
+
     /// City statistics
     pub total_months: u32,
     pub total_buildings_managed: u32,
@@ -48,6 +47,22 @@ impl City {
         }
     }
 
+    /// Create a city with a starter building already assigned to a neighborhood.
+    pub fn with_starter_building(name: &str, neighborhood_id: u32) -> (Self, u32) {
+        let mut city = Self::new(name);
+        let building = Building::new("Starter Building", 2, 2);
+        let building_id = city
+            .add_building(building, neighborhood_id)
+            .unwrap_or_else(|_| {
+                let building_id = city.buildings.len() as u32;
+                city.buildings.push(Building::new("Starter Building", 2, 2));
+                city.total_buildings_managed += 1;
+                building_id
+            });
+        city.active_building_index = building_id as usize;
+        (city, building_id)
+    }
+
     /// Get the currently active building
     pub fn active_building(&self) -> Option<&Building> {
         self.buildings.get(self.active_building_index)
@@ -68,13 +83,21 @@ impl City {
     /// Get neighborhood for a building
     pub fn neighborhood_for_building(&self, building_index: usize) -> Option<&Neighborhood> {
         let building_id = building_index as u32;
-        self.neighborhoods.iter().find(|n| n.building_ids.contains(&building_id))
+        self.neighborhoods
+            .iter()
+            .find(|n| n.building_ids.contains(&building_id))
     }
 
     /// Add a new building to a neighborhood
-    pub fn add_building(&mut self, building: Building, neighborhood_id: u32) -> Result<u32, String> {
+    pub fn add_building(
+        &mut self,
+        building: Building,
+        neighborhood_id: u32,
+    ) -> Result<u32, String> {
         // Check if neighborhood can accept more buildings
-        let neighborhood = self.neighborhoods.iter_mut()
+        let neighborhood = self
+            .neighborhoods
+            .iter_mut()
             .find(|n| n.id == neighborhood_id)
             .ok_or("Neighborhood not found")?;
 
@@ -92,28 +115,33 @@ impl City {
 
     /// Get all buildings as a vector of (index, building, neighborhood_name)
     pub fn buildings_with_info(&self) -> Vec<(usize, &Building, String)> {
-        self.buildings.iter().enumerate().map(|(i, b)| {
-            let neighborhood_name = self.neighborhood_for_building(i)
-                .map(|n| n.name.clone())
-                .unwrap_or_else(|| "Unknown".to_string());
-            (i, b, neighborhood_name)
-        }).collect()
+        self.buildings
+            .iter()
+            .enumerate()
+            .map(|(i, b)| {
+                let neighborhood_name = self
+                    .neighborhood_for_building(i)
+                    .map(|n| n.name.clone())
+                    .unwrap_or_else(|| "Unknown".to_string());
+                (i, b, neighborhood_name)
+            })
+            .collect()
     }
 
     /// Monthly tick for all city systems
     pub fn tick(&mut self) {
         self.total_months += 1;
-        
+
         // Update neighborhoods
         for neighborhood in &mut self.neighborhoods {
             neighborhood.tick();
         }
-        
+
         // Refresh market listings periodically
         if self.total_months % 3 == 0 {
             self.market.refresh_listings(&self.neighborhoods);
         }
-        
+
         // Random economic events
         self.update_economy();
     }
@@ -123,11 +151,12 @@ impl City {
         // Small random fluctuations
         let change = macroquad::rand::gen_range(-5, 6) as f32 / 100.0;
         self.economy_health = (self.economy_health + change).clamp(0.5, 1.5);
-        
+
         // Interest rates inversely track economy health
         let target_rate = 0.08 - (self.economy_health - 1.0) * 0.05;
-        self.interest_rate = (self.interest_rate + (target_rate - self.interest_rate) * 0.1).clamp(0.02, 0.15);
-        
+        self.interest_rate =
+            (self.interest_rate + (target_rate - self.interest_rate) * 0.1).clamp(0.02, 0.15);
+
         // Inflation tracks economy health
         self.inflation_rate = (self.economy_health - 0.7) * 0.05;
     }

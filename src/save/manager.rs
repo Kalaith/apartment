@@ -1,10 +1,8 @@
-
-
-use std::path::{Path, PathBuf};
-use serde::{Deserialize, Serialize};
-use crate::state::GameplayState;
 use crate::data::config::load_config;
-use macroquad_toolkit::persistence::{save_json, load_json, get_app_data_path, file_exists};
+use crate::state::GameplayState;
+use macroquad_toolkit::persistence::{file_exists, get_app_data_path, load_json, save_json};
+use serde::{Deserialize, Serialize};
+use std::path::PathBuf;
 
 const SAVE_FILE_NAME: &str = "savegame.json";
 const PROGRESS_FILE_NAME: &str = "player_progress.json";
@@ -33,17 +31,17 @@ impl PlayerProgress {
             completed_buildings: Vec::new(),
         }
     }
-    
+
     pub fn is_unlocked(&self, building_id: &str) -> bool {
         self.unlocked_buildings.contains(&building_id.to_string())
     }
-    
+
     pub fn unlock_building(&mut self, building_id: &str) {
         if !self.unlocked_buildings.contains(&building_id.to_string()) {
             self.unlocked_buildings.push(building_id.to_string());
         }
     }
-    
+
     pub fn mark_completed(&mut self, building_id: &str) {
         if !self.completed_buildings.contains(&building_id.to_string()) {
             self.completed_buildings.push(building_id.to_string());
@@ -53,19 +51,18 @@ impl PlayerProgress {
 
 /// Save the current game state to disk
 pub fn save_game(state: &GameplayState) -> std::io::Result<()> {
-    save_json(get_save_path(), state)
-        .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))
+    save_json(get_save_path(), state).map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))
 }
 
 /// Load the game state from disk
 pub fn load_game() -> std::io::Result<GameplayState> {
     let mut state: GameplayState = load_json(get_save_path())
         .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
-    
+
     // Restore non-serialized fields
     state.config = load_config();
     state.sync_building();
-    
+
     Ok(state)
 }
 
@@ -87,7 +84,7 @@ pub fn save_player_progress(progress: &PlayerProgress) -> std::io::Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+
     use crate::state::GameplayState;
 
     #[test]
@@ -97,13 +94,13 @@ mod tests {
         state.funds.balance = 9999;
         state.current_tick = 5;
         state.next_tenant_id = 10;
-        
+
         // 2. Serialize
         let json = serde_json::to_string(&state).expect("Failed to serialize");
-        
+
         // 3. Deserialize
         let loaded: GameplayState = serde_json::from_str(&json).expect("Failed to deserialize");
-        
+
         // 4. Verify fields
         assert_eq!(loaded.funds.balance, 9999);
         assert_eq!(loaded.current_tick, 5);

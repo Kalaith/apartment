@@ -1,4 +1,3 @@
-
 use serde::{Deserialize, Serialize};
 
 /// Types of mail items
@@ -32,6 +31,18 @@ impl MailType {
             MailType::Official => "📋",
         }
     }
+
+    pub fn priority(&self) -> i32 {
+        match self {
+            MailType::CityNotice => 100,
+            MailType::Official => 90,
+            MailType::Financial => 70,
+            MailType::TenantLetter { .. } => 60,
+            MailType::Personal => 40,
+            MailType::News => 20,
+            MailType::Advertisement => 10,
+        }
+    }
 }
 
 /// A mail item in the player's mailbox
@@ -56,7 +67,10 @@ pub enum MailAction {
     /// Pay a fine or fee
     PayFine { amount: i32, deadline_month: u32 },
     /// Respond to a tenant request
-    RespondToTenant { tenant_id: u32, request_type: String },
+    RespondToTenant {
+        tenant_id: u32,
+        request_type: String,
+    },
     /// Schedule an inspection
     ScheduleInspection { building_id: u32 },
     /// Accept or reject an offer
@@ -88,16 +102,8 @@ impl MailItem {
         }
     }
 
-
-
     /// Create a financial statement
-    pub fn financial_statement(
-        id: u32,
-        month: u32,
-        income: i32,
-        expenses: i32,
-        net: i32,
-    ) -> Self {
+    pub fn financial_statement(id: u32, month: u32, income: i32, expenses: i32, net: i32) -> Self {
         let body = format!(
             "Monthly Financial Summary:\n\n\
              Total Income: ${}\n\
@@ -136,8 +142,6 @@ impl MailItem {
         }
     }
 
-
-
     /// Get age in months
     pub fn age(&self, current_month: u32) -> u32 {
         current_month.saturating_sub(self.month_received)
@@ -175,6 +179,19 @@ impl Mailbox {
         self.unread_count
     }
 
+    /// Mark a mail item as read.
+    pub fn mark_read(&mut self, id: u32) -> bool {
+        if let Some(item) = self.items.iter_mut().find(|item| item.id == id) {
+            if !item.read {
+                item.read = true;
+                self.unread_count = self.unread_count.saturating_sub(1);
+            }
+            true
+        } else {
+            false
+        }
+    }
+
     /// Delete old read mail (cleanup)
     pub fn cleanup(&mut self, current_month: u32, max_age_months: u32) {
         self.items.retain(|m| {
@@ -194,9 +211,8 @@ impl Mailbox {
     ) {
         // Monthly financial statement
         if month > 0 {
-            let statement = MailItem::financial_statement(
-                0, month, income, expenses, income - expenses
-            );
+            let statement =
+                MailItem::financial_statement(0, month, income, expenses, income - expenses);
             self.receive(statement);
         }
 
@@ -213,12 +229,24 @@ impl Mailbox {
         // Occasional news
         if macroquad::rand::gen_range(0, 100) < 15 {
             let headlines = vec![
-                ("Housing Market Update", "Rental prices continue to rise across the city as demand increases."),
-                ("Local Business Spotlight", "New shops opening in several neighborhoods."),
-                ("Community News", "Residents organize neighborhood watch program."),
-                ("Weather Alert", "Unusual weather pattern expected this season."),
+                (
+                    "Housing Market Update",
+                    "Rental prices continue to rise across the city as demand increases.",
+                ),
+                (
+                    "Local Business Spotlight",
+                    "New shops opening in several neighborhoods.",
+                ),
+                (
+                    "Community News",
+                    "Residents organize neighborhood watch program.",
+                ),
+                (
+                    "Weather Alert",
+                    "Unusual weather pattern expected this season.",
+                ),
             ];
-            
+
             use macroquad::rand::ChooseRandom;
             if let Some((headline, article)) = headlines.choose() {
                 self.receive(MailItem::news_clipping(0, month, headline, article));
@@ -236,50 +264,59 @@ impl Mailbox {
 
         // Find tenant's apartment
         let apt = tenant.apartment_id.and_then(|apt_id| {
-            buildings.iter()
+            buildings
+                .iter()
                 .flat_map(|b| &b.apartments)
                 .find(|a| a.id == apt_id)
         })?;
 
         let templates: Vec<(&str, String)> = match () {
             _ if apt.condition < 40 => {
-                vec![
-                    ("Maintenance Request", format!(
+                vec![(
+                    "Maintenance Request",
+                    format!(
                         "Dear Landlord,\n\n\
                         I've noticed the apartment is getting quite worn down. \
                         Would it be possible to get some repairs done soon?\n\n\
-                        Thank you,\n{}", tenant.name
-                    )),
-                ]
+                        Thank you,\n{}",
+                        tenant.name
+                    ),
+                )]
             }
             _ if tenant.happiness > 80 => {
-                vec![
-                    ("Thank You Note", format!(
+                vec![(
+                    "Thank You Note",
+                    format!(
                         "Dear Landlord,\n\n\
                         I just wanted to say I really appreciate how well you \
                         maintain the building. It's a pleasure living here!\n\n\
-                        Best,\n{}", tenant.name
-                    )),
-                ]
+                        Best,\n{}",
+                        tenant.name
+                    ),
+                )]
             }
             _ if tenant.happiness < 40 => {
-                vec![
-                    ("Concerns", format!(
+                vec![(
+                    "Concerns",
+                    format!(
                         "Dear Landlord,\n\n\
                         I have some concerns about my unit that I'd like to discuss. \
                         Please let me know when you're available to talk.\n\n\
-                        Regards,\n{}", tenant.name
-                    )),
-                ]
+                        Regards,\n{}",
+                        tenant.name
+                    ),
+                )]
             }
             _ => {
-                vec![
-                    ("Quick Note", format!(
+                vec![(
+                    "Quick Note",
+                    format!(
                         "Hi there,\n\n\
                         Just a friendly check-in. Everything's going well!\n\n\
-                        Cheers,\n{}", tenant.name
-                    )),
-                ]
+                        Cheers,\n{}",
+                        tenant.name
+                    ),
+                )]
             }
         };
 
@@ -308,12 +345,12 @@ mod tests {
     fn test_mailbox_basics() {
         let mut mailbox = Mailbox::new();
         mailbox.receive(MailItem::news_clipping(0, 1, "Test", "Body"));
-        
+
         assert_eq!(mailbox.unread_count(), 1);
-        
+
         let id = mailbox.items[0].id;
         mailbox.mark_read(id);
-        
+
         assert_eq!(mailbox.unread_count(), 0);
     }
 

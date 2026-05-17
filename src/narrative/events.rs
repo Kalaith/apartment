@@ -1,6 +1,5 @@
-
+use macroquad::rand::{gen_range, ChooseRandom};
 use serde::{Deserialize, Serialize};
-use macroquad::rand::{ChooseRandom, gen_range};
 
 /// Types of narrative events
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
@@ -76,9 +75,16 @@ pub enum NarrativeEffect {
     /// Trigger an inspection
     TriggerInspection { building_id: u32 },
     /// Property value change
-    PropertyValue { building_id: u32, change_percent: f32 },
+    PropertyValue {
+        building_id: u32,
+        change_percent: f32,
+    },
     /// Change relationship strength between tenants
-    RelationshipStrength { tenant_a_id: u32, tenant_b_id: u32, change: i32 },
+    RelationshipStrength {
+        tenant_a_id: u32,
+        tenant_b_id: u32,
+        change: i32,
+    },
     /// Change landlord opinion (how much tenant likes player)
     OpinionChange { tenant_id: u32, amount: i32 },
     /// Tenant moves out
@@ -131,11 +137,11 @@ impl NarrativeEvent {
         }
     }
 
-
-
     /// Check if deadline has passed
     pub fn is_expired(&self, current_month: u32) -> bool {
-        self.response_deadline.map(|d| current_month > d).unwrap_or(false)
+        self.response_deadline
+            .map(|d| current_month > d)
+            .unwrap_or(false)
     }
 }
 
@@ -165,33 +171,36 @@ impl NarrativeEventSystem {
         let id = self.next_event_id;
         event.id = id;
         self.next_event_id += 1;
-        
+
         if event.requires_response {
             self.pending_events.push(id);
         }
-        
+
         self.events.push(event);
         id
     }
 
-
-
     /// Get pending events requiring response
     pub fn events_requiring_response(&self) -> Vec<&NarrativeEvent> {
-        self.pending_events.iter()
+        self.pending_events
+            .iter()
             .filter_map(|id| self.events.iter().find(|e| e.id == *id))
             .collect()
     }
 
     /// Process a choice for an event
-    pub fn process_choice(&mut self, event_id: u32, choice_index: usize) -> Option<NarrativeEffect> {
+    pub fn process_choice(
+        &mut self,
+        event_id: u32,
+        choice_index: usize,
+    ) -> Option<NarrativeEffect> {
         let event = self.events.iter_mut().find(|e| e.id == event_id)?;
         let effect = event.choices.get(choice_index).map(|c| c.effect.clone())?;
-        
+
         event.read = true;
         self.pending_events.retain(|&id| id != event_id);
         self.processed_events.push(event_id);
-        
+
         Some(effect)
     }
 
@@ -227,7 +236,10 @@ impl NarrativeEventSystem {
         // Developer/investor offers (rare)
         if gen_range(0, 100) < 5 && !buildings.is_empty() {
             let building = buildings.choose().unwrap();
-            let building_id = buildings.iter().position(|b| std::ptr::eq(b, building)).unwrap_or(0) as u32;
+            let building_id = buildings
+                .iter()
+                .position(|b| std::ptr::eq(b, building))
+                .unwrap_or(0) as u32;
             let event = self.generate_offer_event(month, building_id, building);
             self.add_event(event);
         }
@@ -236,7 +248,8 @@ impl NarrativeEventSystem {
         for (_i, building) in buildings.iter().enumerate() {
             if building.occupancy_count() == building.apartments.len() && gen_range(0, 100) < 30 {
                 let event = NarrativeEvent::news(
-                    0, month,
+                    0,
+                    month,
                     &format!("{} Achieves Full Occupancy!", building.name),
                     "All units are now occupied. Your reputation is growing.",
                 );
@@ -248,38 +261,42 @@ impl NarrativeEventSystem {
         self.handle_expired_events(month);
     }
 
-    fn generate_neighborhood_event(&self, month: u32, neighborhood: &crate::city::Neighborhood) -> NarrativeEvent {
+    fn generate_neighborhood_event(
+        &self,
+        month: u32,
+        neighborhood: &crate::city::Neighborhood,
+    ) -> NarrativeEvent {
         let templates: Vec<(&str, &str, NarrativeEffect)> = vec![
             (
                 "New Business Opens",
                 "A new café has opened in the neighborhood, adding to local charm.",
-                NarrativeEffect::NeighborhoodReputation { 
-                    neighborhood_id: neighborhood.id, 
-                    change: 5 
+                NarrativeEffect::NeighborhoodReputation {
+                    neighborhood_id: neighborhood.id,
+                    change: 5,
                 },
             ),
             (
                 "Street Improvements",
                 "The city has announced road improvements for the area.",
-                NarrativeEffect::RentDemand { 
-                    neighborhood_id: neighborhood.id, 
-                    change: 0.05 
+                NarrativeEffect::RentDemand {
+                    neighborhood_id: neighborhood.id,
+                    change: 0.05,
                 },
             ),
             (
                 "Crime Report",
                 "Local news reports a slight uptick in property crime.",
-                NarrativeEffect::NeighborhoodReputation { 
-                    neighborhood_id: neighborhood.id, 
-                    change: -3 
+                NarrativeEffect::NeighborhoodReputation {
+                    neighborhood_id: neighborhood.id,
+                    change: -3,
                 },
             ),
             (
                 "Community Festival",
                 "The annual neighborhood festival brought residents together.",
-                NarrativeEffect::NeighborhoodReputation { 
-                    neighborhood_id: neighborhood.id, 
-                    change: 3 
+                NarrativeEffect::NeighborhoodReputation {
+                    neighborhood_id: neighborhood.id,
+                    change: 3,
                 },
             ),
         ];
@@ -296,12 +313,16 @@ impl NarrativeEventSystem {
             (
                 "Housing Market Heats Up",
                 "Analysts report increased demand for rental properties citywide.",
-                NarrativeEffect::EconomyChange { economy_health_change: 0.05 },
+                NarrativeEffect::EconomyChange {
+                    economy_health_change: 0.05,
+                },
             ),
             (
                 "Economic Concerns",
                 "Business leaders express worry about the local economy.",
-                NarrativeEffect::EconomyChange { economy_health_change: -0.05 },
+                NarrativeEffect::EconomyChange {
+                    economy_health_change: -0.05,
+                },
             ),
             (
                 "New Transit Line Announced",
@@ -324,10 +345,22 @@ impl NarrativeEventSystem {
 
     fn generate_seasonal_event(&self, month: u32, season: u32) -> NarrativeEvent {
         let (headline, description) = match season {
-            0 => ("Spring Cleaning Season", "Tenants report increased satisfaction with well-maintained properties."),
-            1 => ("Summer Heat Wave Warning", "Hot weather expected. Tenants are asking about AC."),
-            2 => ("Back to School Rush", "Students are actively hunting for housing near universities."),
-            _ => ("Winter Preparedness", "Cold weather approaching. Heating systems should be checked."),
+            0 => (
+                "Spring Cleaning Season",
+                "Tenants report increased satisfaction with well-maintained properties.",
+            ),
+            1 => (
+                "Summer Heat Wave Warning",
+                "Hot weather expected. Tenants are asking about AC.",
+            ),
+            2 => (
+                "Back to School Rush",
+                "Students are actively hunting for housing near universities.",
+            ),
+            _ => (
+                "Winter Preparedness",
+                "Cold weather approaching. Heating systems should be checked.",
+            ),
         };
 
         let mut event = NarrativeEvent::news(0, month, headline, description);
@@ -335,7 +368,12 @@ impl NarrativeEventSystem {
         event
     }
 
-    fn generate_offer_event(&self, month: u32, building_id: u32, building: &crate::building::Building) -> NarrativeEvent {
+    fn generate_offer_event(
+        &self,
+        month: u32,
+        building_id: u32,
+        building: &crate::building::Building,
+    ) -> NarrativeEvent {
         let base_value = 50000 * building.apartments.len() as i32;
         // Increased offer multiplier to 2.5x - 4.0x base value to be "worth it"
         let offer = (base_value as f32 * gen_range(2.5, 4.0)) as i32;
@@ -353,11 +391,11 @@ impl NarrativeEventSystem {
                 NarrativeChoice {
                     label: "Accept Offer".to_string(),
                     description: format!("Sell the building for ${}", offer),
-                    effect: NarrativeEffect::Multiple { 
+                    effect: NarrativeEffect::Multiple {
                         effects: vec![
                             NarrativeEffect::Money { amount: offer },
-                            NarrativeEffect::SellBuilding { building_id }
-                        ]
+                            NarrativeEffect::SellBuilding { building_id },
+                        ],
                     },
                     reputation_change: -20,
                 },
@@ -378,7 +416,9 @@ impl NarrativeEventSystem {
     }
 
     fn handle_expired_events(&mut self, current_month: u32) {
-        let expired: Vec<u32> = self.events.iter()
+        let expired: Vec<u32> = self
+            .events
+            .iter()
             .filter(|e| e.is_expired(current_month) && !self.processed_events.contains(&e.id))
             .map(|e| e.id)
             .collect();
@@ -391,8 +431,6 @@ impl NarrativeEventSystem {
             self.processed_events.push(id);
         }
     }
-
-
 }
 
 impl Default for NarrativeEventSystem {

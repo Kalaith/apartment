@@ -1,8 +1,7 @@
-
-use macroquad::rand::gen_range;
+use super::{PlayerFunds, Transaction, TransactionType};
 use crate::building::Building;
 use crate::tenant::Tenant;
-use super::{Transaction, TransactionType, PlayerFunds};
+use macroquad::rand::gen_range;
 
 /// Result of rent collection for one tick
 #[derive(Clone, Debug)]
@@ -39,7 +38,7 @@ pub fn collect_rent(
         payments: Vec::new(),
         missed_payments: Vec::new(),
     };
-    
+
     for tenant in tenants {
         if let Some(apt_id) = tenant.apartment_id {
             if let Some(apartment) = building.get_apartment(apt_id) {
@@ -53,28 +52,26 @@ pub fn collect_rent(
                     });
                     continue;
                 }
-                
+
                 let rent = apartment.rent_price;
-                
+
                 funds.add_income(Transaction::income(
                     TransactionType::RentIncome,
                     rent,
                     &format!("Rent from {} (Unit {})", tenant.name, apartment.unit_number),
                     current_tick,
                 ));
-                
+
                 collection.payments.push(RentPayment {
                     tenant_name: tenant.name.clone(),
                     _apartment_unit: apartment.unit_number.clone(),
                     amount: rent,
                 });
-                
+
                 collection.total_collected += rent;
             }
         }
     }
-    
+
     collection
 }
-
-

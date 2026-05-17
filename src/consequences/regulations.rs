@@ -1,4 +1,3 @@
-
 use serde::{Deserialize, Serialize};
 
 /// Types of building regulations
@@ -74,6 +73,22 @@ impl Regulation {
             compliant: true,
             violation_count: 0,
             months_until_inspection: months,
+        }
+    }
+
+    /// Record a violation against this regulation.
+    pub fn add_violation(&mut self) {
+        self.violation_count += 1;
+        self.compliant = false;
+        self.warned = true;
+    }
+
+    /// Current fine owed for this regulation.
+    pub fn current_fine(&self) -> i32 {
+        if self.compliant || self.violation_count == 0 {
+            0
+        } else {
+            self.regulation_type.base_fine() * self.violation_count as i32
         }
     }
 }
@@ -157,6 +172,21 @@ impl ComplianceSystem {
         self.building_regulations.insert(building_id, regulations);
     }
 
+    /// Get regulations for a building.
+    pub fn get_regulations(&self, building_id: u32) -> Option<&Vec<Regulation>> {
+        self.building_regulations.get(&building_id)
+    }
+
+    /// Check if a building currently has any regulation violations.
+    pub fn has_violations(&self, building_id: u32) -> bool {
+        self.get_regulations(building_id)
+            .is_some_and(|regulations| {
+                regulations
+                    .iter()
+                    .any(|regulation| !regulation.compliant || regulation.violation_count > 0)
+            })
+    }
+
     /// Monthly tick - decrement inspection timers, check deadlines
     pub fn tick(&mut self, current_month: u32) {
         // Decrement inspection timers
@@ -170,14 +200,15 @@ impl ComplianceSystem {
 
         // Check for missed deadlines
         let mut escalations = Vec::new();
-        self.pending_fixes.retain(|(building_id, reg_type, deadline)| {
-            if current_month >= *deadline {
-                escalations.push((*building_id, reg_type.clone()));
-                false
-            } else {
-                true
-            }
-        });
+        self.pending_fixes
+            .retain(|(building_id, reg_type, deadline)| {
+                if current_month >= *deadline {
+                    escalations.push((*building_id, reg_type.clone()));
+                    false
+                } else {
+                    true
+                }
+            });
 
         // Apply penalties for missed deadlines
         for (_building_id, reg_type) in escalations {
@@ -202,7 +233,7 @@ mod tests {
         let mut reg = Regulation::new(RegulationType::FireSafety);
         assert!(reg.compliant);
         assert_eq!(reg.current_fine(), 0);
-        
+
         reg.add_violation();
         assert!(!reg.compliant);
         assert!(reg.current_fine() > 0);
@@ -212,7 +243,7 @@ mod tests {
     fn test_compliance_system() {
         let mut system = ComplianceSystem::new();
         system.init_building_regulations(0, false);
-        
+
         assert!(system.get_regulations(0).is_some());
         assert!(!system.has_violations(0));
     }

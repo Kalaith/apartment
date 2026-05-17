@@ -1,4 +1,3 @@
-
 use macroquad::prelude::*;
 use std::collections::HashMap;
 
@@ -23,25 +22,21 @@ impl AssetManager {
             "tenant_artist",
             "tenant_family",
             "tenant_elderly",
-            
             // Designs
             "design_bare",
             "design_practical",
             "design_cozy",
-            
             // Building Elements
             "building_exterior",
             "hallway",
             "apartment_door",
             "window_street",
             "window_quiet",
-            
             // Neighborhoods
             "neighborhood_downtown",
             "neighborhood_suburbs",
             "neighborhood_industrial",
             "neighborhood_historic",
-            
             // UI Icons
             "icon_money",
             "icon_repair",
@@ -57,14 +52,12 @@ impl AssetManager {
             "icon_mail",
             "icon_inspection",
             "icon_market",
-            
             // Happiness
             "happiness_ecstatic",
             "happiness_happy",
             "happiness_neutral",
             "happiness_unhappy",
             "happiness_miserable",
-            
             // Events
             "event_rent_collected",
             "event_tenant_moved_in",
@@ -75,12 +68,10 @@ impl AssetManager {
             "event_heatwave",
             "event_new_business",
             "event_developer_offer",
-            
             // Title & Menu
             "title_background",
             "title_logo",
             "menu_button_bg",
-            
             // Decor
             "decoration_plant",
             "decoration_lamp",
@@ -96,7 +87,7 @@ impl AssetManager {
                 Ok(texture) => {
                     texture.set_filter(FilterMode::Nearest);
                     self.textures.insert(id.to_string(), texture);
-                },
+                }
                 Err(_e) => {
                     // Silently skip missing textures - game uses fallback rendering
                     #[cfg(not(target_arch = "wasm32"))]
@@ -104,7 +95,7 @@ impl AssetManager {
                 }
             }
         }
-        
+
         #[cfg(not(target_arch = "wasm32"))]
         println!("Assets loaded: {} textures", self.textures.len());
         self.loaded = true;
@@ -115,4 +106,3 @@ impl AssetManager {
         self.textures.get(id)
     }
 }
-

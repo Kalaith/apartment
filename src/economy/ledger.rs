@@ -1,4 +1,3 @@
-
 use super::{Transaction, TransactionType};
 use serde::{Deserialize, Serialize};
 
@@ -25,7 +24,7 @@ impl FinancialLedger {
             reports: Vec::new(),
         }
     }
-    
+
     /// Generate a monthly report from transactions
     pub fn generate_report(
         &mut self,
@@ -36,27 +35,29 @@ impl FinancialLedger {
         let mut rent_income = 0;
         let mut repair_costs = 0;
         let mut upgrade_costs = 0;
-        
+
         for t in transactions {
             match t.transaction_type {
-                TransactionType::RentIncome | TransactionType::Grant => rent_income += t.amount.abs(),
+                TransactionType::RentIncome | TransactionType::Grant => {
+                    rent_income += t.amount.abs()
+                }
                 TransactionType::RepairCost | TransactionType::HallwayRepair => {
                     repair_costs += t.amount.abs();
                 }
                 TransactionType::UpgradeCost => upgrade_costs += t.amount.abs(),
                 TransactionType::BuildingPurchase => upgrade_costs += t.amount.abs(), // Count as capital upgrade for now
                 TransactionType::AssetSale => rent_income += t.amount.abs(), // Count condo sales as income
-                TransactionType::PropertyTax 
-                | TransactionType::Utilities 
-                | TransactionType::Insurance 
-                | TransactionType::StaffSalary 
+                TransactionType::PropertyTax
+                | TransactionType::Utilities
+                | TransactionType::Insurance
+                | TransactionType::StaffSalary
                 | TransactionType::CriticalFailure => {
                     // These are all operating expenses, count them in repair_costs for simplicity
                     repair_costs += t.amount.abs();
                 }
             }
         }
-        
+
         let report = MonthlyReport {
             tick,
             rent_income,
@@ -65,7 +66,7 @@ impl FinancialLedger {
             net: rent_income - repair_costs - upgrade_costs,
             ending_balance,
         };
-        
+
         self.reports.push(report.clone());
         report
     }

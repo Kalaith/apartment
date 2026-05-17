@@ -1,7 +1,6 @@
-
-use serde::{Deserialize, Serialize};
 use super::{Neighborhood, NeighborhoodType};
 use crate::building::Building;
+use serde::{Deserialize, Serialize};
 
 /// Condition of a building on the market
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
@@ -70,6 +69,48 @@ pub enum FinancingOption {
 
 impl FinancingOption {}
 
+impl FinancingOption {
+    /// Cash needed at purchase time.
+    pub fn upfront_cost(&self, asking_price: i32) -> i32 {
+        match self {
+            FinancingOption::Cash => asking_price,
+            FinancingOption::Mortgage {
+                down_payment_percent,
+                ..
+            } => (asking_price as f32 * down_payment_percent).round() as i32,
+            FinancingOption::Investor {
+                investment_percent, ..
+            } => (asking_price as f32 * (1.0 - investment_percent)).round() as i32,
+        }
+    }
+
+    /// Estimated monthly payment for debt-style financing.
+    pub fn monthly_payment(&self, asking_price: i32) -> i32 {
+        match self {
+            FinancingOption::Cash | FinancingOption::Investor { .. } => 0,
+            FinancingOption::Mortgage {
+                down_payment_percent,
+                interest_rate,
+                term_months,
+            } => {
+                if *term_months == 0 {
+                    return 0;
+                }
+
+                let principal = asking_price as f32 * (1.0 - down_payment_percent);
+                let monthly_rate = interest_rate / 12.0;
+                if monthly_rate <= 0.0 {
+                    return (principal / *term_months as f32).round() as i32;
+                }
+
+                let months = *term_months as f32;
+                let factor = (1.0 + monthly_rate).powf(months);
+                (principal * monthly_rate * factor / (factor - 1.0)).round() as i32
+            }
+        }
+    }
+}
+
 /// A property listing on the market
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PropertyListing {
@@ -114,8 +155,8 @@ impl PropertyListing {
             NeighborhoodType::Historic => 70000,
         };
 
-        let asking_price = (base_unit_price as f32 
-            * total_units as f32 
+        let asking_price = (base_unit_price as f32
+            * total_units as f32
             * condition.price_multiplier()
             * neighborhood.stats.rent_demand) as i32;
 
@@ -151,7 +192,10 @@ impl PropertyListing {
             notes.push("⚠️ Major renovation required".to_string());
         }
         if existing_tenants > 0 {
-            notes.push(format!("📋 {} existing tenants with leases", existing_tenants));
+            notes.push(format!(
+                "📋 {} existing tenants with leases",
+                existing_tenants
+            ));
         }
         if matches!(neighborhood.neighborhood_type, NeighborhoodType::Historic) {
             notes.push("🏛️ Historic preservation restrictions apply".to_string());
@@ -178,7 +222,7 @@ impl PropertyListing {
     /// Convert this listing to an actual Building
     pub fn to_building(&self) -> Building {
         let mut building = Building::new(&self.name, self.num_floors, self.units_per_floor);
-        
+
         // Set condition based on listing
         let target_condition = self.condition.starting_apartment_condition();
         for apt in &mut building.apartments {
@@ -215,13 +259,14 @@ impl PropertyMarket {
     pub fn refresh_listings(&mut self, neighborhoods: &[Neighborhood]) {
         // Add 1-2 new listings per refresh
         let new_listings = macroquad::rand::gen_range(1, 3);
-        
+
         for _ in 0..new_listings {
             // Pick a random neighborhood with available slots
-            let available: Vec<_> = neighborhoods.iter()
+            let available: Vec<_> = neighborhoods
+                .iter()
                 .filter(|n| n.can_add_building())
                 .collect();
-            
+
             if let Some(neighborhood) = available.first() {
                 let listing = PropertyListing::generate(self.next_listing_id, neighborhood);
                 self.next_listing_id += 1;
@@ -249,12 +294,28 @@ fn generate_building_name(neighborhood_type: &NeighborhoodType) -> String {
     let prefixes: Vec<&str> = match neighborhood_type {
         NeighborhoodType::Downtown => vec!["Metro", "City", "Central", "Tower", "Urban", "Sky"],
         NeighborhoodType::Suburbs => vec!["Green", "Oak", "Maple", "Willow", "Pine", "Garden"],
-        NeighborhoodType::Industrial => vec!["Brick", "Steel", "Dock", "Foundry", "Mill", "Factory"],
-        NeighborhoodType::Historic => vec!["Heritage", "Colonial", "Victorian", "Classic", "Grand", "Royal"],
+        NeighborhoodType::Industrial => {
+            vec!["Brick", "Steel", "Dock", "Foundry", "Mill", "Factory"]
+        }
+        NeighborhoodType::Historic => vec![
+            "Heritage",
+            "Colonial",
+            "Victorian",
+            "Classic",
+            "Grand",
+            "Royal",
+        ],
     };
 
     let suffixes: Vec<&str> = vec![
-        "Apartments", "Place", "Court", "Terrace", "Manor", "House", "Arms", "Lodge",
+        "Apartments",
+        "Place",
+        "Court",
+        "Terrace",
+        "Manor",
+        "House",
+        "Arms",
+        "Lodge",
     ];
 
     let prefix = prefixes.choose().unwrap_or(&"The");
@@ -271,7 +332,7 @@ mod tests {
     fn test_listing_generation() {
         let neighborhood = Neighborhood::new(0, NeighborhoodType::Downtown, "Test");
         let listing = PropertyListing::generate(0, &neighborhood);
-        
+
         assert!(listing.asking_price > 0);
         assert!(listing.num_floors >= 2);
     }
@@ -283,10 +344,10 @@ mod tests {
             interest_rate: 0.06,
             term_months: 120,
         };
-        
+
         let upfront = mortgage.upfront_cost(100000);
         assert_eq!(upfront, 20000); // 20% down
-        
+
         let monthly = mortgage.monthly_payment(100000);
         assert!(monthly > 0 && monthly < 2000); // Reasonable range
     }

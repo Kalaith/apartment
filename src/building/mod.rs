@@ -1,5 +1,5 @@
 //! # Building Module
-//! 
+//!
 //! Handles the physical structure of the game world:
 //! - `Apartment`: Individual units, their condition, and properties.
 //! - `Building`: The container for apartments and shared spaces (hallways).
@@ -8,10 +8,9 @@
 
 mod apartment;
 mod building;
-pub mod upgrades;
 pub mod ownership;
+pub mod upgrades;
 
-pub use apartment::{Apartment, DesignType, ApartmentSize, NoiseLevel};
+pub use apartment::{Apartment, ApartmentSize, DesignType, NoiseLevel};
 pub use building::{Building, MarketingType};
-pub use upgrades::{UpgradeAction, apply_upgrade};
-
+pub use upgrades::{apply_upgrade, UpgradeAction};

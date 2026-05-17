@@ -1,7 +1,6 @@
-
-use serde::{Deserialize, Serialize};
-use crate::tenant::TenantArchetype;
 use crate::data::config::GentrificationConfig;
+use crate::tenant::TenantArchetype;
+use serde::{Deserialize, Serialize};
 
 /// Tracks a displacement event
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -51,6 +50,24 @@ pub struct DemographicSnapshot {
     pub average_rent: i32,
 }
 
+impl DemographicSnapshot {
+    /// Score demographic variety across archetype buckets on a 0-100 scale.
+    pub fn diversity_score(&self) -> i32 {
+        let occupied_groups = [
+            self.student_count,
+            self.professional_count,
+            self.artist_count,
+            self.family_count,
+            self.elderly_count,
+        ]
+        .iter()
+        .filter(|count| **count > 0)
+        .count();
+
+        (occupied_groups as i32 * 100) / 5
+    }
+}
+
 impl GentrificationTracker {
     pub fn new() -> Self {
         Self {
@@ -64,23 +81,39 @@ impl GentrificationTracker {
     }
 
     /// Record a rent change
-    pub fn record_rent_change(&mut self, building_id: u32, month: u32, old_avg: i32, new_avg: i32, config: &GentrificationConfig) {
-        let history = self.rent_history.entry(building_id).or_insert_with(Vec::new);
+    pub fn record_rent_change(
+        &mut self,
+        building_id: u32,
+        month: u32,
+        old_avg: i32,
+        new_avg: i32,
+        config: &GentrificationConfig,
+    ) {
+        let history = self
+            .rent_history
+            .entry(building_id)
+            .or_insert_with(Vec::new);
         history.push((month, old_avg, new_avg));
-        
+
         // If significant rent increase, add to gentrification score
         if old_avg > 0 {
             let increase_percent = ((new_avg - old_avg) as f32 / old_avg as f32 * 100.0) as i32;
             if increase_percent > config.rent_increase_threshold_percent {
-                self.gentrification_score = (self.gentrification_score + increase_percent / config.rent_increase_score_divisor)
+                self.gentrification_score = (self.gentrification_score
+                    + increase_percent / config.rent_increase_score_divisor)
                     .min(config.max_gentrification_score);
             }
         }
     }
 
     /// Update affordable unit count
-    pub fn update_affordable_units(&mut self, apartments: &[crate::building::Apartment], config: &GentrificationConfig) {
-        self.affordable_units = apartments.iter()
+    pub fn update_affordable_units(
+        &mut self,
+        apartments: &[crate::building::Apartment],
+        config: &GentrificationConfig,
+    ) {
+        self.affordable_units = apartments
+            .iter()
             .filter(|a| a.rent_price <= config.affordable_threshold)
             .count() as u32;
     }
@@ -101,7 +134,7 @@ mod tests {
         let mut tracker = GentrificationTracker::new();
         let config = GentrificationConfig::default();
         assert_eq!(tracker.gentrification_score, 0);
-        
+
         tracker.record_rent_change(0, 1, 500, 700, &config);
         assert!(tracker.gentrification_score > 0);
     }
@@ -117,7 +150,7 @@ mod tests {
             elderly_count: 0,
             average_rent: 600,
         };
-        
+
         assert!(snapshot.diversity_score() >= 40); // 3 different types
     }
 }

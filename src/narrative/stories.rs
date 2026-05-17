@@ -1,8 +1,7 @@
-
-use serde::{Deserialize, Serialize};
-use macroquad::rand::{ChooseRandom, gen_range};
+use crate::narrative::events_config::{RequestTemplate, TenantEventsConfig};
 use crate::tenant::TenantArchetype;
-use crate::narrative::events_config::{TenantEventsConfig, RequestTemplate};
+use macroquad::rand::{gen_range, ChooseRandom};
+use serde::{Deserialize, Serialize};
 
 /// A story event in a tenant's life
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -22,7 +21,7 @@ pub enum StoryImpact {
     /// Affects rent tolerance
     RentTolerance(i32),
     /// Tenant may need to move
-    MoveOutRisk(i32),      // 0-100 probability
+    MoveOutRisk(i32), // 0-100 probability
     /// Tenant requests something
     Request(TenantRequest),
     /// Tenant gets a roommate
@@ -39,7 +38,10 @@ pub enum TenantRequest {
     /// Can I have a pet?
     Pet { pet_type: String },
     /// Can a family member stay temporarily?
-    TemporaryGuest { guest_name: String, duration_months: u32 },
+    TemporaryGuest {
+        guest_name: String,
+        duration_months: u32,
+    },
     /// Can I run a small business from home?
     HomeBusiness { business_type: String },
     /// Can I modify the apartment?
@@ -65,13 +67,18 @@ impl TenantRequest {
             TenantRequest::Pet { .. } => StoryImpact::Happiness(15),
             TenantRequest::TemporaryGuest { .. } => StoryImpact::Happiness(10),
             TenantRequest::HomeBusiness { business_type } => {
-                let impacts = if business_type.to_lowercase().contains("music") || business_type.to_lowercase().contains("drum") {
-                     vec![StoryImpact::Happiness(15), StoryImpact::SetApartmentFlag("high_noise".to_string())]
+                let impacts = if business_type.to_lowercase().contains("music")
+                    || business_type.to_lowercase().contains("drum")
+                {
+                    vec![
+                        StoryImpact::Happiness(15),
+                        StoryImpact::SetApartmentFlag("high_noise".to_string()),
+                    ]
                 } else {
-                     vec![StoryImpact::Happiness(15)]
+                    vec![StoryImpact::Happiness(15)]
                 };
                 StoryImpact::Multiple(impacts)
-            },
+            }
             TenantRequest::Modification { .. } => StoryImpact::Happiness(10),
             TenantRequest::Sublease => StoryImpact::Happiness(5),
         }
@@ -103,28 +110,26 @@ pub enum LifeChangeType {
     Graduated,
 }
 
-
-
 /// Complete story/background for a tenant
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TenantStory {
     pub tenant_id: u32,
-    
+
     // Background
     pub job_title: String,
     pub hometown: String,
     pub move_reason: String,
     pub hobbies: Vec<String>,
     pub personality_traits: Vec<String>,
-    
+
     // Family
     pub has_partner: bool,
     pub has_children: bool,
     pub num_children: u32,
-    
+
     // History
     pub story_events: Vec<StoryEvent>,
-    
+
     // Active requests
     pub pending_request: Option<TenantRequest>,
 }
@@ -151,22 +156,27 @@ impl TenantStory {
             return;
         }
 
-        let archetype_key = archetype.name(); 
-        
-        if let Some(templates) = config.requests.get(archetype_key) {
-            let total_weight: u32 = templates.iter().map(|t| match t {
-                RequestTemplate::Pet { weight, .. } => *weight,
-                RequestTemplate::Sublease { weight } => *weight,
-                RequestTemplate::HomeBusiness { weight, .. } => *weight,
-                RequestTemplate::Modification { weight, .. } => *weight,
-                RequestTemplate::TemporaryGuest { weight, .. } => *weight,
-                RequestTemplate::None { weight } => *weight,
-            }).sum();
+        let archetype_key = archetype.name();
 
-            if total_weight == 0 { return; }
+        if let Some(templates) = config.requests.get(archetype_key) {
+            let total_weight: u32 = templates
+                .iter()
+                .map(|t| match t {
+                    RequestTemplate::Pet { weight, .. } => *weight,
+                    RequestTemplate::Sublease { weight } => *weight,
+                    RequestTemplate::HomeBusiness { weight, .. } => *weight,
+                    RequestTemplate::Modification { weight, .. } => *weight,
+                    RequestTemplate::TemporaryGuest { weight, .. } => *weight,
+                    RequestTemplate::None { weight } => *weight,
+                })
+                .sum();
+
+            if total_weight == 0 {
+                return;
+            }
 
             let mut roll = gen_range(0, total_weight);
-            
+
             for template in templates {
                 let weight = match template {
                     RequestTemplate::Pet { weight, .. } => *weight,
@@ -181,18 +191,33 @@ impl TenantStory {
                     // Selected!
                     self.pending_request = match template {
                         RequestTemplate::Pet { options, .. } => Some(TenantRequest::Pet {
-                            pet_type: options.choose().unwrap_or(&"cat".to_string()).clone()
+                            pet_type: options.choose().unwrap_or(&"cat".to_string()).clone(),
                         }),
                         RequestTemplate::Sublease { .. } => Some(TenantRequest::Sublease),
-                        RequestTemplate::HomeBusiness { options, .. } => Some(TenantRequest::HomeBusiness {
-                            business_type: options.choose().unwrap_or(&"consulting".to_string()).clone()
-                        }),
-                        RequestTemplate::Modification { options, .. } => Some(TenantRequest::Modification {
-                            description: options.choose().unwrap_or(&"improvement".to_string()).clone()
-                        }),
-                        RequestTemplate::TemporaryGuest { options, duration_min, duration_max, .. } => Some(TenantRequest::TemporaryGuest {
+                        RequestTemplate::HomeBusiness { options, .. } => {
+                            Some(TenantRequest::HomeBusiness {
+                                business_type: options
+                                    .choose()
+                                    .unwrap_or(&"consulting".to_string())
+                                    .clone(),
+                            })
+                        }
+                        RequestTemplate::Modification { options, .. } => {
+                            Some(TenantRequest::Modification {
+                                description: options
+                                    .choose()
+                                    .unwrap_or(&"improvement".to_string())
+                                    .clone(),
+                            })
+                        }
+                        RequestTemplate::TemporaryGuest {
+                            options,
+                            duration_min,
+                            duration_max,
+                            ..
+                        } => Some(TenantRequest::TemporaryGuest {
                             guest_name: options.choose().unwrap_or(&"Guest".to_string()).clone(),
-                            duration_months: gen_range(*duration_min, *duration_max + 1)
+                            duration_months: gen_range(*duration_min, *duration_max + 1),
                         }),
                         RequestTemplate::None { .. } => None,
                     };
@@ -202,8 +227,6 @@ impl TenantStory {
             }
         }
     }
-
-
 }
 
 /// Generates tenant backgrounds
@@ -217,26 +240,38 @@ pub struct BackgroundGenerator {
 
 impl BackgroundGenerator {
     pub fn generate(&self, tenant_id: u32, archetype: &TenantArchetype) -> TenantStory {
-        let job_title = self.job_titles.get(archetype)
+        let job_title = self
+            .job_titles
+            .get(archetype)
             .and_then(|jobs| jobs.choose().copied())
             .unwrap_or("Worker")
             .to_string();
 
-        let hometown = self.hometowns.choose().copied().unwrap_or("Unknown").to_string();
+        let hometown = self
+            .hometowns
+            .choose()
+            .copied()
+            .unwrap_or("Unknown")
+            .to_string();
 
-        let move_reason = self.move_reasons.get(archetype)
+        let move_reason = self
+            .move_reasons
+            .get(archetype)
             .and_then(|reasons| reasons.choose().copied())
             .unwrap_or("Needed a change")
             .to_string();
 
         let hobby_pool = self.hobbies.get(archetype).cloned().unwrap_or_default();
         let num_hobbies = gen_range(1, 3);
-        let hobbies: Vec<String> = hobby_pool.choose_multiple(num_hobbies)
+        let hobbies: Vec<String> = hobby_pool
+            .choose_multiple(num_hobbies)
             .map(|s| s.to_string())
             .collect();
 
         let num_traits = gen_range(1, 3);
-        let personality_traits: Vec<String> = self.traits.iter()
+        let personality_traits: Vec<String> = self
+            .traits
+            .iter()
             .cloned()
             .collect::<Vec<_>>()
             .choose_multiple(num_traits)
@@ -272,81 +307,211 @@ impl Default for BackgroundGenerator {
         use std::collections::HashMap;
 
         let mut job_titles = HashMap::new();
-        job_titles.insert(TenantArchetype::Student, vec![
-            "University Student", "Graduate Student", "Community College Student",
-            "Trade School Student", "Exchange Student", "Medical Student",
-        ]);
-        job_titles.insert(TenantArchetype::Professional, vec![
-            "Software Developer", "Accountant", "Marketing Manager", "Lawyer",
-            "Project Manager", "Financial Analyst", "Consultant", "Doctor",
-            "Engineer", "Architect",
-        ]);
-        job_titles.insert(TenantArchetype::Artist, vec![
-            "Painter", "Musician", "Writer", "Photographer", "Graphic Designer",
-            "Sculptor", "Filmmaker", "Dancer", "Potter", "Illustrator",
-        ]);
-        job_titles.insert(TenantArchetype::Family, vec![
-            "Teacher", "Nurse", "Small Business Owner", "Sales Representative",
-            "Office Manager", "Electrician", "Chef", "Social Worker",
-        ]);
-        job_titles.insert(TenantArchetype::Elderly, vec![
-            "Retired Teacher", "Retired Accountant", "Retired Nurse",
-            "Retired Factory Worker", "Retired Business Owner", "Widower",
-        ]);
+        job_titles.insert(
+            TenantArchetype::Student,
+            vec![
+                "University Student",
+                "Graduate Student",
+                "Community College Student",
+                "Trade School Student",
+                "Exchange Student",
+                "Medical Student",
+            ],
+        );
+        job_titles.insert(
+            TenantArchetype::Professional,
+            vec![
+                "Software Developer",
+                "Accountant",
+                "Marketing Manager",
+                "Lawyer",
+                "Project Manager",
+                "Financial Analyst",
+                "Consultant",
+                "Doctor",
+                "Engineer",
+                "Architect",
+            ],
+        );
+        job_titles.insert(
+            TenantArchetype::Artist,
+            vec![
+                "Painter",
+                "Musician",
+                "Writer",
+                "Photographer",
+                "Graphic Designer",
+                "Sculptor",
+                "Filmmaker",
+                "Dancer",
+                "Potter",
+                "Illustrator",
+            ],
+        );
+        job_titles.insert(
+            TenantArchetype::Family,
+            vec![
+                "Teacher",
+                "Nurse",
+                "Small Business Owner",
+                "Sales Representative",
+                "Office Manager",
+                "Electrician",
+                "Chef",
+                "Social Worker",
+            ],
+        );
+        job_titles.insert(
+            TenantArchetype::Elderly,
+            vec![
+                "Retired Teacher",
+                "Retired Accountant",
+                "Retired Nurse",
+                "Retired Factory Worker",
+                "Retired Business Owner",
+                "Widower",
+            ],
+        );
 
         let hometowns = vec![
-            "the suburbs", "a small town", "across the country", "overseas",
-            "downtown", "the countryside", "another city", "up north",
-            "the coast", "the midwest",
+            "the suburbs",
+            "a small town",
+            "across the country",
+            "overseas",
+            "downtown",
+            "the countryside",
+            "another city",
+            "up north",
+            "the coast",
+            "the midwest",
         ];
 
         let mut move_reasons = HashMap::new();
-        move_reasons.insert(TenantArchetype::Student, vec![
-            "Started at the local university.", "Needed to be closer to campus.",
-            "Looking for affordable housing near school.", "Moving for an internship.",
-        ]);
-        move_reasons.insert(TenantArchetype::Professional, vec![
-            "Got a new job in the area.", "Wanted a shorter commute.",
-            "Looking for a quieter neighborhood.", "Relocated for work.",
-        ]);
-        move_reasons.insert(TenantArchetype::Artist, vec![
-            "Looking for an inspiring space.", "Needed a studio with good light.",
-            "Drawn to the creative community here.", "Escaping the high rents elsewhere.",
-        ]);
-        move_reasons.insert(TenantArchetype::Family, vec![
-            "Needed more space for the kids.", "Moving for the school district.",
-            "Wanted a safer neighborhood.", "Growing family needs.",
-        ]);
-        move_reasons.insert(TenantArchetype::Elderly, vec![
-            "Downsizing after retirement.", "Wanted to be closer to family.",
-            "Looking for a quieter place.", "Needed a ground floor unit.",
-        ]);
+        move_reasons.insert(
+            TenantArchetype::Student,
+            vec![
+                "Started at the local university.",
+                "Needed to be closer to campus.",
+                "Looking for affordable housing near school.",
+                "Moving for an internship.",
+            ],
+        );
+        move_reasons.insert(
+            TenantArchetype::Professional,
+            vec![
+                "Got a new job in the area.",
+                "Wanted a shorter commute.",
+                "Looking for a quieter neighborhood.",
+                "Relocated for work.",
+            ],
+        );
+        move_reasons.insert(
+            TenantArchetype::Artist,
+            vec![
+                "Looking for an inspiring space.",
+                "Needed a studio with good light.",
+                "Drawn to the creative community here.",
+                "Escaping the high rents elsewhere.",
+            ],
+        );
+        move_reasons.insert(
+            TenantArchetype::Family,
+            vec![
+                "Needed more space for the kids.",
+                "Moving for the school district.",
+                "Wanted a safer neighborhood.",
+                "Growing family needs.",
+            ],
+        );
+        move_reasons.insert(
+            TenantArchetype::Elderly,
+            vec![
+                "Downsizing after retirement.",
+                "Wanted to be closer to family.",
+                "Looking for a quieter place.",
+                "Needed a ground floor unit.",
+            ],
+        );
 
         let mut hobbies = HashMap::new();
-        hobbies.insert(TenantArchetype::Student, vec![
-            "gaming", "studying", "partying", "jogging", "reading",
-            "cooking on a budget", "streaming", "yoga",
-        ]);
-        hobbies.insert(TenantArchetype::Professional, vec![
-            "wine tasting", "golf", "reading", "fitness", "travel",
-            "cooking", "podcasts", "networking events",
-        ]);
-        hobbies.insert(TenantArchetype::Artist, vec![
-            "painting", "music", "writing", "photography", "sculpting",
-            "gallery hopping", "poetry readings", "experimental cooking",
-        ]);
-        hobbies.insert(TenantArchetype::Family, vec![
-            "family outings", "cooking", "gardening", "board games",
-            "soccer practice", "movie nights", "camping",
-        ]);
-        hobbies.insert(TenantArchetype::Elderly, vec![
-            "gardening", "crossword puzzles", "watching TV", "knitting",
-            "reading", "bird watching", "walking", "bingo",
-        ]);
+        hobbies.insert(
+            TenantArchetype::Student,
+            vec![
+                "gaming",
+                "studying",
+                "partying",
+                "jogging",
+                "reading",
+                "cooking on a budget",
+                "streaming",
+                "yoga",
+            ],
+        );
+        hobbies.insert(
+            TenantArchetype::Professional,
+            vec![
+                "wine tasting",
+                "golf",
+                "reading",
+                "fitness",
+                "travel",
+                "cooking",
+                "podcasts",
+                "networking events",
+            ],
+        );
+        hobbies.insert(
+            TenantArchetype::Artist,
+            vec![
+                "painting",
+                "music",
+                "writing",
+                "photography",
+                "sculpting",
+                "gallery hopping",
+                "poetry readings",
+                "experimental cooking",
+            ],
+        );
+        hobbies.insert(
+            TenantArchetype::Family,
+            vec![
+                "family outings",
+                "cooking",
+                "gardening",
+                "board games",
+                "soccer practice",
+                "movie nights",
+                "camping",
+            ],
+        );
+        hobbies.insert(
+            TenantArchetype::Elderly,
+            vec![
+                "gardening",
+                "crossword puzzles",
+                "watching TV",
+                "knitting",
+                "reading",
+                "bird watching",
+                "walking",
+                "bingo",
+            ],
+        );
 
         let traits = vec![
-            "quiet", "friendly", "private", "social", "neat", "messy",
-            "punctual", "easygoing", "strict", "flexible", "chatty", "reserved",
+            "quiet",
+            "friendly",
+            "private",
+            "social",
+            "neat",
+            "messy",
+            "punctual",
+            "easygoing",
+            "strict",
+            "flexible",
+            "chatty",
+            "reserved",
         ];
 
         Self {
@@ -372,7 +537,9 @@ mod tests {
 
     #[test]
     fn test_request_effects() {
-        let request = TenantRequest::Pet { pet_type: "cat".to_string() };
+        let request = TenantRequest::Pet {
+            pet_type: "cat".to_string(),
+        };
         let approval = request.approval_effect();
         matches!(approval, StoryImpact::Happiness(h) if h > 0);
     }

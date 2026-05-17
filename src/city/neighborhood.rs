@@ -1,4 +1,3 @@
-
 use serde::{Deserialize, Serialize};
 
 use std::collections::HashMap;
@@ -61,7 +60,7 @@ impl NeighborhoodStats {
     pub fn for_type(neighborhood_type: &NeighborhoodType) -> Self {
         // Load config (lazy/cached would be better but this is only called at startup)
         let config_map = load_neighborhood_config();
-        
+
         let type_key = match neighborhood_type {
             NeighborhoodType::Downtown => "Downtown",
             NeighborhoodType::Suburbs => "Suburbs",
@@ -198,17 +197,17 @@ mod tests {
         let stats = NeighborhoodStats::for_type(&NeighborhoodType::Suburbs);
         // assert!(stats.crime_level < 30); // Suburbs are safe  <-- Depends on config now, keep existing logic or update test
         // Allow for config values
-        assert!(stats.crime_level <= 50); 
+        assert!(stats.crime_level <= 50);
     }
 }
 
 fn load_neighborhood_config() -> HashMap<String, NeighborhoodStats> {
     #[cfg(target_arch = "wasm32")]
     let json = include_str!("../../assets/neighborhoods.json");
-    
+
     #[cfg(not(target_arch = "wasm32"))]
     let json = std::fs::read_to_string("assets/neighborhoods.json")
         .unwrap_or_else(|_| include_str!("../../assets/neighborhoods.json").to_string());
-    
+
     serde_json::from_str(&json).unwrap_or_default()
 }

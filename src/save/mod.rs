@@ -1,3 +1,5 @@
 pub mod manager;
 
-pub use manager::{save_game, load_game, has_save_game, PlayerProgress, load_player_progress, save_player_progress};
+pub use manager::{
+    has_save_game, load_game, load_player_progress, save_game, save_player_progress, PlayerProgress,
+};

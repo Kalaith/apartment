@@ -1,6 +1,6 @@
 use super::application::TenantApplication;
-use crate::economy::PlayerFunds;
 use crate::data::config::VettingConfig;
+use crate::economy::PlayerFunds;
 
 /// Results of a credit check
 pub struct CreditCheckResult {
@@ -23,15 +23,15 @@ pub fn perform_credit_check(
     if application.revealed_reliability {
         return None; // Already checked
     }
-    
+
     if !funds.spend(config.credit_check_cost) {
         return None; // Cannot afford
     }
-    
+
     // Reveal stats
     application.revealed_reliability = true;
     let score = application.tenant.rent_reliability;
-    
+
     // Generate recommendation based on thresholds
     let thresholds = &config.credit_thresholds;
     let recommendation = if score >= thresholds.excellent {
@@ -45,7 +45,7 @@ pub fn perform_credit_check(
     } else {
         "Poor credit history. Default risk high.".to_string()
     };
-    
+
     Some(CreditCheckResult {
         reliability_score: score,
         recommendation,
@@ -61,15 +61,15 @@ pub fn perform_background_check(
     if application.revealed_behavior {
         return None; // Already checked
     }
-    
+
     if !funds.spend(config.background_check_cost) {
         return None; // Cannot afford
     }
-    
+
     // Reveal stats
     application.revealed_behavior = true;
     let score = application.tenant.behavior_score;
-    
+
     // Generate notes based on thresholds
     let thresholds = &config.behavior_thresholds;
     let history_notes = if score >= thresholds.excellent {
@@ -83,10 +83,9 @@ pub fn perform_background_check(
     } else {
         "Evicted from previous apartment for disturbance.".to_string()
     };
-    
+
     Some(BackgroundCheckResult {
         behavior_score: score,
         history_notes,
     })
 }
-
