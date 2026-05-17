@@ -52,6 +52,7 @@ pub struct DemographicSnapshot {
 
 impl DemographicSnapshot {
     /// Score demographic variety across archetype buckets on a 0-100 scale.
+    #[cfg(test)]
     pub fn diversity_score(&self) -> i32 {
         let occupied_groups = [
             self.student_count,

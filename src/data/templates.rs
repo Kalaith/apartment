@@ -1,5 +1,6 @@
 use crate::building::{ApartmentSize, DesignType, NoiseLevel};
 use serde::{Deserialize, Serialize};
+#[cfg(not(target_arch = "wasm32"))]
 use std::fs;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

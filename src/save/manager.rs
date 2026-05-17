@@ -1,21 +1,11 @@
 use crate::data::config::load_config;
 use crate::state::GameplayState;
-use macroquad_toolkit::persistence::{file_exists, get_app_data_path, load_json, save_json};
+use macroquad_toolkit::persistence::{json_key_exists, load_json_key, save_json_key};
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
 
+const GAME_NAME: &str = "apartment_manager";
 const SAVE_FILE_NAME: &str = "savegame.json";
 const PROGRESS_FILE_NAME: &str = "player_progress.json";
-
-fn get_save_path() -> PathBuf {
-    get_app_data_path("apartment_manager", SAVE_FILE_NAME)
-        .unwrap_or_else(|| PathBuf::from(SAVE_FILE_NAME))
-}
-
-fn get_progress_path() -> PathBuf {
-    get_app_data_path("apartment_manager", PROGRESS_FILE_NAME)
-        .unwrap_or_else(|| PathBuf::from(PROGRESS_FILE_NAME))
-}
 
 /// Player progress - persists across game sessions
 #[derive(Clone, Debug, Serialize, Deserialize, Default)]
@@ -51,12 +41,13 @@ impl PlayerProgress {
 
 /// Save the current game state to disk
 pub fn save_game(state: &GameplayState) -> std::io::Result<()> {
-    save_json(get_save_path(), state).map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))
+    save_json_key(GAME_NAME, SAVE_FILE_NAME, state)
+        .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))
 }
 
 /// Load the game state from disk
 pub fn load_game() -> std::io::Result<GameplayState> {
-    let mut state: GameplayState = load_json(get_save_path())
+    let mut state: GameplayState = load_json_key(GAME_NAME, SAVE_FILE_NAME)
         .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
 
     // Restore non-serialized fields
@@ -68,17 +59,17 @@ pub fn load_game() -> std::io::Result<GameplayState> {
 
 /// Check if a save file exists
 pub fn has_save_game() -> bool {
-    file_exists(get_save_path())
+    json_key_exists(GAME_NAME, SAVE_FILE_NAME)
 }
 
 /// Load player progress (persistent unlock state)
 pub fn load_player_progress() -> PlayerProgress {
-    load_json(get_progress_path()).unwrap_or_else(|_| PlayerProgress::new())
+    load_json_key(GAME_NAME, PROGRESS_FILE_NAME).unwrap_or_else(|_| PlayerProgress::new())
 }
 
 /// Save player progress (persistent unlock state)
 pub fn save_player_progress(progress: &PlayerProgress) -> std::io::Result<()> {
-    save_json(get_progress_path(), progress)
+    save_json_key(GAME_NAME, PROGRESS_FILE_NAME, progress)
         .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))
 }
 

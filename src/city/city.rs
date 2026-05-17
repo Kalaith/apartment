@@ -48,6 +48,7 @@ impl City {
     }
 
     /// Create a city with a starter building already assigned to a neighborhood.
+    #[cfg(test)]
     pub fn with_starter_building(name: &str, neighborhood_id: u32) -> (Self, u32) {
         let mut city = Self::new(name);
         let building = Building::new("Starter Building", 2, 2);

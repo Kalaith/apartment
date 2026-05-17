@@ -77,6 +77,7 @@ impl Regulation {
     }
 
     /// Record a violation against this regulation.
+    #[cfg(test)]
     pub fn add_violation(&mut self) {
         self.violation_count += 1;
         self.compliant = false;
@@ -84,6 +85,7 @@ impl Regulation {
     }
 
     /// Current fine owed for this regulation.
+    #[cfg(test)]
     pub fn current_fine(&self) -> i32 {
         if self.compliant || self.violation_count == 0 {
             0
@@ -173,11 +175,13 @@ impl ComplianceSystem {
     }
 
     /// Get regulations for a building.
+    #[cfg(test)]
     pub fn get_regulations(&self, building_id: u32) -> Option<&Vec<Regulation>> {
         self.building_regulations.get(&building_id)
     }
 
     /// Check if a building currently has any regulation violations.
+    #[cfg(test)]
     pub fn has_violations(&self, building_id: u32) -> bool {
         self.get_regulations(building_id)
             .is_some_and(|regulations| {

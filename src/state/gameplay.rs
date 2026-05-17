@@ -111,6 +111,7 @@ pub struct GameplayState {
 
 impl GameplayState {
     /// Create a new game using the first configured building template.
+    #[cfg(test)]
     pub fn new() -> Self {
         let config = crate::data::config::load_config();
         let template = crate::data::templates::load_templates()
@@ -484,6 +485,7 @@ impl GameplayState {
     }
 }
 
+#[cfg(test)]
 fn default_starter_template() -> crate::data::templates::BuildingTemplate {
     use crate::data::templates::{ApartmentTemplate, BuildingTemplate};
 

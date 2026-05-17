@@ -32,6 +32,7 @@ impl MailType {
         }
     }
 
+    #[cfg(test)]
     pub fn priority(&self) -> i32 {
         match self {
             MailType::CityNotice => 100,
@@ -180,6 +181,7 @@ impl Mailbox {
     }
 
     /// Mark a mail item as read.
+    #[cfg(test)]
     pub fn mark_read(&mut self, id: u32) -> bool {
         if let Some(item) = self.items.iter_mut().find(|item| item.id == id) {
             if !item.read {

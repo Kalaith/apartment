@@ -71,6 +71,7 @@ impl FinancingOption {}
 
 impl FinancingOption {
     /// Cash needed at purchase time.
+    #[cfg(test)]
     pub fn upfront_cost(&self, asking_price: i32) -> i32 {
         match self {
             FinancingOption::Cash => asking_price,
@@ -85,6 +86,7 @@ impl FinancingOption {
     }
 
     /// Estimated monthly payment for debt-style financing.
+    #[cfg(test)]
     pub fn monthly_payment(&self, asking_price: i32) -> i32 {
         match self {
             FinancingOption::Cash | FinancingOption::Investor { .. } => 0,
