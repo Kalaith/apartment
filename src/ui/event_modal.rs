@@ -28,35 +28,14 @@ pub fn draw_event_modal(event: &NarrativeEvent) -> Option<UiAction> {
         colors::TEXT_BRIGHT,
     );
 
-    // Body Text
-    // TODO: Implement proper wrapping. For now, assuming relatively short text or manual breaks.
     let body_y = y + 90.0;
     let mut current_y = body_y;
     let font_size = 20.0;
     let max_width = modal_w - 40.0;
 
-    // Very basic wrapping
-    let words: Vec<&str> = event.description.split_whitespace().collect();
-    let mut line = String::new();
-
-    for word in words {
-        let test_line = if line.is_empty() {
-            String::from(word)
-        } else {
-            format!("{} {}", line, word)
-        };
-
-        let dims = measure_text(&test_line, None, font_size as u16, 1.0);
-        if dims.width > max_width {
-            draw_text(&line, x + 20.0, current_y, font_size, colors::TEXT);
-            current_y += 25.0;
-            line = String::from(word);
-        } else {
-            line = test_line;
-        }
-    }
-    if !line.is_empty() {
+    for line in wrap_text(&event.description, font_size, max_width) {
         draw_text(&line, x + 20.0, current_y, font_size, colors::TEXT);
+        current_y += 25.0;
     }
 
     // Draw Choices
@@ -160,4 +139,34 @@ pub fn draw_event_modal(event: &NarrativeEvent) -> Option<UiAction> {
     }
 
     None
+}
+
+fn wrap_text(text: &str, font_size: f32, max_width: f32) -> Vec<String> {
+    let mut lines = Vec::new();
+
+    for paragraph in text.lines() {
+        let mut line = String::new();
+
+        for word in paragraph.split_whitespace() {
+            let candidate = if line.is_empty() {
+                word.to_string()
+            } else {
+                format!("{} {}", line, word)
+            };
+
+            let dims = measure_text(&candidate, None, font_size as u16, 1.0);
+            if dims.width > max_width && !line.is_empty() {
+                lines.push(line);
+                line = word.to_string();
+            } else {
+                line = candidate;
+            }
+        }
+
+        if !line.is_empty() {
+            lines.push(line);
+        }
+    }
+
+    lines
 }

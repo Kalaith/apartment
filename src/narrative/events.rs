@@ -235,13 +235,14 @@ impl NarrativeEventSystem {
 
         // Developer/investor offers (rare)
         if gen_range(0, 100) < 5 && !buildings.is_empty() {
-            let building = buildings.choose().unwrap();
-            let building_id = buildings
-                .iter()
-                .position(|b| std::ptr::eq(b, building))
-                .unwrap_or(0) as u32;
-            let event = self.generate_offer_event(month, building_id, building);
-            self.add_event(event);
+            if let Some(building) = buildings.choose() {
+                let building_id = buildings
+                    .iter()
+                    .position(|b| std::ptr::eq(b, building))
+                    .unwrap_or(0) as u32;
+                let event = self.generate_offer_event(month, building_id, building);
+                self.add_event(event);
+            }
         }
 
         // Building milestones
@@ -301,11 +302,14 @@ impl NarrativeEventSystem {
             ),
         ];
 
-        let (headline, description, effect) = templates.choose().cloned().unwrap();
-        let mut event = NarrativeEvent::news(0, month, headline, description);
-        event.default_effect = effect;
-        event.related_neighborhood_id = Some(neighborhood.id); // Set neighborhood ID
-        event
+        if let Some((headline, description, effect)) = templates.choose().cloned() {
+            let mut event = NarrativeEvent::news(0, month, headline, description);
+            event.default_effect = effect;
+            event.related_neighborhood_id = Some(neighborhood.id);
+            event
+        } else {
+            NarrativeEvent::news(0, month, "Neighborhood Update", "No local news this month.")
+        }
     }
 
     fn generate_city_event(&self, month: u32) -> NarrativeEvent {
@@ -336,11 +340,17 @@ impl NarrativeEventSystem {
             ),
         ];
 
-        let (headline, description, effect) = templates.choose().cloned().unwrap();
-        let mut event = NarrativeEvent::news(0, month, headline, description);
-        event.event_type = NarrativeEventType::CityEvent;
-        event.default_effect = effect;
-        event
+        if let Some((headline, description, effect)) = templates.choose().cloned() {
+            let mut event = NarrativeEvent::news(0, month, headline, description);
+            event.event_type = NarrativeEventType::CityEvent;
+            event.default_effect = effect;
+            event
+        } else {
+            let mut event =
+                NarrativeEvent::news(0, month, "City Update", "No major city news this month.");
+            event.event_type = NarrativeEventType::CityEvent;
+            event
+        }
     }
 
     fn generate_seasonal_event(&self, month: u32, season: u32) -> NarrativeEvent {

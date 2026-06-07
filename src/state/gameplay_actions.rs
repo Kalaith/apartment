@@ -2,9 +2,8 @@
 
 use crate::city::NeighborhoodType;
 use crate::economy::process_upgrade;
-use crate::narrative::events::NarrativeEffect;
 use crate::narrative::{StoryImpact, TenantStory};
-use crate::simulation::{advance_tick, GameEvent};
+use crate::simulation::GameEvent;
 use crate::ui::{colors, FloatingText, Selection, UiAction};
 use macroquad::prelude::*;
 
@@ -13,303 +12,6 @@ use super::mission_system;
 use super::tutorial_system;
 
 impl GameplayState {
-    /// End the current turn and advance time
-    pub fn end_turn(&mut self) {
-        let result = advance_tick(
-            &mut self.building,
-            &mut self.tenants,
-            &mut self.applications,
-            &mut self.funds,
-            &mut self.ledger,
-            &mut self.event_log,
-            &mut self.current_tick,
-            &mut self.next_tenant_id,
-            &self.config,
-        );
-
-        self.game_outcome = result.outcome.clone();
-
-        // Spawn floating texts for events
-        for event in &result.events {
-            match event {
-                GameEvent::RentPaid { amount, .. } => {
-                    let x = screen_width() / 2.0;
-                    let y = screen_height() / 2.0;
-                    self.floating_texts.push(FloatingText::new(
-                        &format!("+${}", amount),
-                        x + macroquad::rand::gen_range(-50.0, 50.0),
-                        y + macroquad::rand::gen_range(-50.0, 50.0),
-                        colors::POSITIVE,
-                    ));
-                }
-                GameEvent::RentMissed { .. } => {
-                    let x = screen_width() / 2.0;
-                    let y = screen_height() / 2.0;
-                    self.floating_texts.push(FloatingText::new(
-                        "Missed Rent!",
-                        x,
-                        y,
-                        colors::NEGATIVE,
-                    ));
-                }
-                GameEvent::TenantUnhappy { .. } => {
-                    let x = screen_width() / 2.0;
-                    let y = screen_height() / 2.0;
-                    self.floating_texts.push(FloatingText::new(
-                        "Unhappy!",
-                        x + macroquad::rand::gen_range(-50.0, 50.0),
-                        y + macroquad::rand::gen_range(-50.0, 50.0),
-                        colors::WARNING,
-                    ));
-                }
-                _ => {}
-            }
-        }
-
-        // === Phase 3: Update consequence and narrative systems ===
-
-        // Save local building changes to city before processing city updates
-        self.save_building_to_city();
-
-        // Update city (neighborhoods, market)
-        self.city.tick();
-
-        // Update tenant relationships
-        let (rel_changes, rel_events) = self.tenant_network.tick(
-            &self.tenants,
-            &self.building,
-            &self.config.relationships,
-            &self.relationship_events_config,
-        );
-        self.notifications.add_relationship_changes(rel_changes);
-        for mut event in rel_events {
-            event.month = self.current_tick;
-            self.narrative_events.events.push(event);
-        }
-
-        // Update compliance system (check inspection timers)
-        self.compliance.tick(self.current_tick);
-
-        // Update gentrification tracking
-        self.gentrification
-            .update_affordable_units(&self.building.apartments, &self.config.gentrification);
-
-        // Generate narrative events
-        self.narrative_events.generate_events(
-            self.current_tick,
-            &self.city.neighborhoods,
-            &self.city.buildings,
-            &self.tenants,
-        );
-
-        // Generate and cleanup mail
-        let income = self
-            .last_tick_result
-            .as_ref()
-            .map(|r| r.rent_collected)
-            .unwrap_or(0);
-        let expenses = self
-            .funds
-            .transactions_for_tick(self.current_tick)
-            .iter()
-            .filter(|t| t.amount < 0)
-            .map(|t| t.amount.abs())
-            .sum();
-        self.mailbox.generate_mail(
-            self.current_tick,
-            income,
-            expenses,
-            &self.tenants,
-            &self.city.buildings,
-        );
-        self.mailbox.cleanup(self.current_tick, 12);
-
-        // Generate dialogues based on tenant state
-        // Clone needed data to avoid borrow issues
-        let tenants_clone = self.tenants.clone();
-        let building_clone = self.building.clone();
-        let funds_clone = self.funds.clone();
-        self.dialogue_system.generate_dialogues(
-            self.current_tick,
-            &tenants_clone,
-            &building_clone,
-            &funds_clone,
-        );
-
-        // Auto-accept available missions (player can view in mission log)
-        let available_ids: Vec<u32> = self
-            .missions
-            .available_missions()
-            .iter()
-            .map(|m| m.id)
-            .collect();
-        for mission_id in available_ids {
-            self.missions.accept_mission(mission_id, self.current_tick);
-        }
-
-        // Generate tenant requests periodically
-        for tenant in &self.tenants {
-            if let Some(story) = self.tenant_stories.get_mut(&tenant.id) {
-                if macroquad::rand::gen_range(0, 100) < 10 {
-                    story.make_request(&tenant.archetype, &self.tenant_events_config);
-                }
-            }
-        }
-
-        // Auto-expire old narrative events
-        let expired_event_ids: Vec<u32> = self
-            .narrative_events
-            .events_requiring_response()
-            .iter()
-            .filter(|e| e.is_expired(self.current_tick))
-            .map(|e| e.id)
-            .collect();
-        for event_id in expired_event_ids {
-            self.narrative_events.process_choice(event_id, 0);
-        }
-
-        // Sync building field with city
-        self.sync_building();
-
-        // Auto-save
-        if let Err(e) = crate::save::save_game(self) {
-            eprintln!("Failed to save game: {}", e);
-            self.floating_texts.push(FloatingText::new(
-                "Save Failed!",
-                screen_width() / 2.0,
-                screen_height() / 2.0,
-                colors::NEGATIVE,
-            ));
-        }
-
-        // Generate new missions based on progression
-        self.missions.generate_late_game_missions(self.current_tick);
-
-        // Check for annual awards (at year boundaries)
-        if self.current_tick % 12 == 0 && self.current_tick > 0 {
-            let avg_happiness = if self.tenants.is_empty() {
-                0.0
-            } else {
-                self.tenants.iter().map(|t| t.happiness as f32).sum::<f32>()
-                    / self.tenants.len() as f32
-            };
-            let total = self.building.apartments.len();
-            let occupied = self.building.occupancy_count();
-            let occupancy_rate = if total > 0 {
-                occupied as f32 / total as f32
-            } else {
-                0.0
-            };
-
-            self.missions.check_for_awards(
-                self.current_tick,
-                &self.building.name,
-                avg_happiness,
-                occupancy_rate,
-                self.tenants.len() as u32,
-            );
-
-            // Check for tenant council formation
-            if self
-                .tenant_network
-                .should_form_council(&self.tenants, &self.config.gentrification)
-            {
-                self.floating_texts.push(FloatingText::new(
-                    "Tenants forming a council!",
-                    screen_width() / 2.0,
-                    screen_height() / 2.0 + 30.0,
-                    colors::ACCENT,
-                ));
-                self.missions.record_legacy_event(
-                    self.current_tick,
-                    "Tenant Council Formed",
-                    "Tenants organized to form a tenant council.",
-                );
-            }
-        }
-
-        // Calculate and apply community cohesion bonus to happiness
-        let cohesion = self
-            .tenant_network
-            .calculate_cohesion(&self.tenants, &self.config.cohesion);
-        for tenant in &mut self.tenants {
-            // Apply relationship happiness modifier (uses RelationshipType::happiness_modifier)
-            let relationship_bonus = crate::tenant::happiness::calculate_relationship_happiness(
-                tenant.id,
-                &self.tenant_network,
-                &self.config.relationships,
-            );
-
-            // Apply cohesion bonus if threshold met
-            let cohesion_bonus = if cohesion > 20 { 1 } else { 0 };
-
-            tenant.happiness =
-                (tenant.happiness + relationship_bonus + cohesion_bonus).clamp(0, 100);
-        }
-
-        // Log marketing campaign status
-        let marketing_name = self.building.marketing_strategy.name();
-        if marketing_name != "None" {
-            println!("Active marketing campaign: {}", marketing_name);
-        }
-
-        // Check for pending dialogues
-        let pending_count = self.dialogue_system.pending_dialogues().len();
-        if pending_count > 0 {
-            println!("Pending dialogues: {}", pending_count);
-        }
-
-        // Generate contextual hints
-        let total_units = self.building.apartments.len();
-        let vacancy_count = self
-            .building
-            .apartments
-            .iter()
-            .filter(|a| a.is_vacant())
-            .count();
-        let avg_condition = self.building.average_condition();
-        let any_unhappy = self.tenants.iter().any(|t| t.is_unhappy());
-
-        self.notifications.check_context_hints(
-            self.current_tick,
-            vacancy_count,
-            total_units,
-            avg_condition,
-            self.funds.balance,
-            any_unhappy,
-        );
-
-        // Phase 5: Check for game completion
-        let duration = self.config.win_conditions.game_duration_ticks.unwrap_or(36);
-        if self.current_tick >= duration && self.game_outcome.is_none() {
-            self.game_outcome = Some(crate::simulation::GameOutcome::Victory {
-                score: 0,
-                months: self.current_tick,
-                total_income: self.funds.total_income,
-            });
-            self.view_mode = ViewMode::CareerSummary;
-
-            // Unlock next building on victory
-            self.unlock_next_building();
-
-            // Check final achievements immediately
-            let new_unlocks = self.achievements.check_new_unlocks(
-                &self.city,
-                &self.building,
-                &self.tenants,
-                &self.funds,
-                self.current_tick,
-                &self.config,
-            );
-            for id in new_unlocks {
-                self.achievements.unlock(&id);
-            }
-        }
-
-        self.update_missions();
-        self.last_tick_result = Some(result);
-    }
-
     /// Process a UI action
     pub(super) fn process_action(&mut self, action: UiAction) {
         match action {
@@ -798,14 +500,27 @@ impl GameplayState {
                                 }
                             }
                             crate::narrative::dialogue::DialogueEffect::TensionChange {
-                                ..
+                                apt_a,
+                                apt_b,
+                                amount,
                             } => {
-                                // TODO: Apply to tenant network
+                                self.tenant_network.apply_tension_change(
+                                    apt_a,
+                                    apt_b,
+                                    amount,
+                                    "Dialogue choice",
+                                );
                             }
                             crate::narrative::dialogue::DialogueEffect::RelationshipChange {
-                                ..
+                                tenant_a,
+                                tenant_b,
+                                change,
                             } => {
-                                // TODO: Apply to tenant relationships
+                                self.tenant_network.apply_relationship_change(
+                                    tenant_a,
+                                    tenant_b,
+                                    change,
+                                );
                             }
                             crate::narrative::dialogue::DialogueEffect::OpinionChange {
                                 tenant_id,
@@ -879,99 +594,5 @@ impl GameplayState {
     pub fn update_missions(&mut self) {
         mission_system::update_missions(self);
     }
-
-    /// Apply a narrative effect
-    fn apply_narrative_effect(&mut self, effect: &NarrativeEffect) {
-        match effect {
-            NarrativeEffect::None => {}
-            NarrativeEffect::Money { amount } => {
-                if *amount < 0 {
-                    self.funds.deduct_expense(crate::economy::Transaction {
-                        amount: amount.abs(),
-                        transaction_type: crate::economy::TransactionType::CriticalFailure,
-                        description: "Event Consequence".to_string(),
-                        tick: self.current_tick,
-                    });
-                } else {
-                    self.funds.add_income(crate::economy::Transaction {
-                        amount: *amount,
-                        transaction_type: crate::economy::TransactionType::Grant,
-                        description: "Event Reward".to_string(),
-                        tick: self.current_tick,
-                    });
-                }
-            }
-            NarrativeEffect::TenantHappiness { tenant_id, change } => {
-                if let Some(tenant) = self.tenants.iter_mut().find(|t| t.id == *tenant_id) {
-                    tenant.happiness = (tenant.happiness + change).clamp(0, 100);
-                }
-            }
-            NarrativeEffect::OpinionChange { tenant_id, amount } => {
-                if let Some(tenant) = self.tenants.iter_mut().find(|t| t.id == *tenant_id) {
-                    tenant.landlord_opinion = (tenant.landlord_opinion + amount).clamp(-100, 100);
-                }
-            }
-            NarrativeEffect::RelationshipStrength {
-                tenant_a_id,
-                tenant_b_id,
-                change,
-            } => {
-                if let Some(rel) = self.tenant_network.relationships.iter_mut().find(|r| {
-                    (r.tenant_a_id == *tenant_a_id && r.tenant_b_id == *tenant_b_id)
-                        || (r.tenant_a_id == *tenant_b_id && r.tenant_b_id == *tenant_a_id)
-                }) {
-                    rel.strength = (rel.strength + change).clamp(0, 100);
-                }
-            }
-            NarrativeEffect::MoveOut { tenant_id } => {
-                if let Some(tenant) = self.tenants.iter_mut().find(|t| t.id == *tenant_id) {
-                    tenant.happiness = 0; // Force leave
-                }
-            }
-            NarrativeEffect::SellBuilding { building_id } => {
-                let index = *building_id as usize;
-
-                // Remove from city if valid index
-                if index < self.city.buildings.len() {
-                    self.city.buildings.remove(index);
-
-                    // Update neighborhoods: Remove the ID and shift subsequent IDs down
-                    for neighborhood in &mut self.city.neighborhoods {
-                        neighborhood.building_ids.retain(|&id| id != *building_id);
-                        for id in &mut neighborhood.building_ids {
-                            if *id > *building_id {
-                                *id -= 1;
-                            }
-                        }
-                    }
-                }
-
-                if self.city.buildings.is_empty() {
-                    // Cashed out completely! Victory!
-                    self.game_outcome = Some(crate::simulation::GameOutcome::Victory {
-                        score: self.funds.balance, // Score is cash
-                        months: self.current_tick,
-                        total_income: self.funds.total_income,
-                    });
-                    self.view_mode = ViewMode::CareerSummary;
-                } else {
-                    // Switch to another building
-                    self.city.active_building_index = 0;
-                    self.sync_building();
-                    self.floating_texts.push(FloatingText::new(
-                        "Building Sold!",
-                        screen_width() / 2.0,
-                        screen_height() / 2.0,
-                        colors::POSITIVE,
-                    ));
-                }
-            }
-            NarrativeEffect::Multiple { effects } => {
-                for e in effects {
-                    self.apply_narrative_effect(e);
-                }
-            }
-            _ => {} // Ignore others
-        }
-    }
 }
+

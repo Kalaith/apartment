@@ -149,6 +149,17 @@ impl TenantNetwork {
         })
     }
 
+    fn relationship_between_mut(
+        &mut self,
+        tenant_a: u32,
+        tenant_b: u32,
+    ) -> Option<&mut TenantRelationship> {
+        self.relationships.iter_mut().find(|r| {
+            (r.tenant_a_id == tenant_a && r.tenant_b_id == tenant_b)
+                || (r.tenant_a_id == tenant_b && r.tenant_b_id == tenant_a)
+        })
+    }
+
     /// Create a new relationship
     fn add_relationship(
         &mut self,
@@ -163,6 +174,62 @@ impl TenantNetwork {
         } else {
             None
         }
+    }
+
+    /// Apply a direct change to social tension between apartments.
+    pub fn apply_tension_change(&mut self, apt_a: u32, apt_b: u32, amount: i32, cause: &str) {
+        if apt_a == apt_b || amount == 0 {
+            return;
+        }
+
+        let existing = self.tensions.iter_mut().find(|tension| {
+            (tension.apartment_a == apt_a && tension.apartment_b == apt_b)
+                || (tension.apartment_a == apt_b && tension.apartment_b == apt_a)
+        });
+
+        if let Some(tension) = existing {
+            tension.tension_level = (tension.tension_level + amount).clamp(0, 100);
+            if !cause.is_empty() {
+                tension.cause = cause.to_string();
+            }
+        } else if amount > 0 {
+            self.tensions.push(SocialTension {
+                apartment_a: apt_a,
+                apartment_b: apt_b,
+                tension_level: amount.clamp(0, 100),
+                cause: cause.to_string(),
+            });
+        }
+
+        self.tensions.retain(|tension| tension.tension_level > 0);
+    }
+
+    /// Apply a direct strength change between two tenants, creating a relationship if needed.
+    pub fn apply_relationship_change(&mut self, tenant_a: u32, tenant_b: u32, change: i32) {
+        if tenant_a == tenant_b || change == 0 {
+            return;
+        }
+
+        if let Some(relationship) = self.relationship_between_mut(tenant_a, tenant_b) {
+            relationship.strength = (relationship.strength + change).clamp(0, 100);
+            relationship
+                .recent_events
+                .push(format!("Dialogue changed relationship by {:+}", change));
+            update_relationship_type_from_strength(relationship, change);
+            return;
+        }
+
+        let rel_type = if change > 0 {
+            RelationshipType::Friendly
+        } else {
+            RelationshipType::Hostile
+        };
+        let mut relationship = TenantRelationship::new(tenant_a, tenant_b, rel_type);
+        relationship.strength = (50 + change).clamp(0, 100);
+        relationship
+            .recent_events
+            .push(format!("Dialogue created relationship at {:+}", change));
+        self.relationships.push(relationship);
     }
 
     /// Process monthly relationship dynamics
@@ -525,6 +592,23 @@ impl TenantNetwork {
 
         // Formation threshold from config
         relative_unhappiness >= config.council_formation_threshold
+    }
+}
+
+fn update_relationship_type_from_strength(relationship: &mut TenantRelationship, change: i32) {
+    if matches!(
+        relationship.relationship_type,
+        RelationshipType::Family | RelationshipType::Romantic
+    ) {
+        return;
+    }
+
+    if relationship.strength >= 70 && change > 0 {
+        relationship.relationship_type = RelationshipType::Friendly;
+    } else if relationship.strength <= 30 && change < 0 {
+        relationship.relationship_type = RelationshipType::Hostile;
+    } else if relationship.strength > 30 && relationship.strength < 70 {
+        relationship.relationship_type = RelationshipType::Neutral;
     }
 }
 

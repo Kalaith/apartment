@@ -276,12 +276,14 @@ mod tests {
             None,
         );
 
-        let effects = system.resolve_dialogue(id, 0).unwrap();
-        assert_eq!(effects.len(), 1);
-        if let DialogueEffect::MoneyChange(amount) = effects[0] {
-            assert_eq!(amount, 100);
-        } else {
-            panic!("Wrong effect type");
+        let effects = system.resolve_dialogue(id, 0);
+        assert!(effects.is_some(), "expected dialogue effects");
+        if let Some(effects) = effects {
+            assert_eq!(effects.len(), 1);
+            assert!(
+                matches!(effects[0], DialogueEffect::MoneyChange(100)),
+                "expected money change effect"
+            );
         }
 
         assert_eq!(system.pending_dialogues().len(), 0);

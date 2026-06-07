@@ -19,7 +19,7 @@ mod tutorial;
 pub use dialogue::DialogueSystem;
 pub use events::{NarrativeEvent, NarrativeEventSystem};
 pub use mail::Mailbox;
-pub use missions::{MissionGoal, MissionManager, MissionReward, MissionStatus};
+pub use missions::{ActiveTaxBreak, MissionGoal, MissionManager, MissionReward, MissionStatus};
 pub use notifications::{NotificationCategory, NotificationManager, RelationshipChange};
 pub use stories::{StoryImpact, TenantRequest, TenantStory};
 pub use tutorial::{TutorialManager, TutorialMilestone};

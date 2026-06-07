@@ -7,20 +7,24 @@
 //! - Strictly separation of concerns: No game state mutation happens here.
 
 mod apartment_panel;
+mod apartment_panel_sections;
 mod application_panel;
 mod building_view;
 pub mod career_summary;
 pub mod city_view; // Phase 3 city map
 mod common;
 pub mod event_modal; // Phase 4 event modal
+mod hallway_panel;
 mod header;
 mod notifications;
 pub mod ownership_panel; // Phase 3 ownership
+mod tenant_panel;
 pub mod visuals; // Make public so we can use FloatingText // Phase 5 career summary
 
-pub use apartment_panel::{draw_apartment_panel, draw_hallway_panel};
+pub use apartment_panel::draw_apartment_panel;
 pub use building_view::draw_building_view;
 pub use common::*;
+pub use hallway_panel::draw_hallway_panel;
 pub use ownership_panel::draw_ownership_panel;
 
 pub use application_panel::draw_application_panel;

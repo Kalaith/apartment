@@ -201,9 +201,14 @@ pub fn process_upgrade(
             format!("Repair Unit {} (+{} condition)", unit, amount)
         }
         UpgradeAction::UpgradeDesign { apartment_id } => {
-            let apt = building.get_apartment(*apartment_id).unwrap();
+            let apt = building
+                .get_apartment(*apartment_id)
+                .ok_or("Apartment not found")?;
             let unit = apt.unit_number.clone();
-            let to_design = apt.design.next_upgrade().unwrap();
+            let to_design = apt
+                .design
+                .next_upgrade()
+                .ok_or("Apartment already at max design")?;
             format!("Upgrade Unit {} to {:?}", unit, to_design)
         }
         UpgradeAction::RepairHallway { amount } => {

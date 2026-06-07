@@ -1,5 +1,5 @@
 use super::GameplayState;
-use crate::narrative::{MissionGoal, MissionReward, MissionStatus};
+use crate::narrative::{ActiveTaxBreak, MissionGoal, MissionReward, MissionStatus};
 use crate::ui::{colors, FloatingText};
 use macroquad::prelude::*;
 
@@ -127,6 +127,9 @@ pub fn update_missions(state: &mut GameplayState) {
                     ));
                 }
                 MissionReward::TaxBreak { months, percentage } => {
+                    state
+                        .active_tax_breaks
+                        .push(ActiveTaxBreak::new(months, percentage));
                     state.floating_texts.push(FloatingText::new(
                         &format!(
                             "Tax Break! {}% for {} months",
@@ -137,7 +140,6 @@ pub fn update_missions(state: &mut GameplayState) {
                         screen_height() / 2.0 + 30.0,
                         colors::POSITIVE,
                     ));
-                    // TODO: Implement actual tax reduction logic storage
                 }
             }
         }

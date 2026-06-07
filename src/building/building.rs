@@ -327,8 +327,17 @@ mod tests {
         assert_eq!(building.vacancy_count(), 6);
         assert_eq!(building.occupancy_count(), 0);
 
-        building.get_apartment_mut(0).unwrap().move_in(1);
-        building.get_apartment_mut(1).unwrap().move_in(2);
+        let first_unit = building.get_apartment_mut(0);
+        assert!(first_unit.is_some(), "expected apartment 0 to exist");
+        if let Some(apartment) = first_unit {
+            apartment.move_in(1);
+        }
+
+        let second_unit = building.get_apartment_mut(1);
+        assert!(second_unit.is_some(), "expected apartment 1 to exist");
+        if let Some(apartment) = second_unit {
+            apartment.move_in(2);
+        }
 
         assert_eq!(building.vacancy_count(), 4);
         assert_eq!(building.occupancy_count(), 2);

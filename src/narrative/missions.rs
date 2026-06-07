@@ -19,6 +19,22 @@ pub enum MissionReward {
     UnlockBuilding(u32),
 }
 
+/// A mission-earned property tax reduction that remains active for future months.
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct ActiveTaxBreak {
+    pub remaining_months: u32,
+    pub percentage: f32,
+}
+
+impl ActiveTaxBreak {
+    pub fn new(months: u32, percentage: f32) -> Self {
+        Self {
+            remaining_months: months,
+            percentage: percentage.clamp(0.0, 1.0),
+        }
+    }
+}
+
 /// A mission/quest in the game
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Mission {
@@ -406,8 +422,11 @@ mod tests {
 
         manager.check_expirations(10);
 
-        let mission = manager.missions.iter().find(|m| m.id == id).unwrap();
-        assert_eq!(mission.status, MissionStatus::Expired);
+        let mission = manager.missions.iter().find(|m| m.id == id);
+        assert!(mission.is_some(), "expected expiring mission to exist");
+        if let Some(mission) = mission {
+            assert_eq!(mission.status, MissionStatus::Expired);
+        }
     }
 
     #[test]

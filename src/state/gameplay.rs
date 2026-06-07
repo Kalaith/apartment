@@ -77,6 +77,8 @@ pub struct GameplayState {
     // Phase 4: Tutorial & Missions
     pub tutorial: TutorialManager,
     pub missions: MissionManager,
+    #[serde(default)]
+    pub active_tax_breaks: Vec<crate::narrative::ActiveTaxBreak>,
 
     // Phase 5: Notifications (relationship changes, hints)
     pub notifications: NotificationManager,
@@ -166,6 +168,7 @@ impl GameplayState {
 
             tutorial: TutorialManager::new(),
             missions: MissionManager::new(),
+            active_tax_breaks: Vec::new(),
             notifications: NotificationManager::new(),
             achievements: crate::narrative::AchievementSystem::new(),
 
