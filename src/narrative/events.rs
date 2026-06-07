@@ -1,4 +1,4 @@
-use macroquad::rand::{gen_range, ChooseRandom};
+use macroquad_toolkit::rng;
 use serde::{Deserialize, Serialize};
 
 /// Types of narrative events
@@ -235,29 +235,29 @@ impl NarrativeEventSystem {
         _tenants: &[crate::tenant::Tenant],
     ) {
         // Chance for neighborhood news
-        if gen_range(0, 100) < 20 {
-            if let Some(neighborhood) = neighborhoods.choose() {
+        if rng::gen_range(0, 100) < 20 {
+            if let Some(neighborhood) = rng::choose(neighborhoods) {
                 let event = self.generate_neighborhood_event(month, neighborhood);
                 self.add_event(event);
             }
         }
 
         // Chance for city-wide event
-        if gen_range(0, 100) < 10 {
+        if rng::gen_range(0, 100) < 10 {
             let event = self.generate_city_event(month);
             self.add_event(event);
         }
 
         // Seasonal events
         let season = (month % 12) / 3; // 0=spring, 1=summer, 2=fall, 3=winter
-        if gen_range(0, 100) < 15 {
+        if rng::gen_range(0, 100) < 15 {
             let event = self.generate_seasonal_event(month, season);
             self.add_event(event);
         }
 
         // Developer/investor offers (rare)
-        if gen_range(0, 100) < 5 && !buildings.is_empty() {
-            if let Some(building) = buildings.choose() {
+        if rng::gen_range(0, 100) < 5 && !buildings.is_empty() {
+            if let Some(building) = rng::choose(buildings) {
                 let building_id = buildings
                     .iter()
                     .position(|b| std::ptr::eq(b, building))
@@ -269,7 +269,7 @@ impl NarrativeEventSystem {
 
         // Building milestones
         for (_i, building) in buildings.iter().enumerate() {
-            if building.occupancy_count() == building.apartments.len() && gen_range(0, 100) < 30 {
+            if building.occupancy_count() == building.apartments.len() && rng::gen_range(0, 100) < 30 {
                 let event = NarrativeEvent::news(
                     0,
                     month,
@@ -323,7 +323,7 @@ impl NarrativeEventSystem {
             ),
         ];
 
-        if let Some((headline, description, effect)) = templates.choose().cloned() {
+        if let Some((headline, description, effect)) = rng::choose(&templates).cloned() {
             let mut event = NarrativeEvent::news(0, month, headline, description);
             event.default_effect = effect;
             event.related_neighborhood_id = Some(neighborhood.id);
@@ -361,7 +361,7 @@ impl NarrativeEventSystem {
             ),
         ];
 
-        if let Some((headline, description, effect)) = templates.choose().cloned() {
+        if let Some((headline, description, effect)) = rng::choose(&templates).cloned() {
             let mut event = NarrativeEvent::news(0, month, headline, description);
             event.event_type = NarrativeEventType::CityEvent;
             event.default_effect = effect;
@@ -407,7 +407,7 @@ impl NarrativeEventSystem {
     ) -> NarrativeEvent {
         let base_value = 50000 * building.apartments.len() as i32;
         // Increased offer multiplier to 2.5x - 4.0x base value to be "worth it"
-        let offer = (base_value as f32 * gen_range(2.5, 4.0)) as i32;
+        let offer = (base_value as f32 * rng::gen_range(2.5, 4.0)) as i32;
 
         NarrativeEvent::with_choices(
             0,
@@ -470,5 +470,47 @@ mod tests {
         let mut system = NarrativeEventSystem::new();
         let _id = system.add_event(NarrativeEvent::news(0, 1, "Test", "Desc"));
         assert_eq!(system.events.len(), 1);
+    }
+
+    #[test]
+    fn expired_event_returns_default_effect() {
+        let mut system = NarrativeEventSystem::new();
+        let mut event = NarrativeEvent::with_choices(
+            0,
+            NarrativeEventType::CityEvent,
+            1,
+            "Tax Review",
+            "The city needs a response.",
+            vec![NarrativeChoice {
+                label: "Object".to_string(),
+                description: "Push back.".to_string(),
+                effect: NarrativeEffect::Money { amount: 500 },
+                reputation_change: 0,
+            }],
+        );
+        event.default_effect = NarrativeEffect::Money { amount: -250 };
+        event.response_deadline = Some(1);
+
+        let event_id = system.add_event(event);
+        let effects = system.expire_due_events(2);
+
+        assert_eq!(effects.len(), 1);
+        assert!(matches!(effects[0], NarrativeEffect::Money { amount: -250 }));
+        assert!(system.pending_events.is_empty());
+        assert!(system.processed_events.contains(&event_id));
+        assert!(system.events[0].read);
+    }
+
+    #[test]
+    fn no_choice_event_processes_default_effect() {
+        let mut system = NarrativeEventSystem::new();
+        let mut event = NarrativeEvent::news(0, 1, "Grant", "A grant arrived.");
+        event.default_effect = NarrativeEffect::Money { amount: 750 };
+        let event_id = system.add_event(event);
+
+        let effect = system.process_choice(event_id, 0);
+
+        assert!(matches!(effect, Some(NarrativeEffect::Money { amount: 750 })));
+        assert!(system.processed_events.contains(&event_id));
     }
 }

@@ -1,7 +1,7 @@
 use crate::building::Building;
 use crate::economy::PlayerFunds;
 use crate::simulation::events::GameEvent;
-use macroquad::rand::gen_range;
+use macroquad_toolkit::rng;
 
 pub struct EventSystem {
     // We could track cooldowns here if needed
@@ -25,15 +25,15 @@ impl EventSystem {
         // but for this MVP scope we'll treat it as a flavor event or immediate effect if possible.
         // To properly implement duration effects, we'd need to store "ActiveEvents" in the GameState.
         // For now, let's just emit the event.
-        if gen_range(0, 100) < 2 {
+        if rng::gen_range(0, 100) < 2 {
             events.push(GameEvent::Heatwave { tick_duration: 3 });
         }
 
         // 2. Pipe Burst (3% chance per tick to happen in ONE apartment)
-        if gen_range(0, 100) < 3 {
+        if rng::gen_range(0, 100) < 3 {
             let num_apts = building.apartments.len();
             if num_apts > 0 {
-                let idx = gen_range(0, num_apts);
+                let idx = rng::gen_range(0, num_apts);
                 if let Some(apt) = building.apartments.get_mut(idx) {
                     let damage = 30;
                     let old_condition = apt.condition;
@@ -51,7 +51,7 @@ impl EventSystem {
         }
 
         // 3. Gentrification (Very rare, 0.5% chance)
-        if gen_range(0, 1000) < 5 {
+        if rng::gen_range(0, 1000) < 5 {
             events.push(GameEvent::Gentrification {
                 tick_duration: 6,
                 effect_desc: "Rent tolerance +20%".to_string(),
@@ -63,7 +63,7 @@ impl EventSystem {
                                                         // If appeal is low (< 40), higher chance of inspection stuff
         let inspection_chance = if avg_condition < 40 { 5 } else { 1 };
 
-        if gen_range(0, 100) < inspection_chance {
+        if rng::gen_range(0, 100) < inspection_chance {
             let passed = avg_condition >= 40;
             let fine = if passed { 0 } else { 500 };
 

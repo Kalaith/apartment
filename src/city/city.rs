@@ -1,3 +1,4 @@
+use macroquad_toolkit::rng;
 use super::{Neighborhood, NeighborhoodType, PropertyMarket};
 use crate::building::Building;
 use serde::{Deserialize, Serialize};
@@ -150,7 +151,7 @@ impl City {
     /// Update economic conditions
     fn update_economy(&mut self) {
         // Small random fluctuations
-        let change = macroquad::rand::gen_range(-5, 6) as f32 / 100.0;
+        let change = rng::gen_range(-5, 6) as f32 / 100.0;
         self.economy_health = (self.economy_health + change).clamp(0.5, 1.5);
 
         // Interest rates inversely track economy health

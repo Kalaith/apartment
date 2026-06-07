@@ -270,7 +270,7 @@ impl GameTick {
         current_tick: u32,
         result: &mut TickResult,
     ) {
-        use macroquad::rand::gen_range;
+        use macroquad_toolkit::rng;
 
         let base_prob = 5; // 0.5% as integer (out of 1000)
         let mut prob = base_prob;
@@ -280,7 +280,7 @@ impl GameTick {
         }
 
         // Boiler Failure (prob out of 1000)
-        if gen_range(0, 1000) < prob {
+        if rng::gen_range(0, 1000) < prob {
             let cost = 1500;
             if funds.can_afford(cost) {
                 funds.deduct_expense(Transaction::expense(
@@ -307,7 +307,7 @@ impl GameTick {
         }
 
         // Structural Issue
-        if gen_range(0, 1000) < prob {
+        if rng::gen_range(0, 1000) < prob {
             let cost = 2500;
             let tx = Transaction::expense(
                 TransactionType::CriticalFailure,

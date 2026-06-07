@@ -1,5 +1,5 @@
 use super::TenantArchetype;
-use macroquad::rand::{gen_range, ChooseRandom};
+use macroquad_toolkit::rng;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -61,23 +61,23 @@ impl Tenant {
         // Add some variance to tolerances (±15%)
         let variance = 0.15;
         let rent_var = (tenant.rent_tolerance as f32 * variance) as i32;
-        tenant.rent_tolerance += gen_range(-rent_var, rent_var);
+        tenant.rent_tolerance += rng::gen_range(-rent_var, rent_var);
 
         let noise_var = (tenant.noise_tolerance as f32 * variance) as i32;
         tenant.noise_tolerance =
-            (tenant.noise_tolerance + gen_range(-noise_var, noise_var)).clamp(0, 100);
+            (tenant.noise_tolerance + rng::gen_range(-noise_var, noise_var)).clamp(0, 100);
 
         // Random initial opinion slight variance
-        tenant.landlord_opinion = gen_range(-5, 6);
+        tenant.landlord_opinion = rng::gen_range(-5, 6);
 
         // Add variance to hidden stats (±20%)
         let reliability_var = (tenant.rent_reliability as f32 * 0.2) as i32;
         tenant.rent_reliability =
-            (tenant.rent_reliability + gen_range(-reliability_var, reliability_var)).clamp(0, 100);
+            (tenant.rent_reliability + rng::gen_range(-reliability_var, reliability_var)).clamp(0, 100);
 
         let behavior_var = (tenant.behavior_score as f32 * 0.2) as i32;
         tenant.behavior_score =
-            (tenant.behavior_score + gen_range(-behavior_var, behavior_var)).clamp(0, 100);
+            (tenant.behavior_score + rng::gen_range(-behavior_var, behavior_var)).clamp(0, 100);
 
         tenant
     }
@@ -182,8 +182,8 @@ fn generate_random_name(archetype: &TenantArchetype) -> String {
         "A", "B", "C", "D", "E", "F", "G", "H", "J", "K", "L", "M", "N", "P", "R", "S", "T", "W",
     ];
 
-    let first = first_names.choose().unwrap_or(&"Pat");
-    let last = last_initials.choose().unwrap_or(&"X");
+    let first = *rng::choose(&first_names).unwrap_or(&"Pat");
+    let last = *rng::choose(&last_initials).unwrap_or(&"X");
 
     format!("{} {}.", first, last)
 }

@@ -2,7 +2,7 @@ use crate::data::config::RelationshipsConfig;
 use crate::narrative::events::{NarrativeChoice, NarrativeEffect, NarrativeEventType};
 use crate::narrative::relationship_config::RelationshipEventTemplate;
 use crate::narrative::{NarrativeEvent, RelationshipChange, RelationshipEventsConfig};
-use macroquad::rand::gen_range;
+use macroquad_toolkit::rng;
 use serde::{Deserialize, Serialize};
 
 /// Type of relationship between tenants
@@ -86,7 +86,7 @@ impl TenantRelationship {
 
         // Hostile relationships can cool down over time
         if matches!(self.relationship_type, RelationshipType::Hostile)
-            && macroquad::rand::gen_range(0, 100) < config.hostile_cooldown_chance
+            && rng::gen_range(0, 100) < config.hostile_cooldown_chance
         {
             self.strength = (self.strength - config.hostile_strength_decay).max(0);
             if self.strength < config.hostile_transition_threshold {
@@ -272,7 +272,7 @@ impl TenantNetwork {
                 }
 
                 // Chance per month for new relationship
-                if macroquad::rand::gen_range(0, 100) < config.formation_chance {
+                if rng::gen_range(0, 100) < config.formation_chance {
                     let rel_type =
                         self.determine_initial_relationship(tenant_a, tenant_b, building, config);
                     if let Some(actual_type) =
@@ -302,7 +302,7 @@ impl TenantNetwork {
 
             for template in possible_events {
                 // Check probability
-                if gen_range(0, 100) >= template.probability {
+                if rng::gen_range(0, 100) >= template.probability {
                     continue;
                 }
 
@@ -493,12 +493,12 @@ impl TenantNetwork {
         );
 
         if (noisy_type_a && quiet_type_b)
-            || (!noisy_type_a && !quiet_type_b && macroquad::rand::gen_range(0, 100) < 20)
+            || (!noisy_type_a && !quiet_type_b && rng::gen_range(0, 100) < 20)
         {
             // Check if apartments are adjacent (same floor or floor ±1)
             if let (Some(a), Some(b)) = (apt_a, apt_b) {
                 if (a.floor as i32 - b.floor as i32).abs() <= 1 {
-                    if macroquad::rand::gen_range(0, 100) < config.adjacent_hostile_chance {
+                    if rng::gen_range(0, 100) < config.adjacent_hostile_chance {
                         return RelationshipType::Hostile;
                     }
                 }
@@ -507,7 +507,7 @@ impl TenantNetwork {
 
         // Same archetype tends to be friendly
         if tenant_a.archetype == tenant_b.archetype {
-            if macroquad::rand::gen_range(0, 100) < config.same_archetype_friendly_chance {
+            if rng::gen_range(0, 100) < config.same_archetype_friendly_chance {
                 return RelationshipType::Friendly;
             }
         }

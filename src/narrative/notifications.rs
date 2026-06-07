@@ -1,5 +1,6 @@
-//! Game notification system for relationship changes and contextual hints
-//! Uses pop-up modals similar to the tutorial system
+use macroquad_toolkit::rng;
+// Game notification system for relationship changes and contextual hints
+// Uses pop-up modals similar to the tutorial system
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -327,7 +328,7 @@ impl NotificationManager {
         if let Some((hint_key, _)) = best_hint {
             if let Some(hint) = config.context_hints.get(hint_key) {
                 if !hint.messages.is_empty() {
-                    let idx = macroquad::rand::gen_range(0, hint.messages.len());
+                    let idx = rng::gen_range(0, hint.messages.len());
                     self.pending
                         .push(GameNotification::hint(&hint.messages[idx]));
                     self.last_hint_month = current_month;

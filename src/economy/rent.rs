@@ -1,7 +1,7 @@
 use super::{PlayerFunds, Transaction, TransactionType};
 use crate::building::Building;
 use crate::tenant::Tenant;
-use macroquad::rand::gen_range;
+use macroquad_toolkit::rng;
 
 /// Result of rent collection for one tick
 #[derive(Clone, Debug)]
@@ -43,7 +43,7 @@ pub fn collect_rent(
         if let Some(apt_id) = tenant.apartment_id {
             if let Some(apartment) = building.get_apartment(apt_id) {
                 // Very unhappy tenants might miss payment
-                if tenant.happiness < 20 && gen_range(0, 100) < 30 {
+                if tenant.happiness < 20 && rng::gen_range(0, 100) < 30 {
                     collection.missed_payments.push(MissedPayment {
                         tenant_name: tenant.name.clone(),
                         _apartment_unit: apartment.unit_number.clone(),

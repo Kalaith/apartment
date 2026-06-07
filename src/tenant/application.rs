@@ -1,7 +1,7 @@
 use super::{matching::MatchResult, Tenant, TenantArchetype};
 use crate::building::Building;
 use crate::data::config::MatchingConfig;
-use macroquad::rand::gen_range;
+use macroquad_toolkit::rng;
 use serde::{Deserialize, Serialize};
 
 /// A tenant application for a specific apartment
@@ -85,7 +85,7 @@ pub fn generate_applications(
         );
 
         // Random check to see if we generate an applicant this tick
-        if gen_range(0.0, 1.0) < chance {
+        if rng::gen_range(0.0, 1.0) < chance {
             // Pick archetype based on preference + marketing
             let archetype = pick_archetype_with_preference(
                 &building.marketing_strategy,
@@ -154,12 +154,12 @@ fn pick_archetype_with_preference(
 ) -> TenantArchetype {
     // If preference exists, 80% chance to pick it
     if let Some(pref) = preference {
-        if gen_range(0, 100) < 80 {
+        if rng::gen_range(0, 100) < 80 {
             return pref.clone();
         }
     }
 
-    let roll = gen_range(0, 100);
+    let roll = rng::gen_range(0, 100);
 
     // Adjust weights based on marketing
     match marketing {

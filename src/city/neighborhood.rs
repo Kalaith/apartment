@@ -1,3 +1,4 @@
+use macroquad_toolkit::rng;
 use serde::{Deserialize, Serialize};
 
 use std::collections::HashMap;
@@ -117,7 +118,7 @@ impl NeighborhoodStats {
     pub fn tick(&mut self, neighborhood_type: &NeighborhoodType) {
         // Gentrification slowly increases in industrial areas
         if matches!(neighborhood_type, NeighborhoodType::Industrial) && self.gentrification < 100 {
-            if macroquad::rand::gen_range(0, 100) < 10 {
+            if rng::gen_range(0, 100) < 10 {
                 self.gentrification = (self.gentrification + 1).min(100);
                 // Gentrification increases rent demand but pushes out long-term residents
                 self.rent_demand = (self.rent_demand + 0.01).min(1.5);
@@ -125,11 +126,11 @@ impl NeighborhoodStats {
         }
 
         // Crime fluctuates slightly
-        let crime_change = macroquad::rand::gen_range(-2, 3);
+        let crime_change = rng::gen_range(-2, 3);
         self.crime_level = (self.crime_level + crime_change).clamp(5, 95);
 
         // Rent demand fluctuates
-        let demand_change = macroquad::rand::gen_range(-5, 6) as f32 / 100.0;
+        let demand_change = rng::gen_range(-5, 6) as f32 / 100.0;
         self.rent_demand = (self.rent_demand + demand_change).clamp(0.5, 2.0);
     }
 }

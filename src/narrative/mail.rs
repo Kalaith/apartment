@@ -1,3 +1,4 @@
+use macroquad_toolkit::rng;
 use serde::{Deserialize, Serialize};
 
 /// Types of mail items
@@ -220,7 +221,7 @@ impl Mailbox {
 
         // Random tenant letters
         for tenant in tenants {
-            if macroquad::rand::gen_range(0, 100) < 10 {
+            if rng::gen_range(0, 100) < 10 {
                 let letter = self.generate_tenant_letter(month, tenant, buildings);
                 if let Some(l) = letter {
                     self.receive(l);
@@ -229,7 +230,7 @@ impl Mailbox {
         }
 
         // Occasional news
-        if macroquad::rand::gen_range(0, 100) < 15 {
+        if rng::gen_range(0, 100) < 15 {
             let headlines = vec![
                 (
                     "Housing Market Update",
@@ -249,8 +250,8 @@ impl Mailbox {
                 ),
             ];
 
-            use macroquad::rand::ChooseRandom;
-            if let Some((headline, article)) = headlines.choose() {
+            
+            if let Some((headline, article)) = rng::choose(&headlines).copied() {
                 self.receive(MailItem::news_clipping(0, month, headline, article));
             }
         }
@@ -262,7 +263,7 @@ impl Mailbox {
         tenant: &crate::tenant::Tenant,
         buildings: &[crate::building::Building],
     ) -> Option<MailItem> {
-        use macroquad::rand::ChooseRandom;
+        
 
         // Find tenant's apartment
         let apt = tenant.apartment_id.and_then(|apt_id| {
@@ -322,7 +323,7 @@ impl Mailbox {
             }
         };
 
-        templates.choose().map(|(subject, body)| {
+        rng::choose(&templates).map(|(subject, body)| {
             MailItem::tenant_letter(0, tenant.id, &tenant.name, month, subject, body)
         })
     }

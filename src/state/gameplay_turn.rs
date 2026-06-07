@@ -1,4 +1,5 @@
-//! Monthly turn advancement for gameplay state.
+use macroquad_toolkit::rng;
+// Monthly turn advancement for gameplay state.
 
 use crate::economy::{Transaction, TransactionType};
 use crate::simulation::{advance_tick, GameEvent, TickResult};
@@ -49,8 +50,8 @@ impl GameplayState {
             match event {
                 GameEvent::RentPaid { amount, .. } => self.spawn_center_text(
                     &format!("+${}", amount),
-                    macroquad::rand::gen_range(-50.0, 50.0),
-                    macroquad::rand::gen_range(-50.0, 50.0),
+                    rng::gen_range(-50.0, 50.0),
+                    rng::gen_range(-50.0, 50.0),
                     colors::POSITIVE,
                 ),
                 GameEvent::RentMissed { .. } => {
@@ -58,8 +59,8 @@ impl GameplayState {
                 }
                 GameEvent::TenantUnhappy { .. } => self.spawn_center_text(
                     "Unhappy!",
-                    macroquad::rand::gen_range(-50.0, 50.0),
-                    macroquad::rand::gen_range(-50.0, 50.0),
+                    rng::gen_range(-50.0, 50.0),
+                    rng::gen_range(-50.0, 50.0),
                     colors::WARNING,
                 ),
                 _ => {}
@@ -149,7 +150,7 @@ impl GameplayState {
     fn generate_tenant_requests(&mut self) {
         for tenant in &self.tenants {
             if let Some(story) = self.tenant_stories.get_mut(&tenant.id) {
-                if macroquad::rand::gen_range(0, 100) < 10 {
+                if rng::gen_range(0, 100) < 10 {
                     story.make_request(&tenant.archetype, &self.tenant_events_config);
                 }
             }
@@ -250,8 +251,20 @@ impl GameplayState {
     }
 
     fn apply_active_tax_breaks(&mut self) {
+        let refund = self.process_active_tax_breaks();
+        if refund > 0 {
+            self.spawn_center_text(
+                &format!("Tax Break +${}", refund),
+                0.0,
+                60.0,
+                colors::POSITIVE,
+            );
+        }
+    }
+
+    fn process_active_tax_breaks(&mut self) -> i32 {
         if self.active_tax_breaks.is_empty() {
-            return;
+            return 0;
         }
 
         let percentage = self
@@ -270,12 +283,6 @@ impl GameplayState {
                 "Mission Tax Break Refund",
                 self.current_tick,
             ));
-            self.spawn_center_text(
-                &format!("Tax Break +${}", refund),
-                0.0,
-                60.0,
-                colors::POSITIVE,
-            );
         }
 
         for tax_break in &mut self.active_tax_breaks {
@@ -283,6 +290,8 @@ impl GameplayState {
         }
         self.active_tax_breaks
             .retain(|tax_break| tax_break.remaining_months > 0 && tax_break.percentage > 0.0);
+
+        refund
     }
 
     fn current_tick_property_tax(&self) -> i32 {
@@ -332,6 +341,72 @@ impl GameplayState {
                 self.current_tick,
                 "Tenant Council Formed",
                 "Tenants organized to form a tenant council.",
+            );
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::narrative::ActiveTaxBreak;
+
+    #[test]
+    fn tax_break_refunds_current_tick_property_tax_and_expires() {
+        let mut state = GameplayState::new();
+        state.current_tick = 4;
+        state.active_tax_breaks = vec![ActiveTaxBreak::new(1, 0.25)];
+        state.funds.deduct_expense(Transaction::expense(
+            TransactionType::PropertyTax,
+            400,
+            "Monthly Property Tax",
+            state.current_tick,
+        ));
+
+        let refund = state.process_active_tax_breaks();
+
+        assert_eq!(refund, 100);
+        assert!(state.active_tax_breaks.is_empty());
+        assert!(state.funds.transactions.iter().any(|transaction| {
+            transaction.transaction_type == TransactionType::Grant
+                && transaction.amount == 100
+                && transaction.description == "Mission Tax Break Refund"
+                && transaction.tick == 4
+        }));
+    }
+
+    #[test]
+    fn monthly_mail_uses_current_tick_rent_income() {
+        let mut state = GameplayState::new();
+        state.current_tick = 2;
+        state.mailbox.items.clear();
+        state.last_tick_result = Some(TickResult {
+            events: Vec::new(),
+            rent_collected: 10,
+            tenants_moved_out: Vec::new(),
+            new_applications: 0,
+            outcome: None,
+        });
+
+        let result = TickResult {
+            events: Vec::new(),
+            rent_collected: 1234,
+            tenants_moved_out: Vec::new(),
+            new_applications: 0,
+            outcome: None,
+        };
+        state.generate_monthly_narrative(&result);
+
+        let statement = state
+            .mailbox
+            .items
+            .iter()
+            .find(|item| item.subject == "Monthly Statement - Month 2");
+        assert!(statement.is_some(), "expected month 2 financial statement");
+        if let Some(statement) = statement {
+            assert!(
+                statement.body.contains("Total Income: $1234"),
+                "statement should use current tick income"
             );
         }
     }

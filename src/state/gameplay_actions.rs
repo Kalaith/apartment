@@ -479,71 +479,8 @@ impl GameplayState {
                     .dialogue_system
                     .resolve_dialogue(dialogue_id, choice_index)
                 {
-                    // Apply dialogue effects
                     for effect in effects {
-                        match effect {
-                            crate::narrative::dialogue::DialogueEffect::HappinessChange {
-                                tenant_id,
-                                amount,
-                            } => {
-                                if let Some(tenant) =
-                                    self.tenants.iter_mut().find(|t| t.id == tenant_id)
-                                {
-                                    tenant.happiness = (tenant.happiness + amount).clamp(0, 100);
-                                }
-                            }
-                            crate::narrative::dialogue::DialogueEffect::MoneyChange(amount) => {
-                                if amount > 0 {
-                                    self.funds.add_income(crate::economy::Transaction::income(
-                                        crate::economy::TransactionType::Grant,
-                                        amount,
-                                        "Dialogue Reward",
-                                        self.current_tick,
-                                    ));
-                                } else {
-                                    self.funds.deduct_expense(crate::economy::Transaction::expense(
-                                        crate::economy::TransactionType::CriticalFailure,
-                                        amount.abs(),
-                                        "Dialogue Cost",
-                                        self.current_tick,
-                                    ));
-                                }
-                            }
-                            crate::narrative::dialogue::DialogueEffect::TensionChange {
-                                apt_a,
-                                apt_b,
-                                amount,
-                            } => {
-                                self.tenant_network.apply_tension_change(
-                                    apt_a,
-                                    apt_b,
-                                    amount,
-                                    "Dialogue choice",
-                                );
-                            }
-                            crate::narrative::dialogue::DialogueEffect::RelationshipChange {
-                                tenant_a,
-                                tenant_b,
-                                change,
-                            } => {
-                                self.tenant_network.apply_relationship_change(
-                                    tenant_a,
-                                    tenant_b,
-                                    change,
-                                );
-                            }
-                            crate::narrative::dialogue::DialogueEffect::OpinionChange {
-                                tenant_id,
-                                amount,
-                            } => {
-                                if let Some(tenant) =
-                                    self.tenants.iter_mut().find(|t| t.id == tenant_id)
-                                {
-                                    tenant.landlord_opinion =
-                                        (tenant.landlord_opinion + amount).clamp(-100, 100);
-                                }
-                            }
-                        }
+                        self.apply_dialogue_effect(effect);
                     }
 
                     self.floating_texts.push(FloatingText::new(
@@ -562,6 +499,58 @@ impl GameplayState {
                     self.apply_narrative_effect(&effect);
                 }
             }
+        }
+    }
+
+    fn apply_dialogue_effect(&mut self, effect: crate::narrative::dialogue::DialogueEffect) {
+        match effect {
+            crate::narrative::dialogue::DialogueEffect::HappinessChange { tenant_id, amount } => {
+                if let Some(tenant) = self.tenants.iter_mut().find(|t| t.id == tenant_id) {
+                    tenant.happiness = (tenant.happiness + amount).clamp(0, 100);
+                }
+            }
+            crate::narrative::dialogue::DialogueEffect::MoneyChange(amount) => {
+                self.apply_dialogue_money_change(amount);
+            }
+            crate::narrative::dialogue::DialogueEffect::TensionChange {
+                apt_a,
+                apt_b,
+                amount,
+            } => {
+                self.tenant_network
+                    .apply_tension_change(apt_a, apt_b, amount, "Dialogue choice");
+            }
+            crate::narrative::dialogue::DialogueEffect::RelationshipChange {
+                tenant_a,
+                tenant_b,
+                change,
+            } => {
+                self.tenant_network
+                    .apply_relationship_change(tenant_a, tenant_b, change);
+            }
+            crate::narrative::dialogue::DialogueEffect::OpinionChange { tenant_id, amount } => {
+                if let Some(tenant) = self.tenants.iter_mut().find(|t| t.id == tenant_id) {
+                    tenant.landlord_opinion = (tenant.landlord_opinion + amount).clamp(-100, 100);
+                }
+            }
+        }
+    }
+
+    fn apply_dialogue_money_change(&mut self, amount: i32) {
+        if amount > 0 {
+            self.funds.add_income(crate::economy::Transaction::income(
+                crate::economy::TransactionType::Grant,
+                amount,
+                "Dialogue Reward",
+                self.current_tick,
+            ));
+        } else {
+            self.funds.deduct_expense(crate::economy::Transaction::expense(
+                crate::economy::TransactionType::CriticalFailure,
+                amount.abs(),
+                "Dialogue Cost",
+                self.current_tick,
+            ));
         }
     }
 
@@ -603,6 +592,48 @@ impl GameplayState {
     /// Update missions states (called on turn end)
     pub fn update_missions(&mut self) {
         mission_system::update_missions(self);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::economy::TransactionType;
+
+    #[test]
+    fn dialogue_money_reward_records_income_transaction() {
+        let mut state = GameplayState::new();
+        state.current_tick = 7;
+        let starting_balance = state.funds.balance;
+
+        state.apply_dialogue_money_change(250);
+
+        assert_eq!(state.funds.balance, starting_balance + 250);
+        assert_eq!(state.funds.total_income, 250);
+        assert!(state.funds.transactions.iter().any(|transaction| {
+            transaction.transaction_type == TransactionType::Grant
+                && transaction.amount == 250
+                && transaction.description == "Dialogue Reward"
+                && transaction.tick == 7
+        }));
+    }
+
+    #[test]
+    fn dialogue_money_cost_records_expense_transaction() {
+        let mut state = GameplayState::new();
+        state.current_tick = 8;
+        let starting_balance = state.funds.balance;
+
+        state.apply_dialogue_money_change(-125);
+
+        assert_eq!(state.funds.balance, starting_balance - 125);
+        assert_eq!(state.funds.total_expenses, 125);
+        assert!(state.funds.transactions.iter().any(|transaction| {
+            transaction.transaction_type == TransactionType::CriticalFailure
+                && transaction.amount == -125
+                && transaction.description == "Dialogue Cost"
+                && transaction.tick == 8
+        }));
     }
 }
 

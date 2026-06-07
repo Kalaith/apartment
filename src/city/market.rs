@@ -1,5 +1,6 @@
 use super::{Neighborhood, NeighborhoodType};
 use crate::building::Building;
+use macroquad_toolkit::rng;
 use serde::{Deserialize, Serialize};
 
 /// Condition of a building on the market
@@ -133,15 +134,13 @@ pub struct PropertyListing {
 impl PropertyListing {
     /// Create a random listing for a neighborhood
     pub fn generate(id: u32, neighborhood: &Neighborhood) -> Self {
-        use macroquad::rand::gen_range;
-
         // Random building size
-        let num_floors = gen_range(2, 5);
-        let units_per_floor = gen_range(2, 4);
+        let num_floors = rng::gen_range(2, 5);
+        let units_per_floor = rng::gen_range(2, 4);
         let total_units = num_floors * units_per_floor;
 
         // Random condition (biased by neighborhood)
-        let condition = match gen_range(0, 100) {
+        let condition = match rng::gen_range(0, 100) {
             0..=20 => BuildingCondition::Condemned,
             21..=40 => BuildingCondition::Poor,
             41..=70 => BuildingCondition::Fair,
@@ -166,7 +165,7 @@ impl PropertyListing {
         let existing_tenants = if matches!(condition, BuildingCondition::Condemned) {
             0
         } else {
-            gen_range(0, total_units / 2 + 1)
+            rng::gen_range(0, total_units / 2 + 1)
         };
 
         // Generate name
@@ -228,7 +227,7 @@ impl PropertyListing {
         // Set condition based on listing
         let target_condition = self.condition.starting_apartment_condition();
         for apt in &mut building.apartments {
-            apt.condition = target_condition + macroquad::rand::gen_range(-10, 11);
+            apt.condition = target_condition + rng::gen_range(-10, 11);
             apt.condition = apt.condition.clamp(0, 100);
         }
         building.hallway_condition = target_condition;
@@ -260,7 +259,7 @@ impl PropertyMarket {
     /// Generate new listings based on neighborhoods
     pub fn refresh_listings(&mut self, neighborhoods: &[Neighborhood]) {
         // Add 1-2 new listings per refresh
-        let new_listings = macroquad::rand::gen_range(1, 3);
+        let new_listings = rng::gen_range(1, 3);
 
         for _ in 0..new_listings {
             // Pick a random neighborhood with available slots
@@ -291,7 +290,7 @@ impl Default for PropertyMarket {
 
 /// Generate a random building name based on neighborhood type
 fn generate_building_name(neighborhood_type: &NeighborhoodType) -> String {
-    use macroquad::rand::ChooseRandom;
+    
 
     let prefixes: Vec<&str> = match neighborhood_type {
         NeighborhoodType::Downtown => vec!["Metro", "City", "Central", "Tower", "Urban", "Sky"],
@@ -320,8 +319,8 @@ fn generate_building_name(neighborhood_type: &NeighborhoodType) -> String {
         "Lodge",
     ];
 
-    let prefix = prefixes.choose().unwrap_or(&"The");
-    let suffix = suffixes.choose().unwrap_or(&"Building");
+    let prefix = *rng::choose(&prefixes).unwrap_or(&"The");
+    let suffix = *rng::choose(&suffixes).unwrap_or(&"Building");
 
     format!("{} {}", prefix, suffix)
 }

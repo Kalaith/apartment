@@ -1,4 +1,4 @@
-use macroquad::rand::gen_range;
+use macroquad_toolkit::rng;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
@@ -134,7 +134,7 @@ impl DialogueSystem {
             let complaint_chance = if building_quality < 50 { 10 } else { 5 };
             let months_factor = if month > 12 { 2 } else { 0 };
 
-            if tenant.happiness < 40 && gen_range(0, 100) < (complaint_chance + months_factor) {
+            if tenant.happiness < 40 && rng::gen_range(0, 100) < (complaint_chance + months_factor) {
                 // Determine request type based on archetype
                 let (headline, desc, choices) = match tenant.archetype {
                     crate::tenant::TenantArchetype::Student => (

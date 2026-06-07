@@ -1,6 +1,6 @@
 use crate::narrative::events_config::{RequestTemplate, TenantEventsConfig};
 use crate::tenant::TenantArchetype;
-use macroquad::rand::{gen_range, ChooseRandom};
+use macroquad_toolkit::rng;
 use serde::{Deserialize, Serialize};
 
 /// A story event in a tenant's life
@@ -175,7 +175,7 @@ impl TenantStory {
                 return;
             }
 
-            let mut roll = gen_range(0, total_weight);
+            let mut roll = rng::gen_range(0, total_weight);
 
             for template in templates {
                 let weight = match template {
@@ -191,23 +191,21 @@ impl TenantStory {
                     // Selected!
                     self.pending_request = match template {
                         RequestTemplate::Pet { options, .. } => Some(TenantRequest::Pet {
-                            pet_type: options.choose().unwrap_or(&"cat".to_string()).clone(),
+                            pet_type: rng::choose(options).cloned().unwrap_or_else(|| "cat".to_string()),
                         }),
                         RequestTemplate::Sublease { .. } => Some(TenantRequest::Sublease),
                         RequestTemplate::HomeBusiness { options, .. } => {
                             Some(TenantRequest::HomeBusiness {
-                                business_type: options
-                                    .choose()
-                                    .unwrap_or(&"consulting".to_string())
-                                    .clone(),
+                                business_type: rng::choose(options)
+                                    .cloned()
+                                    .unwrap_or_else(|| "consulting".to_string()),
                             })
                         }
                         RequestTemplate::Modification { options, .. } => {
                             Some(TenantRequest::Modification {
-                                description: options
-                                    .choose()
-                                    .unwrap_or(&"improvement".to_string())
-                                    .clone(),
+                                description: rng::choose(options)
+                                    .cloned()
+                                    .unwrap_or_else(|| "improvement".to_string()),
                             })
                         }
                         RequestTemplate::TemporaryGuest {
@@ -216,8 +214,10 @@ impl TenantStory {
                             duration_max,
                             ..
                         } => Some(TenantRequest::TemporaryGuest {
-                            guest_name: options.choose().unwrap_or(&"Guest".to_string()).clone(),
-                            duration_months: gen_range(*duration_min, *duration_max + 1),
+                            guest_name: rng::choose(options)
+                                .cloned()
+                                .unwrap_or_else(|| "Guest".to_string()),
+                            duration_months: rng::gen_range(*duration_min, *duration_max + 1),
                         }),
                         RequestTemplate::None { .. } => None,
                     };
@@ -243,13 +243,11 @@ impl BackgroundGenerator {
         let job_title = self
             .job_titles
             .get(archetype)
-            .and_then(|jobs| jobs.choose().copied())
+            .and_then(|jobs| rng::choose(jobs).copied())
             .unwrap_or("Worker")
             .to_string();
 
-        let hometown = self
-            .hometowns
-            .choose()
+        let hometown = rng::choose(&self.hometowns)
             .copied()
             .unwrap_or("Unknown")
             .to_string();
@@ -257,33 +255,29 @@ impl BackgroundGenerator {
         let move_reason = self
             .move_reasons
             .get(archetype)
-            .and_then(|reasons| reasons.choose().copied())
+            .and_then(|reasons| rng::choose(reasons).copied())
             .unwrap_or("Needed a change")
             .to_string();
 
         let hobby_pool = self.hobbies.get(archetype).cloned().unwrap_or_default();
-        let num_hobbies = gen_range(1, 3);
-        let hobbies: Vec<String> = hobby_pool
-            .choose_multiple(num_hobbies)
-            .map(|s| s.to_string())
+        let num_hobbies = rng::gen_range(1, 3);
+        let hobbies: Vec<String> = rng::choose_multiple(&hobby_pool, num_hobbies)
+            .into_iter()
+            .map(|s| (*s).to_string())
             .collect();
 
-        let num_traits = gen_range(1, 3);
-        let personality_traits: Vec<String> = self
-            .traits
-            .iter()
-            .cloned()
-            .collect::<Vec<_>>()
-            .choose_multiple(num_traits)
-            .map(|s| s.to_string())
+        let num_traits = rng::gen_range(1, 3);
+        let personality_traits: Vec<String> = rng::choose_multiple(&self.traits, num_traits)
+            .into_iter()
+            .map(|s| (*s).to_string())
             .collect();
 
         let (has_partner, has_children, num_children) = match archetype {
             TenantArchetype::Student => (false, false, 0),
-            TenantArchetype::Professional => (gen_range(0, 100) < 30, false, 0),
-            TenantArchetype::Artist => (gen_range(0, 100) < 20, false, 0),
-            TenantArchetype::Family => (true, true, gen_range(1, 4)),
-            TenantArchetype::Elderly => (gen_range(0, 100) < 50, gen_range(0, 100) < 70, 0),
+            TenantArchetype::Professional => (rng::gen_range(0, 100) < 30, false, 0),
+            TenantArchetype::Artist => (rng::gen_range(0, 100) < 20, false, 0),
+            TenantArchetype::Family => (true, true, rng::gen_range(1, 4)),
+            TenantArchetype::Elderly => (rng::gen_range(0, 100) < 50, rng::gen_range(0, 100) < 70, 0),
         };
 
         TenantStory {
