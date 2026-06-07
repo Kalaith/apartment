@@ -27,7 +27,7 @@ These instructions apply to all Rust game projects in this workspace.
 
 - Use each project's `publish.ps1` script as the validation path.
 - Do not treat running a local instance or local dev server as the required test path unless the user explicitly asks for it.
-- After meaningful changes, run `.\publish.ps1` from the affected project directory and report whether it passes.
+- After meaningful changes, run `.\publish.ps1` with no parameters from the affected project directory and report whether it passes.
 - If `publish.ps1` is missing, blocked, or fails for an unrelated environment reason, report that clearly instead of substituting an unrequested local run.
 
 ## File Size Rule

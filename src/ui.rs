@@ -12,6 +12,7 @@ mod application_panel;
 mod building_view;
 pub mod career_summary;
 pub mod city_view; // Phase 3 city map
+mod city_view_widgets;
 mod common;
 pub mod event_modal; // Phase 4 event modal
 mod hallway_panel;

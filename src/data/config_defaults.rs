@@ -1,0 +1,141 @@
+use super::config::*;
+use std::collections::HashMap;
+
+impl Default for GameConfig {
+    fn default() -> Self {
+        Self {
+            version: "0.1.0".to_string(),
+            starting_conditions: default_starting_conditions(),
+            economy: default_economy(),
+            decay: DecayConfig {
+                apartment_per_tick: 2,
+                hallway_per_tick: 1,
+            },
+            happiness: default_happiness(),
+            win_conditions: WinConditions {
+                full_occupancy_required: true,
+                min_ticks_for_victory: 6,
+                game_duration_ticks: Some(36),
+            },
+            applications: ApplicationConfig {
+                expire_after_ticks: 3,
+                base_per_vacancy: 0.5,
+                appeal_bonus_divisor: 50,
+            },
+            ui: UiConfig {
+                upgrade_labels: default_upgrade_labels(),
+            },
+            upgrades: HashMap::new(),
+            matching: MatchingConfig::default(),
+            thresholds: ThresholdsConfig::default(),
+            operating_costs: OperatingCostsConfig::default(),
+            vetting: VettingConfig::default(),
+            marketing: MarketingConfig::default(),
+            relationships: RelationshipsConfig::default(),
+            cohesion: CohesionConfig::default(),
+            gentrification: GentrificationConfig::default(),
+            theme: ThemeConfig::default(),
+            layout: LayoutConfig::default(),
+            ui_thresholds: UiThresholdsConfig::default(),
+        }
+    }
+}
+
+fn default_starting_conditions() -> StartingConditions {
+    StartingConditions {
+        player_money: 5000,
+        starting_tenants: 1,
+        building_floors: 3,
+        units_per_floor: 2,
+    }
+}
+
+fn default_economy() -> EconomyConfig {
+    EconomyConfig {
+        repair_cost_per_point: 10,
+        hallway_repair_cost_per_point: 15,
+        design_upgrade_costs: default_design_upgrade_costs(),
+        kitchen_renovation_cost: 800,
+        laundry_installation_cost: 2000,
+        soundproofing_cost: 300,
+        base_rent: default_base_rent(),
+        staff_costs: default_staff_costs(),
+    }
+}
+
+fn default_design_upgrade_costs() -> HashMap<String, i32> {
+    let mut costs = HashMap::new();
+    costs.insert("bare_to_practical".to_string(), 500);
+    costs.insert("practical_to_cozy".to_string(), 1000);
+    costs
+}
+
+fn default_base_rent() -> HashMap<String, i32> {
+    let mut rents = HashMap::new();
+    rents.insert("small".to_string(), 600);
+    rents.insert("medium".to_string(), 900);
+    rents
+}
+
+fn default_staff_costs() -> HashMap<String, i32> {
+    let mut costs = HashMap::new();
+    costs.insert("janitor".to_string(), 200);
+    costs.insert("security".to_string(), 400);
+    costs.insert("manager".to_string(), 600);
+    costs
+}
+
+fn default_happiness() -> HappinessConfig {
+    HappinessConfig {
+        base: 50,
+        min_for_victory: 60,
+        leave_threshold: 0,
+        unhappy_threshold: 30,
+        tenure_bonus_max: 12,
+        rent_bonus_multiplier: 0.02,
+        rent_bonus_cap: 15,
+        rent_penalty_multiplier: 0.05,
+        rent_penalty_cap: -30,
+        condition_bonus_multiplier: 0.3,
+        condition_bonus_cap: 20,
+        condition_penalty_multiplier: 0.5,
+        condition_penalty_cap: 40,
+        noise_quiet_bonus: 10.0,
+        noise_high_penalty_base: -25,
+        noise_tolerance_multiplier: 0.3,
+        design_preferred_bonus: 20,
+        design_hated_penalty: -25,
+        design_style_modifiers: default_design_style_modifiers(),
+        hallway_condition_base: 50,
+        hallway_condition_multiplier: 0.1,
+    }
+}
+
+fn default_design_style_modifiers() -> HashMap<String, i32> {
+    let mut modifiers = HashMap::new();
+    modifiers.insert("Bare".to_string(), -5);
+    modifiers.insert("Practical".to_string(), 5);
+    modifiers.insert("Cozy".to_string(), 10);
+    modifiers
+}
+
+fn default_upgrade_labels() -> HashMap<String, String> {
+    let mut labels = HashMap::new();
+    labels.insert("repair_fmt".to_string(), "Repair +{}".to_string());
+    labels.insert(
+        "repair_hallway_fmt".to_string(),
+        "Repair Hallway +{}".to_string(),
+    );
+    labels.insert(
+        "upgrade_design_fmt".to_string(),
+        "Upgrade to {}".to_string(),
+    );
+    labels.insert("max_design".to_string(), "Max Design".to_string());
+    labels.insert("soundproofing".to_string(), "Add Soundproofing".to_string());
+    labels.insert(
+        "kitchen_renovation".to_string(),
+        "Renovate Kitchen".to_string(),
+    );
+    labels.insert("install_laundry".to_string(), "Install Laundry".to_string());
+    labels
+}

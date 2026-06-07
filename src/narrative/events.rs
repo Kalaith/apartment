@@ -180,14 +180,6 @@ impl NarrativeEventSystem {
         id
     }
 
-    /// Get pending events requiring response
-    pub fn events_requiring_response(&self) -> Vec<&NarrativeEvent> {
-        self.pending_events
-            .iter()
-            .filter_map(|id| self.events.iter().find(|e| e.id == *id))
-            .collect()
-    }
-
     /// Process a choice for an event
     pub fn process_choice(
         &mut self,
@@ -195,13 +187,43 @@ impl NarrativeEventSystem {
         choice_index: usize,
     ) -> Option<NarrativeEffect> {
         let event = self.events.iter_mut().find(|e| e.id == event_id)?;
-        let effect = event.choices.get(choice_index).map(|c| c.effect.clone())?;
+        let effect = if event.choices.is_empty() {
+            event.default_effect.clone()
+        } else {
+            event.choices.get(choice_index).map(|c| c.effect.clone())?
+        };
 
         event.read = true;
         self.pending_events.retain(|&id| id != event_id);
         self.processed_events.push(event_id);
 
         Some(effect)
+    }
+
+    /// Expire an event and return the default consequence for no response.
+    pub fn expire_event(&mut self, event_id: u32) -> Option<NarrativeEffect> {
+        let event = self.events.iter_mut().find(|e| e.id == event_id)?;
+
+        event.read = true;
+        self.pending_events.retain(|&id| id != event_id);
+        self.processed_events.push(event_id);
+
+        Some(event.default_effect.clone())
+    }
+
+    /// Expire all overdue response events and return their consequences.
+    pub fn expire_due_events(&mut self, current_month: u32) -> Vec<NarrativeEffect> {
+        let expired: Vec<u32> = self
+            .events
+            .iter()
+            .filter(|e| e.is_expired(current_month) && !self.processed_events.contains(&e.id))
+            .map(|e| e.id)
+            .collect();
+
+        expired
+            .into_iter()
+            .filter_map(|id| self.expire_event(id))
+            .collect()
     }
 
     /// Generate random events based on game state
@@ -258,8 +280,7 @@ impl NarrativeEventSystem {
             }
         }
 
-        // Process expired events
-        self.handle_expired_events(month);
+        // Expiration effects are applied by gameplay state after generation.
     }
 
     fn generate_neighborhood_event(
@@ -425,22 +446,6 @@ impl NarrativeEventSystem {
         )
     }
 
-    fn handle_expired_events(&mut self, current_month: u32) {
-        let expired: Vec<u32> = self
-            .events
-            .iter()
-            .filter(|e| e.is_expired(current_month) && !self.processed_events.contains(&e.id))
-            .map(|e| e.id)
-            .collect();
-
-        for id in expired {
-            if let Some(event) = self.events.iter_mut().find(|e| e.id == id) {
-                event.read = true;
-            }
-            self.pending_events.retain(|&pid| pid != id);
-            self.processed_events.push(id);
-        }
-    }
 }
 
 impl Default for NarrativeEventSystem {

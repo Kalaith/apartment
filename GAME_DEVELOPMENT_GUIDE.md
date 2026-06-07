@@ -324,6 +324,14 @@ Every game MUST have:
 - `publish.ps1` – Build and deploy script
 - `index.html` – WebGL host page
 
+### Validation
+
+Run this with no parameters from the affected project directory after meaningful changes:
+
+```powershell
+.\publish.ps1
+```
+
 ### Build Targets
 
 ```bash

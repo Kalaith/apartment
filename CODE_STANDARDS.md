@@ -287,7 +287,10 @@ The game must build for:
 - **Windows**: `cargo build --release`
 - **Web/WASM**: `cargo build --release --target wasm32-unknown-unknown`
 
-### 8.3 WebGL Requirements
+### 8.3 Validation
+After meaningful changes, run `.\publish.ps1` with no parameters from the affected project directory.
+
+### 8.4 WebGL Requirements
 The `index.html` must:
 - Load `mq_js_bundle.js` (Miniquad loader)
 - Call `load("game_name.wasm")`

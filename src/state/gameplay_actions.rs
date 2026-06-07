@@ -494,9 +494,19 @@ impl GameplayState {
                             }
                             crate::narrative::dialogue::DialogueEffect::MoneyChange(amount) => {
                                 if amount > 0 {
-                                    self.funds.balance += amount;
+                                    self.funds.add_income(crate::economy::Transaction::income(
+                                        crate::economy::TransactionType::Grant,
+                                        amount,
+                                        "Dialogue Reward",
+                                        self.current_tick,
+                                    ));
                                 } else {
-                                    self.funds.spend(amount.abs());
+                                    self.funds.deduct_expense(crate::economy::Transaction::expense(
+                                        crate::economy::TransactionType::CriticalFailure,
+                                        amount.abs(),
+                                        "Dialogue Cost",
+                                        self.current_tick,
+                                    ));
                                 }
                             }
                             crate::narrative::dialogue::DialogueEffect::TensionChange {
