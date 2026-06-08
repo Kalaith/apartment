@@ -269,7 +269,9 @@ impl NarrativeEventSystem {
 
         // Building milestones
         for (_i, building) in buildings.iter().enumerate() {
-            if building.occupancy_count() == building.apartments.len() && rng::gen_range(0, 100) < 30 {
+            if building.occupancy_count() == building.apartments.len()
+                && rng::gen_range(0, 100) < 30
+            {
                 let event = NarrativeEvent::news(
                     0,
                     month,
@@ -445,7 +447,6 @@ impl NarrativeEventSystem {
             ],
         )
     }
-
 }
 
 impl Default for NarrativeEventSystem {
@@ -495,7 +496,10 @@ mod tests {
         let effects = system.expire_due_events(2);
 
         assert_eq!(effects.len(), 1);
-        assert!(matches!(effects[0], NarrativeEffect::Money { amount: -250 }));
+        assert!(matches!(
+            effects[0],
+            NarrativeEffect::Money { amount: -250 }
+        ));
         assert!(system.pending_events.is_empty());
         assert!(system.processed_events.contains(&event_id));
         assert!(system.events[0].read);
@@ -510,7 +514,10 @@ mod tests {
 
         let effect = system.process_choice(event_id, 0);
 
-        assert!(matches!(effect, Some(NarrativeEffect::Money { amount: 750 })));
+        assert!(matches!(
+            effect,
+            Some(NarrativeEffect::Money { amount: 750 })
+        ));
         assert!(system.processed_events.contains(&event_id));
     }
 }

@@ -526,7 +526,6 @@ impl Default for UiThresholdsConfig {
     }
 }
 
-
 pub fn load_config() -> GameConfig {
     // For WASM, embed configs at compile time
     #[cfg(target_arch = "wasm32")]
@@ -556,4 +555,3 @@ pub fn load_config() -> GameConfig {
 
     config
 }
-

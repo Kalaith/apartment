@@ -45,7 +45,13 @@ pub fn draw_application_panel(
     let mut action = None;
     for (index, application) in filtered_apps {
         if y > panel_rect.y + panel_rect.h - 100.0 {
-            draw_text("... more applications", content_x, y, 14.0, colors::TEXT_DIM);
+            draw_text(
+                "... more applications",
+                content_x,
+                y,
+                14.0,
+                colors::TEXT_DIM,
+            );
             break;
         }
 
@@ -175,7 +181,13 @@ fn draw_application_text(
     text_x: f32,
     y: f32,
 ) {
-    draw_text(&application.tenant.name, text_x, y + 22.0, 18.0, colors::TEXT);
+    draw_text(
+        &application.tenant.name,
+        text_x,
+        y + 22.0,
+        18.0,
+        colors::TEXT,
+    );
     draw_text(
         &format!("{:?}", application.tenant.archetype),
         text_x,

@@ -72,8 +72,9 @@ impl Tenant {
 
         // Add variance to hidden stats (±20%)
         let reliability_var = (tenant.rent_reliability as f32 * 0.2) as i32;
-        tenant.rent_reliability =
-            (tenant.rent_reliability + rng::gen_range(-reliability_var, reliability_var)).clamp(0, 100);
+        tenant.rent_reliability = (tenant.rent_reliability
+            + rng::gen_range(-reliability_var, reliability_var))
+        .clamp(0, 100);
 
         let behavior_var = (tenant.behavior_score as f32 * 0.2) as i32;
         tenant.behavior_score =

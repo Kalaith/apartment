@@ -250,7 +250,6 @@ impl Mailbox {
                 ),
             ];
 
-            
             if let Some((headline, article)) = rng::choose(&headlines).copied() {
                 self.receive(MailItem::news_clipping(0, month, headline, article));
             }
@@ -263,8 +262,6 @@ impl Mailbox {
         tenant: &crate::tenant::Tenant,
         buildings: &[crate::building::Building],
     ) -> Option<MailItem> {
-        
-
         // Find tenant's apartment
         let apt = tenant.apartment_id.and_then(|apt_id| {
             buildings

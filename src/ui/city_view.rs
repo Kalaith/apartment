@@ -1,8 +1,10 @@
+use super::city_view_widgets::{
+    draw_button_icon, draw_button_mini, draw_listing_card, draw_progress_bar,
+};
 use crate::assets::AssetManager;
 use crate::city::{City, Neighborhood, NeighborhoodType, PropertyListing};
 use crate::narrative::NarrativeEventSystem;
 use crate::ui::colors;
-use super::city_view_widgets::{draw_button_icon, draw_button_mini, draw_listing_card, draw_progress_bar};
 use macroquad::prelude::*;
 
 /// Draw the city map showing all neighborhoods
@@ -512,5 +514,3 @@ pub enum CityMapAction {
     PurchaseBuilding(u32),
     EnterBuilding(usize),
 }
-
-

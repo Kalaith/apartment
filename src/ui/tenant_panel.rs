@@ -112,14 +112,9 @@ fn draw_occupied_tenant_info(
 
         draw_relationship_icons(tenant.id, network, text_x, *y + 45.0);
 
-        if let Some(action) = draw_pending_request(
-            tenant,
-            stories,
-            content_x,
-            y,
-            content_top,
-            content_bottom,
-        ) {
+        if let Some(action) =
+            draw_pending_request(tenant, stories, content_x, y, content_top, content_bottom)
+        {
             return Some(action);
         }
     }
@@ -130,7 +125,15 @@ fn draw_occupied_tenant_info(
         *y += 75.0;
     }
 
-    draw_tenant_happiness(tenant, assets, content_x, y, panel_w, content_top, content_bottom);
+    draw_tenant_happiness(
+        tenant,
+        assets,
+        content_x,
+        y,
+        panel_w,
+        content_top,
+        content_bottom,
+    );
 
     if *y > content_top && *y < content_bottom {
         draw_text(

@@ -13,12 +13,13 @@ impl GameplayState {
             NarrativeEffect::None => {}
             NarrativeEffect::Money { amount } => {
                 if *amount < 0 {
-                    self.funds.deduct_expense(crate::economy::Transaction::expense(
-                        crate::economy::TransactionType::CriticalFailure,
-                        amount.abs(),
-                        "Event Consequence",
-                        self.current_tick,
-                    ));
+                    self.funds
+                        .deduct_expense(crate::economy::Transaction::expense(
+                            crate::economy::TransactionType::CriticalFailure,
+                            amount.abs(),
+                            "Event Consequence",
+                            self.current_tick,
+                        ));
                 } else {
                     self.funds.add_income(crate::economy::Transaction::income(
                         crate::economy::TransactionType::Grant,
@@ -43,11 +44,8 @@ impl GameplayState {
                 tenant_b_id,
                 change,
             } => {
-                self.tenant_network.apply_relationship_change(
-                    *tenant_a_id,
-                    *tenant_b_id,
-                    *change,
-                );
+                self.tenant_network
+                    .apply_relationship_change(*tenant_a_id, *tenant_b_id, *change);
             }
             NarrativeEffect::MoveOut { tenant_id } => {
                 if let Some(tenant) = self.tenants.iter_mut().find(|t| t.id == *tenant_id) {

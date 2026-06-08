@@ -545,12 +545,13 @@ impl GameplayState {
                 self.current_tick,
             ));
         } else {
-            self.funds.deduct_expense(crate::economy::Transaction::expense(
-                crate::economy::TransactionType::CriticalFailure,
-                amount.abs(),
-                "Dialogue Cost",
-                self.current_tick,
-            ));
+            self.funds
+                .deduct_expense(crate::economy::Transaction::expense(
+                    crate::economy::TransactionType::CriticalFailure,
+                    amount.abs(),
+                    "Dialogue Cost",
+                    self.current_tick,
+                ));
         }
     }
 
@@ -636,4 +637,3 @@ mod tests {
         }));
     }
 }
-

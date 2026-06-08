@@ -1,6 +1,6 @@
-use macroquad_toolkit::rng;
 use super::{Neighborhood, NeighborhoodType, PropertyMarket};
 use crate::building::Building;
+use macroquad_toolkit::rng;
 use serde::{Deserialize, Serialize};
 
 /// The city contains all neighborhoods and provides the top-level game world

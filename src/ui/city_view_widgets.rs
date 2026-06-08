@@ -147,7 +147,12 @@ fn draw_listing_text(
     );
 
     let location_name = neighborhood.map(|n| n.name.as_str()).unwrap_or("Unknown");
-    draw_text_ex(location_name, x + 15.0, y + 40.0, text_params(13, colors::TEXT_DIM));
+    draw_text_ex(
+        location_name,
+        x + 15.0,
+        y + 40.0,
+        text_params(13, colors::TEXT_DIM),
+    );
     draw_text_ex(
         &format!(
             "{} floors, {} units | {} condition",
@@ -168,7 +173,6 @@ fn draw_listing_text(
             text_params(11, colors::WARNING),
         );
     }
-
 }
 
 fn draw_listing_purchase(
@@ -196,7 +200,12 @@ fn draw_listing_purchase(
     }
 
     if !can_afford {
-        draw_text_ex("Can't afford", btn_x, btn_y + 15.0, text_params(11, colors::TEXT_DIM));
+        draw_text_ex(
+            "Can't afford",
+            btn_x,
+            btn_y + 15.0,
+            text_params(11, colors::TEXT_DIM),
+        );
     }
 
     None

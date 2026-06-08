@@ -290,8 +290,6 @@ impl Default for PropertyMarket {
 
 /// Generate a random building name based on neighborhood type
 fn generate_building_name(neighborhood_type: &NeighborhoodType) -> String {
-    
-
     let prefixes: Vec<&str> = match neighborhood_type {
         NeighborhoodType::Downtown => vec!["Metro", "City", "Central", "Tower", "Urban", "Sky"],
         NeighborhoodType::Suburbs => vec!["Green", "Oak", "Maple", "Willow", "Pine", "Garden"],

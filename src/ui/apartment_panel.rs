@@ -6,9 +6,7 @@ use crate::tenant::Tenant;
 use macroquad::prelude::*;
 use std::collections::HashMap;
 
-use super::apartment_panel_sections::{
-    draw_apartment_stats, draw_sold_condo_panel, draw_upgrades,
-};
+use super::apartment_panel_sections::{draw_apartment_stats, draw_sold_condo_panel, draw_upgrades};
 use super::tenant_panel::draw_tenant_info;
 use super::{common::*, UiAction};
 

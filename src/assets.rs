@@ -1,5 +1,8 @@
 use macroquad::prelude::*;
+use macroquad_toolkit::assets::{load_texture_from_pack_or_file, AssetPack};
 use std::collections::HashMap;
+
+const ASSET_PACK_PATH: &str = "assets.zip";
 
 pub struct AssetManager {
     pub textures: HashMap<String, Texture2D>,
@@ -15,6 +18,7 @@ impl AssetManager {
     }
 
     pub async fn load_assets(&mut self) {
+        let asset_pack = AssetPack::load(ASSET_PACK_PATH).await.ok();
         let asset_ids = vec![
             // Tenant Portraits
             "tenant_student",
@@ -81,11 +85,10 @@ impl AssetManager {
 
         for id in asset_ids {
             let path = format!("assets/textures/{}.png", id);
-            // In WASM, we can't check if file exists - just try to load
-            // Macroquad will handle missing files gracefully
-            match load_texture(&path).await {
+            match load_texture_from_pack_or_file(asset_pack.as_ref(), &path, FilterMode::Nearest)
+                .await
+            {
                 Ok(texture) => {
-                    texture.set_filter(FilterMode::Nearest);
                     self.textures.insert(id.to_string(), texture);
                 }
                 Err(_e) => {

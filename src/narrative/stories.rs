@@ -191,7 +191,9 @@ impl TenantStory {
                     // Selected!
                     self.pending_request = match template {
                         RequestTemplate::Pet { options, .. } => Some(TenantRequest::Pet {
-                            pet_type: rng::choose(options).cloned().unwrap_or_else(|| "cat".to_string()),
+                            pet_type: rng::choose(options)
+                                .cloned()
+                                .unwrap_or_else(|| "cat".to_string()),
                         }),
                         RequestTemplate::Sublease { .. } => Some(TenantRequest::Sublease),
                         RequestTemplate::HomeBusiness { options, .. } => {
@@ -277,7 +279,9 @@ impl BackgroundGenerator {
             TenantArchetype::Professional => (rng::gen_range(0, 100) < 30, false, 0),
             TenantArchetype::Artist => (rng::gen_range(0, 100) < 20, false, 0),
             TenantArchetype::Family => (true, true, rng::gen_range(1, 4)),
-            TenantArchetype::Elderly => (rng::gen_range(0, 100) < 50, rng::gen_range(0, 100) < 70, 0),
+            TenantArchetype::Elderly => {
+                (rng::gen_range(0, 100) < 50, rng::gen_range(0, 100) < 70, 0)
+            }
         };
 
         TenantStory {
