@@ -66,7 +66,7 @@ pub fn draw_application_panel(
         ) {
             action = Some(card_action);
         }
-        y += 105.0;
+        y += 135.0;
     }
 
     action
@@ -123,23 +123,49 @@ fn draw_application_card(
     width: f32,
     assets: &AssetManager,
 ) -> Option<UiAction> {
-    let card_h = 95.0;
+    let card_h = 125.0;
     draw_rectangle(x, y, width, card_h, colors::PANEL_HEADER);
     draw_rectangle_lines(x, y, width, card_h, 1.0, colors::TEXT_DIM);
 
     let text_x = draw_application_portrait(application, assets, x, y);
     draw_application_text(application, building, text_x, y);
 
-    let btn_y = y + 58.0;
-    let btn_w = 80.0;
+    let btn_y = y + 88.0;
+    let btn_w = 70.0;
     if button(text_x, btn_y, btn_w, 28.0, "Accept", true) {
         return Some(UiAction::AcceptApplication {
             application_index: index,
         });
     }
 
-    if button(text_x + 90.0, btn_y, btn_w, 28.0, "Reject", true) {
+    if button(text_x + 78.0, btn_y, btn_w, 28.0, "Reject", true) {
         return Some(UiAction::RejectApplication {
+            application_index: index,
+        });
+    }
+
+    if button(
+        text_x + 156.0,
+        btn_y,
+        btn_w,
+        28.0,
+        "Credit",
+        !application.revealed_reliability,
+    ) {
+        return Some(UiAction::CreditCheck {
+            application_index: index,
+        });
+    }
+
+    if button(
+        text_x + 234.0,
+        btn_y,
+        95.0,
+        28.0,
+        "BG Check",
+        !application.revealed_behavior,
+    ) {
+        return Some(UiAction::BackgroundCheck {
             application_index: index,
         });
     }
@@ -219,5 +245,32 @@ fn draw_application_text(
         y + 42.0,
         14.0,
         score_color,
+    );
+
+    let fit_text = if application.match_result.meets_minimum {
+        "Fit: Qualified"
+    } else {
+        "Fit: Stretch"
+    };
+    draw_text(fit_text, text_x + 240.0, y + 42.0, 14.0, colors::TEXT_DIM);
+
+    let credit_text = if application.revealed_reliability {
+        format!("Credit: {}", application.tenant.rent_reliability)
+    } else {
+        "Credit: ?".to_string()
+    };
+    draw_text(&credit_text, text_x, y + 67.0, 14.0, colors::TEXT_DIM);
+
+    let background_text = if application.revealed_behavior {
+        format!("Behavior: {}", application.tenant.behavior_score)
+    } else {
+        "Behavior: ?".to_string()
+    };
+    draw_text(
+        &background_text,
+        text_x + 140.0,
+        y + 67.0,
+        14.0,
+        colors::TEXT_DIM,
     );
 }

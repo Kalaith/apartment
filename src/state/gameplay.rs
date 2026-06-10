@@ -3,7 +3,7 @@ use crate::assets::AssetManager;
 use crate::building::Building;
 use crate::data::config::GameConfig;
 use crate::economy::{FinancialLedger, PlayerFunds};
-use crate::simulation::{EventLog, GameOutcome, TickResult};
+use crate::simulation::{ActiveWorldEvent, EventLog, GameOutcome, TickResult};
 use crate::tenant::{Tenant, TenantApplication};
 use crate::ui::layout::HEADER_HEIGHT;
 use crate::ui::{colors, FloatingText, Selection, Tween, UiAction};
@@ -58,6 +58,8 @@ pub struct GameplayState {
     pub current_tick: u32,
     pub game_outcome: Option<GameOutcome>,
     pub last_tick_result: Option<TickResult>,
+    #[serde(default)]
+    pub active_world_events: Vec<ActiveWorldEvent>,
 
     // Phase 3: Consequence systems
     pub tenant_network: TenantNetwork,
@@ -136,11 +138,17 @@ impl GameplayState {
 
         // Create minimal city with just this building
         let mut city = City::new("Metropolis");
-        city.buildings.push(building.clone());
-        city.total_buildings_managed = 1;
+        let starter_building_index = city.add_building(building.clone(), 0).unwrap_or_else(|_| {
+            let index = city.buildings.len() as u32;
+            city.buildings.push(building.clone());
+            city.total_buildings_managed += 1;
+            index
+        });
+        city.active_building_index = starter_building_index as usize;
 
         // Initialize compliance
-        let compliance = ComplianceSystem::new();
+        let mut compliance = ComplianceSystem::new();
+        compliance.init_building_regulations(starter_building_index, false);
 
         let mut state = Self {
             city,
@@ -155,6 +163,7 @@ impl GameplayState {
             current_tick: 0,
             game_outcome: None,
             last_tick_result: None,
+            active_world_events: Vec::new(),
 
             tenant_network: TenantNetwork::new(),
             compliance,
@@ -200,6 +209,8 @@ impl GameplayState {
                     tenant.move_into(apt.id);
                     apt.move_in(tenant_id);
 
+                    let story = TenantStory::generate(tenant_id, &tenant.archetype);
+                    state.tenant_stories.insert(tenant_id, story);
                     state.tenants.push(tenant);
 
                     if let Some(city_building) = state.city.active_building_mut() {
@@ -219,12 +230,114 @@ impl GameplayState {
             &[],
             0,
             &mut state.next_tenant_id,
-            &state.config.matching,
+            &state.config,
         );
 
         state.missions.generate_starter_missions();
 
         state
+    }
+
+    /// Restore fields that are intentionally skipped from save data.
+    pub fn post_load(&mut self) {
+        self.config = crate::data::config::load_config();
+        self.tenant_events_config = load_events_config();
+        self.relationship_events_config = load_relationship_config();
+        self.view_mode = ViewMode::Building;
+        self.selection = Selection::None;
+        self.pending_actions.clear();
+        self.floating_texts.clear();
+        self.panel_tween = Tween::new(0.0);
+        self.panel_scroll_offset = 0.0;
+        self.show_pause_menu = false;
+        self.pending_quit_to_menu = false;
+        self.active_world_events
+            .retain(|event| event.remaining_ticks > 0);
+
+        self.ensure_city_integrity();
+        self.sync_building();
+        self.ensure_compliance_for_buildings();
+        self.ensure_tenant_stories();
+
+        if self.current_building_id.is_empty() {
+            self.current_building_id = crate::data::templates::load_templates()
+                .and_then(|templates| templates.templates.into_iter().next())
+                .map(|template| template.id)
+                .unwrap_or_else(|| "mvp_default".to_string());
+        }
+    }
+
+    fn ensure_city_integrity(&mut self) {
+        if self.city.buildings.is_empty() {
+            self.city.buildings.push(self.building.clone());
+            self.city.active_building_index = 0;
+        }
+
+        if self.city.active_building_index >= self.city.buildings.len() {
+            self.city.active_building_index = 0;
+        }
+
+        for building_id in 0..self.city.buildings.len() as u32 {
+            let already_linked = self
+                .city
+                .neighborhoods
+                .iter()
+                .any(|neighborhood| neighborhood.building_ids.contains(&building_id));
+
+            if already_linked {
+                continue;
+            }
+
+            if let Some(neighborhood) = self
+                .city
+                .neighborhoods
+                .iter_mut()
+                .find(|neighborhood| neighborhood.can_add_building())
+            {
+                neighborhood.add_building(building_id);
+            }
+        }
+
+        self.city.total_buildings_managed = self
+            .city
+            .total_buildings_managed
+            .max(self.city.buildings.len() as u32);
+    }
+
+    fn ensure_compliance_for_buildings(&mut self) {
+        let missing: Vec<(u32, bool)> = (0..self.city.buildings.len() as u32)
+            .filter(|building_id| {
+                !self
+                    .compliance
+                    .building_regulations
+                    .contains_key(building_id)
+            })
+            .map(|building_id| {
+                let is_historic = self
+                    .city
+                    .neighborhood_for_building(building_id as usize)
+                    .is_some_and(|neighborhood| {
+                        matches!(
+                            neighborhood.neighborhood_type,
+                            crate::city::NeighborhoodType::Historic
+                        )
+                    });
+                (building_id, is_historic)
+            })
+            .collect();
+
+        for (building_id, is_historic) in missing {
+            self.compliance
+                .init_building_regulations(building_id, is_historic);
+        }
+    }
+
+    fn ensure_tenant_stories(&mut self) {
+        for tenant in &self.tenants {
+            self.tenant_stories
+                .entry(tenant.id)
+                .or_insert_with(|| TenantStory::generate(tenant.id, &tenant.archetype));
+        }
     }
 
     /// Save the current `building` state back to the city

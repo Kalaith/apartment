@@ -14,6 +14,8 @@ mod win_condition;
 
 pub use tick::{advance_tick, TickResult};
 // pub use decay::apply_decay;
-pub use events::{EventLog, EventSeverity, GameEvent, NotificationLevel};
+pub use events::{
+    ActiveWorldEvent, ActiveWorldEventKind, EventLog, EventSeverity, GameEvent, NotificationLevel,
+};
 pub use random_events::EventSystem;
 pub use win_condition::GameOutcome;

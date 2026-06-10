@@ -14,7 +14,7 @@ impl GameplayState {
             NarrativeEffect::Money { amount } => {
                 if *amount < 0 {
                     self.funds
-                        .deduct_expense(crate::economy::Transaction::expense(
+                        .apply_required_expense(crate::economy::Transaction::expense(
                             crate::economy::TransactionType::CriticalFailure,
                             amount.abs(),
                             "Event Consequence",

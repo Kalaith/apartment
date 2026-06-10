@@ -108,7 +108,7 @@ pub fn calculate_match_score(
 
     MatchResult {
         score: score.clamp(0, 100),
-        meets_minimum: true, // We now allow everyone to "match", just with low scores
+        meets_minimum,
         reasons,
     }
 }

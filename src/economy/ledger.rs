@@ -51,7 +51,10 @@ impl FinancialLedger {
                 | TransactionType::Utilities
                 | TransactionType::Insurance
                 | TransactionType::StaffSalary
-                | TransactionType::CriticalFailure => {
+                | TransactionType::CriticalFailure
+                | TransactionType::Marketing
+                | TransactionType::Vetting
+                | TransactionType::InspectionFine => {
                     // These are all operating expenses, count them in repair_costs for simplicity
                     repair_costs += t.amount.abs();
                 }

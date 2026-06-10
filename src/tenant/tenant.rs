@@ -136,6 +136,22 @@ impl Tenant {
 
 /// Generate a random name appropriate for the archetype
 fn generate_random_name(archetype: &TenantArchetype) -> String {
+    let registry = crate::data::archetypes::archetypes();
+    if let Some(definition) = registry.get(archetype.id()) {
+        let first = rng::choose(&definition.name_pool.first_names)
+            .map(String::as_str)
+            .unwrap_or("Pat");
+        let last = rng::choose(&definition.name_pool.last_initials)
+            .map(String::as_str)
+            .unwrap_or("X");
+
+        if last == "Family" {
+            return format!("{} {}", first, last);
+        }
+
+        return format!("{} {}.", first, last);
+    }
+
     let first_names = match archetype {
         TenantArchetype::Student => vec![
             "Alex", "Jordan", "Casey", "Riley", "Morgan", "Sam", "Taylor", "Jamie", "Quinn",

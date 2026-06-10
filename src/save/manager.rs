@@ -1,4 +1,3 @@
-use crate::data::config::load_config;
 use crate::state::GameplayState;
 use macroquad_toolkit::persistence::{json_key_exists, load_json_key, save_json_key};
 use serde::{Deserialize, Serialize};
@@ -50,9 +49,8 @@ pub fn load_game() -> std::io::Result<GameplayState> {
     let mut state: GameplayState = load_json_key(GAME_NAME, SAVE_FILE_NAME)
         .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
 
-    // Restore non-serialized fields
-    state.config = load_config();
-    state.sync_building();
+    // Restore non-serialized fields and repair older save shapes.
+    state.post_load();
 
     Ok(state)
 }

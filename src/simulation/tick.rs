@@ -76,14 +76,11 @@ impl GameTick {
         }
 
         // 7. Applications
-        applications.retain(|app| !app.is_expired(current_tick));
-        let new_apps = generate_applications(
-            building,
-            applications,
-            current_tick,
-            next_tenant_id,
-            &config.matching,
-        );
+        applications.retain(|app| {
+            !app.is_expired_after(current_tick, config.applications.expire_after_ticks)
+        });
+        let new_apps =
+            generate_applications(building, applications, current_tick, next_tenant_id, config);
         result.new_applications = new_apps.len();
 
         for app in &new_apps {
@@ -169,7 +166,13 @@ impl GameTick {
         // Marketing
         let marketing_cost = building.marketing_strategy.monthly_cost(&config.marketing);
         if marketing_cost > 0 {
-            if !funds.spend(marketing_cost) {
+            let transaction = Transaction::expense(
+                TransactionType::Marketing,
+                marketing_cost,
+                &format!("{} Marketing Campaign", building.marketing_strategy.name()),
+                current_tick,
+            );
+            if !funds.deduct_expense(transaction) {
                 building.marketing_strategy = crate::building::MarketingType::None;
                 result.events.push(GameEvent::Notification {
                     message: "Marketing campaign cancelled due to lack of funds.".to_string(),
@@ -195,7 +198,7 @@ impl GameTick {
             &config.operating_costs,
         );
         if tax > 0 {
-            funds.deduct_expense(Transaction::expense(
+            funds.apply_required_expense(Transaction::expense(
                 TransactionType::PropertyTax,
                 tax,
                 "Monthly Property Tax",
@@ -205,7 +208,7 @@ impl GameTick {
 
         let utilities = OperatingCosts::calculate_utilities(building, &config.operating_costs);
         if utilities > 0 {
-            funds.deduct_expense(Transaction::expense(
+            funds.apply_required_expense(Transaction::expense(
                 TransactionType::Utilities,
                 utilities,
                 "Utility Bills",
@@ -215,7 +218,7 @@ impl GameTick {
 
         let insurance = OperatingCosts::calculate_insurance(building, &config.operating_costs);
         if insurance > 0 {
-            funds.deduct_expense(Transaction::expense(
+            funds.apply_required_expense(Transaction::expense(
                 TransactionType::Insurance,
                 insurance,
                 "Property Insurance",
@@ -226,7 +229,7 @@ impl GameTick {
         // Staff Salaries - Data Driven
         let salaries = OperatingCosts::calculate_staff_salaries(building, &config.economy);
         if salaries > 0 {
-            funds.deduct_expense(Transaction::expense(
+            funds.apply_required_expense(Transaction::expense(
                 TransactionType::StaffSalary,
                 salaries,
                 "Staff Salaries",

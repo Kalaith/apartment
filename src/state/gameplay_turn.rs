@@ -2,7 +2,9 @@ use macroquad_toolkit::rng;
 // Monthly turn advancement for gameplay state.
 
 use crate::economy::{Transaction, TransactionType};
-use crate::simulation::{advance_tick, GameEvent, TickResult};
+use crate::simulation::{
+    advance_tick, ActiveWorldEvent, ActiveWorldEventKind, GameEvent, TickResult,
+};
 use crate::ui::{colors, FloatingText};
 use macroquad::prelude::*;
 
@@ -25,12 +27,13 @@ impl GameplayState {
 
         self.game_outcome = result.outcome.clone();
         self.spawn_tick_feedback(&result.events);
+        self.register_active_world_events(&result.events);
+        self.apply_active_world_events();
         self.apply_active_tax_breaks();
         self.update_city_systems();
         self.generate_monthly_narrative(&result);
         self.expire_narrative_events();
         self.sync_building();
-        self.autosave_current_game();
         self.missions.generate_late_game_missions(self.current_tick);
 
         if self.current_tick % 12 == 0 && self.current_tick > 0 {
@@ -43,6 +46,7 @@ impl GameplayState {
         self.check_game_completion();
         self.update_missions();
         self.last_tick_result = Some(result);
+        self.autosave_current_game();
     }
 
     fn spawn_tick_feedback(&mut self, events: &[GameEvent]) {
@@ -77,6 +81,79 @@ impl GameplayState {
         ));
     }
 
+    fn register_active_world_events(&mut self, events: &[GameEvent]) {
+        for event in events {
+            match event {
+                GameEvent::Heatwave { tick_duration } => {
+                    self.add_active_world_event(ActiveWorldEventKind::Heatwave, *tick_duration);
+                }
+                GameEvent::Gentrification { tick_duration, .. } => {
+                    self.add_active_world_event(
+                        ActiveWorldEventKind::Gentrification,
+                        *tick_duration,
+                    );
+                }
+                _ => {}
+            }
+        }
+    }
+
+    fn add_active_world_event(&mut self, kind: ActiveWorldEventKind, duration: u32) {
+        if duration == 0 {
+            return;
+        }
+
+        if let Some(existing) = self
+            .active_world_events
+            .iter_mut()
+            .find(|event| event.kind == kind)
+        {
+            existing.remaining_ticks = existing.remaining_ticks.max(duration);
+            return;
+        }
+
+        self.active_world_events
+            .push(ActiveWorldEvent::new(kind, duration));
+    }
+
+    fn apply_active_world_events(&mut self) {
+        let mut heatwave_active = false;
+        let mut gentrification_active = false;
+
+        for event in &mut self.active_world_events {
+            match &event.kind {
+                ActiveWorldEventKind::Heatwave => {
+                    heatwave_active = true;
+                }
+                ActiveWorldEventKind::Gentrification => {
+                    gentrification_active = true;
+                }
+            }
+            event.tick();
+        }
+
+        if heatwave_active {
+            for tenant in &mut self.tenants {
+                tenant.happiness = (tenant.happiness - 3).max(0);
+            }
+        }
+
+        if gentrification_active {
+            self.gentrification.gentrification_score = (self.gentrification.gentrification_score
+                + 1)
+            .min(self.config.gentrification.max_gentrification_score);
+
+            for neighborhood in &mut self.city.neighborhoods {
+                neighborhood.stats.gentrification =
+                    (neighborhood.stats.gentrification + 1).min(100);
+                neighborhood.stats.rent_demand = (neighborhood.stats.rent_demand + 0.02).min(2.0);
+            }
+        }
+
+        self.active_world_events
+            .retain(|event| event.remaining_ticks > 0);
+    }
+
     fn update_city_systems(&mut self) {
         self.save_building_to_city();
         self.city.tick();
@@ -90,7 +167,18 @@ impl GameplayState {
         self.notifications.add_relationship_changes(rel_changes);
         for mut event in rel_events {
             event.month = self.current_tick;
-            self.narrative_events.events.push(event);
+            if event.requires_response {
+                event.response_deadline = Some(self.current_tick + 2);
+            }
+            let immediate_effect = if event.requires_response {
+                None
+            } else {
+                Some(event.default_effect.clone())
+            };
+            self.narrative_events.add_event(event);
+            if let Some(effect) = immediate_effect {
+                self.apply_narrative_effect(&effect);
+            }
         }
 
         self.compliance.tick(self.current_tick);

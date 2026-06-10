@@ -1,6 +1,6 @@
 use super::{matching::MatchResult, Tenant, TenantArchetype};
 use crate::building::Building;
-use crate::data::config::MatchingConfig;
+use crate::data::config::GameConfig;
 use macroquad_toolkit::rng;
 use serde::{Deserialize, Serialize};
 
@@ -29,9 +29,8 @@ impl TenantApplication {
         }
     }
 
-    /// Applications expire after a few ticks
-    pub fn is_expired(&self, current_tick: u32) -> bool {
-        current_tick > self.tick_created + 3 // Expire after 3 months
+    pub fn is_expired_after(&self, current_tick: u32, expire_after_ticks: u32) -> bool {
+        current_tick > self.tick_created + expire_after_ticks
     }
 }
 
@@ -41,7 +40,7 @@ pub fn generate_applications(
     existing_applications: &[TenantApplication],
     current_tick: u32,
     next_tenant_id: &mut u32,
-    config: &MatchingConfig,
+    config: &GameConfig,
 ) -> Vec<TenantApplication> {
     let mut new_applications = Vec::new();
 
@@ -75,8 +74,12 @@ pub fn generate_applications(
     // 2. Generate applications for EACH listed apartment
     for apt in listed_apartments {
         // Base probability per apartment
-        let appeal_factor = (building_appeal as f32 / 50.0).max(0.5);
-        let chance = 0.8 * appeal_factor * marketing_multiplier * open_house_multiplier;
+        let appeal_divisor = config.applications.appeal_bonus_divisor.max(1) as f32;
+        let appeal_factor = (building_appeal as f32 / appeal_divisor).max(0.5);
+        let chance = config.applications.base_per_vacancy
+            * appeal_factor
+            * marketing_multiplier
+            * open_house_multiplier;
 
         // Debug print
         println!(
@@ -99,7 +102,7 @@ pub fn generate_applications(
             // Check match
             let apt_slice = [apt];
             if let Some((_, match_result)) =
-                super::matching::find_best_match(&tenant, &apt_slice, config)
+                super::matching::find_best_match(&tenant, &apt_slice, &config.matching)
             {
                 // Check dupes
                 let already_applied =
@@ -159,61 +162,56 @@ fn pick_archetype_with_preference(
         }
     }
 
-    let roll = rng::gen_range(0, 100);
+    let registry = crate::data::archetypes::archetypes();
+    let mut weighted_archetypes: Vec<(TenantArchetype, u32)> = registry
+        .definitions
+        .values()
+        .filter_map(|definition| {
+            TenantArchetype::from_id(&definition.id)
+                .map(|archetype| (archetype, definition.spawn_weight.max(1)))
+        })
+        .collect();
 
-    // Adjust weights based on marketing
-    match marketing {
-        crate::building::MarketingType::SocialMedia => {
-            if roll < 50 {
-                TenantArchetype::Student
-            } else if roll < 80 {
-                TenantArchetype::Artist
-            } else if roll < 90 {
-                TenantArchetype::Professional
-            } else {
-                TenantArchetype::Family
-            }
-        }
-        crate::building::MarketingType::LocalNewspaper => {
-            if roll < 15 {
-                TenantArchetype::Student
-            } else if roll < 30 {
-                TenantArchetype::Professional
-            } else if roll < 60 {
-                TenantArchetype::Family
-            } else if roll < 90 {
-                TenantArchetype::Elderly
-            } else {
-                TenantArchetype::Artist
-            }
-        }
-        crate::building::MarketingType::PremiumAgency => {
-            if roll < 5 {
-                TenantArchetype::Student
-            } else if roll < 65 {
-                TenantArchetype::Professional
-            } else if roll < 85 {
-                TenantArchetype::Family
-            } else if roll < 95 {
-                TenantArchetype::Elderly
-            } else {
-                TenantArchetype::Artist
-            }
-        }
-        crate::building::MarketingType::None => {
-            if roll < 35 {
-                TenantArchetype::Student
-            } else if roll < 60 {
-                TenantArchetype::Professional
-            } else if roll < 75 {
-                TenantArchetype::Family
-            } else if roll < 85 {
-                TenantArchetype::Elderly
-            } else {
-                TenantArchetype::Artist
-            }
-        }
+    if weighted_archetypes.is_empty() {
+        weighted_archetypes = vec![
+            (TenantArchetype::Student, 35),
+            (TenantArchetype::Professional, 25),
+            (TenantArchetype::Family, 15),
+            (TenantArchetype::Elderly, 10),
+            (TenantArchetype::Artist, 15),
+        ];
     }
+
+    for (archetype, weight) in &mut weighted_archetypes {
+        let multiplier = match marketing {
+            crate::building::MarketingType::SocialMedia => match archetype {
+                TenantArchetype::Student | TenantArchetype::Artist => 2,
+                _ => 1,
+            },
+            crate::building::MarketingType::LocalNewspaper => match archetype {
+                TenantArchetype::Family | TenantArchetype::Elderly => 2,
+                _ => 1,
+            },
+            crate::building::MarketingType::PremiumAgency => match archetype {
+                TenantArchetype::Professional => 3,
+                TenantArchetype::Family => 2,
+                _ => 1,
+            },
+            crate::building::MarketingType::None => 1,
+        };
+        *weight *= multiplier;
+    }
+
+    let total_weight: u32 = weighted_archetypes.iter().map(|(_, weight)| *weight).sum();
+    let mut roll = rng::gen_range(0, total_weight.max(1));
+    for (archetype, weight) in weighted_archetypes {
+        if roll < weight {
+            return archetype;
+        }
+        roll -= weight;
+    }
+
+    TenantArchetype::Student
 }
 
 /// Process tenant decisions to leave

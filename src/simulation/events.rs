@@ -306,6 +306,31 @@ pub enum EventSeverity {
     Negative,
 }
 
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub enum ActiveWorldEventKind {
+    Heatwave,
+    Gentrification,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ActiveWorldEvent {
+    pub kind: ActiveWorldEventKind,
+    pub remaining_ticks: u32,
+}
+
+impl ActiveWorldEvent {
+    pub fn new(kind: ActiveWorldEventKind, remaining_ticks: u32) -> Self {
+        Self {
+            kind,
+            remaining_ticks,
+        }
+    }
+
+    pub fn tick(&mut self) {
+        self.remaining_ticks = self.remaining_ticks.saturating_sub(1);
+    }
+}
+
 /// Log of all game events
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct EventLog {

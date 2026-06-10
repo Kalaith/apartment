@@ -1,6 +1,6 @@
 use super::application::TenantApplication;
 use crate::data::config::VettingConfig;
-use crate::economy::PlayerFunds;
+use crate::economy::{PlayerFunds, Transaction, TransactionType};
 
 /// Results of a credit check
 pub struct CreditCheckResult {
@@ -19,12 +19,18 @@ pub fn perform_credit_check(
     application: &mut TenantApplication,
     funds: &mut PlayerFunds,
     config: &VettingConfig,
+    current_tick: u32,
 ) -> Option<CreditCheckResult> {
     if application.revealed_reliability {
         return None; // Already checked
     }
 
-    if !funds.spend(config.credit_check_cost) {
+    if !funds.deduct_expense(Transaction::expense(
+        TransactionType::Vetting,
+        config.credit_check_cost,
+        "Credit Check",
+        current_tick,
+    )) {
         return None; // Cannot afford
     }
 
@@ -57,12 +63,18 @@ pub fn perform_background_check(
     application: &mut TenantApplication,
     funds: &mut PlayerFunds,
     config: &VettingConfig,
+    current_tick: u32,
 ) -> Option<BackgroundCheckResult> {
     if application.revealed_behavior {
         return None; // Already checked
     }
 
-    if !funds.spend(config.background_check_cost) {
+    if !funds.deduct_expense(Transaction::expense(
+        TransactionType::Vetting,
+        config.background_check_cost,
+        "Background Check",
+        current_tick,
+    )) {
         return None; // Cannot afford
     }
 

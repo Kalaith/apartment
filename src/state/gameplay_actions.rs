@@ -6,6 +6,7 @@ use crate::narrative::{StoryImpact, TenantStory};
 use crate::simulation::GameEvent;
 use crate::ui::{colors, FloatingText, Selection, UiAction};
 use macroquad::prelude::*;
+use macroquad_toolkit::rng;
 
 use super::gameplay::{GameplayState, ViewMode};
 use super::mission_system;
@@ -121,24 +122,56 @@ impl GameplayState {
                     let app = self.applications.remove(application_index);
                     let mut tenant = app.tenant;
 
-                    // Evaluate lease using the configured offer
-                    if let Some(apt) = self.building.get_apartment(app.apartment_id) {
-                        let offer = crate::tenant::matching::LeaseOffer::from_config(
-                            apt.rent_price,
-                            &self.config.matching.lease_defaults,
+                    let Some(apt) = self.building.get_apartment(app.apartment_id) else {
+                        return;
+                    };
+
+                    if !apt.is_vacant() {
+                        self.event_log.log(
+                            GameEvent::Notification {
+                                message: "Application could not be accepted because the unit is occupied."
+                                    .to_string(),
+                                level: crate::simulation::NotificationLevel::Warning,
+                            },
+                            self.current_tick,
                         );
-                        let accept_probability = crate::tenant::matching::evaluate_lease_offer(
-                            &tenant,
-                            &offer,
-                            &self.config.matching.lease_acceptance,
+                        return;
+                    }
+
+                    let apartment_unit = apt.unit_number.clone();
+                    let offer = crate::tenant::matching::LeaseOffer::from_config(
+                        apt.rent_price,
+                        &self.config.matching.lease_defaults,
+                    );
+                    let accept_probability = crate::tenant::matching::evaluate_lease_offer(
+                        &tenant,
+                        &offer,
+                        &self.config.matching.lease_acceptance,
+                    );
+                    let leverage_penalty = tenant.negotiation_leverage() as f32 * 0.002;
+                    let adjusted_accept_probability =
+                        (accept_probability - leverage_penalty).clamp(0.0, 1.0);
+
+                    if rng::gen_range(0.0, 1.0) > adjusted_accept_probability {
+                        self.event_log.log(
+                            GameEvent::Notification {
+                                message: format!(
+                                    "{} declined the lease offer for Unit {}.",
+                                    tenant.name, apartment_unit
+                                ),
+                                level: crate::simulation::NotificationLevel::Info,
+                            },
+                            self.current_tick,
                         );
 
-                        // Log the negotiation outcome
-                        let leverage = tenant.negotiation_leverage();
-                        println!(
-                            "Tenant {} has negotiation leverage: {}, accept probability: {:.2}",
-                            tenant.name, leverage, accept_probability
-                        );
+                        let mouse = mouse_position();
+                        self.floating_texts.push(FloatingText::new(
+                            "Offer Declined",
+                            mouse.0,
+                            mouse.1 - 20.0,
+                            colors::WARNING,
+                        ));
+                        return;
                     }
 
                     tenant.move_into(app.apartment_id);
@@ -150,11 +183,7 @@ impl GameplayState {
                     self.event_log.log(
                         GameEvent::TenantMovedIn {
                             tenant_name: tenant.name.clone(),
-                            apartment_unit: self
-                                .building
-                                .get_apartment(app.apartment_id)
-                                .map(|a| a.unit_number.clone())
-                                .unwrap_or_default(),
+                            apartment_unit,
                         },
                         self.current_tick,
                     );
@@ -185,6 +214,7 @@ impl GameplayState {
                         app,
                         &mut self.funds,
                         &self.config.vetting,
+                        self.current_tick,
                     ) {
                         self.floating_texts.push(FloatingText::new(
                             &format!(
@@ -218,6 +248,7 @@ impl GameplayState {
                         app,
                         &mut self.funds,
                         &self.config.vetting,
+                        self.current_tick,
                     ) {
                         self.floating_texts.push(FloatingText::new(
                             &format!(
@@ -339,55 +370,37 @@ impl GameplayState {
 
             // Phase 3: Tenant requests
             UiAction::ApproveRequest { tenant_id } => {
-                if let Some(story) = self.tenant_stories.get_mut(&tenant_id) {
-                    if let Some(request) = story.pending_request.take() {
+                let effect = self.tenant_stories.get_mut(&tenant_id).and_then(|story| {
+                    story.pending_request.take().map(|request| {
                         let effect = request.approval_effect();
                         story.add_event(
                             self.current_tick,
                             "Request approved by landlord",
                             effect.clone(),
                         );
+                        effect
+                    })
+                });
 
-                        let mut stack = vec![effect];
-                        while let Some(e) = stack.pop() {
-                            match e {
-                                StoryImpact::Happiness(amount) => {
-                                    if let Some(tenant) =
-                                        self.tenants.iter_mut().find(|t| t.id == tenant_id)
-                                    {
-                                        tenant.happiness =
-                                            (tenant.happiness + amount).clamp(0, 100);
-                                    }
-                                }
-                                StoryImpact::SetApartmentFlag(flag) => {
-                                    if let Some(apt) = self
-                                        .building
-                                        .apartments
-                                        .iter_mut()
-                                        .find(|a| a.tenant_id == Some(tenant_id))
-                                    {
-                                        apt.flags.insert(flag);
-                                    }
-                                }
-                                StoryImpact::Multiple(sub_effects) => {
-                                    stack.extend(sub_effects);
-                                }
-                                _ => {}
-                            }
-                        }
-                    }
+                if let Some(effect) = effect {
+                    self.apply_story_impact(tenant_id, effect);
                 }
             }
             UiAction::DenyRequest { tenant_id } => {
-                if let Some(story) = self.tenant_stories.get_mut(&tenant_id) {
-                    if let Some(request) = story.pending_request.take() {
+                let effect = self.tenant_stories.get_mut(&tenant_id).and_then(|story| {
+                    story.pending_request.take().map(|request| {
                         let effect = request.denial_effect();
-                        story.add_event(self.current_tick, "Request denied by landlord", effect);
+                        story.add_event(
+                            self.current_tick,
+                            "Request denied by landlord",
+                            effect.clone(),
+                        );
+                        effect
+                    })
+                });
 
-                        if let Some(tenant) = self.tenants.iter_mut().find(|t| t.id == tenant_id) {
-                            tenant.happiness = (tenant.happiness - 10).max(0);
-                        }
-                    }
+                if let Some(effect) = effect {
+                    self.apply_story_impact(tenant_id, effect);
                 }
             }
 
@@ -502,6 +515,63 @@ impl GameplayState {
         }
     }
 
+    fn apply_story_impact(&mut self, tenant_id: u32, impact: StoryImpact) {
+        let mut stack = vec![impact];
+        while let Some(effect) = stack.pop() {
+            match effect {
+                StoryImpact::None
+                | StoryImpact::Request(_)
+                | StoryImpact::Roommate
+                | StoryImpact::LifeChange(_) => {}
+                StoryImpact::Happiness(amount) => {
+                    if let Some(tenant) = self.tenants.iter_mut().find(|t| t.id == tenant_id) {
+                        tenant.happiness = (tenant.happiness + amount).clamp(0, 100);
+                    }
+                }
+                StoryImpact::RentTolerance(amount) => {
+                    if let Some(tenant) = self.tenants.iter_mut().find(|t| t.id == tenant_id) {
+                        tenant.rent_tolerance = (tenant.rent_tolerance + amount).max(100);
+                    }
+                }
+                StoryImpact::MoveOutRisk(chance) => {
+                    if rng::gen_range(0, 100) < chance {
+                        let tenant_name = if let Some(tenant) =
+                            self.tenants.iter_mut().find(|t| t.id == tenant_id)
+                        {
+                            tenant.happiness = 0;
+                            Some(tenant.name.clone())
+                        } else {
+                            None
+                        };
+
+                        if let Some(tenant_name) = tenant_name {
+                            self.event_log.log(
+                                GameEvent::TenantUnhappy {
+                                    tenant_name,
+                                    happiness: 0,
+                                },
+                                self.current_tick,
+                            );
+                        }
+                    }
+                }
+                StoryImpact::SetApartmentFlag(flag) => {
+                    if let Some(apt) = self
+                        .building
+                        .apartments
+                        .iter_mut()
+                        .find(|apartment| apartment.tenant_id == Some(tenant_id))
+                    {
+                        apt.flags.insert(flag);
+                    }
+                }
+                StoryImpact::Multiple(sub_effects) => {
+                    stack.extend(sub_effects);
+                }
+            }
+        }
+    }
+
     fn apply_dialogue_effect(&mut self, effect: crate::narrative::dialogue::DialogueEffect) {
         match effect {
             crate::narrative::dialogue::DialogueEffect::HappinessChange { tenant_id, amount } => {
@@ -546,7 +616,7 @@ impl GameplayState {
             ));
         } else {
             self.funds
-                .deduct_expense(crate::economy::Transaction::expense(
+                .apply_required_expense(crate::economy::Transaction::expense(
                     crate::economy::TransactionType::CriticalFailure,
                     amount.abs(),
                     "Dialogue Cost",

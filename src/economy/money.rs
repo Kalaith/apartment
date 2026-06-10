@@ -13,6 +13,9 @@ pub enum TransactionType {
     Insurance,
     StaffSalary,
     CriticalFailure,
+    Marketing,
+    Vetting,
+    InspectionFine,
     Grant, // Mission rewards, grants, bonuses
 }
 
@@ -98,15 +101,12 @@ impl PlayerFunds {
         true
     }
 
-    /// Spend money without a specific transaction type (used by random events)
-    /// Returns true if successful, false if insufficient funds
-    pub fn spend(&mut self, amount: i32) -> bool {
-        if self.balance < amount {
-            return false;
-        }
-        self.balance -= amount;
-        self.total_expenses += amount;
-        true
+    /// Record a mandatory expense even if it pushes the player into debt.
+    pub fn apply_required_expense(&mut self, transaction: Transaction) {
+        let cost = transaction.amount.abs();
+        self.balance -= cost;
+        self.total_expenses += cost;
+        self.transactions.push(transaction);
     }
 
     /// Check if player is bankrupt

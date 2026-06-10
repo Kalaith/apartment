@@ -1,5 +1,5 @@
 use crate::building::Building;
-use crate::economy::PlayerFunds;
+use crate::economy::{PlayerFunds, Transaction, TransactionType};
 use crate::simulation::events::GameEvent;
 use macroquad_toolkit::rng;
 
@@ -16,7 +16,7 @@ impl EventSystem {
         &mut self,
         building: &mut Building,
         funds: &mut PlayerFunds,
-        _current_tick: u32,
+        current_tick: u32,
     ) -> Vec<GameEvent> {
         let mut events = Vec::new();
 
@@ -69,7 +69,12 @@ impl EventSystem {
 
             if fine > 0 {
                 // Deduct fine
-                funds.spend(fine);
+                funds.apply_required_expense(Transaction::expense(
+                    TransactionType::InspectionFine,
+                    fine,
+                    "Failed Inspection Fine",
+                    current_tick,
+                ));
             }
 
             events.push(GameEvent::Inspection {
