@@ -3,6 +3,7 @@ use crate::assets::AssetManager;
 use crate::building::Building;
 use crate::tenant::TenantApplication;
 use macroquad::prelude::*;
+use macroquad_toolkit::ui::draw_ui_text;
 
 pub fn draw_application_panel(
     applications: &[TenantApplication],
@@ -33,7 +34,7 @@ pub fn draw_application_panel(
         return None;
     }
 
-    draw_text(
+    draw_ui_text(
         &format!("{} pending", filtered_apps.len()),
         content_x,
         y,
@@ -45,7 +46,7 @@ pub fn draw_application_panel(
     let mut action = None;
     for (index, application) in filtered_apps {
         if y > panel_rect.y + panel_rect.h - 100.0 {
-            draw_text(
+            draw_ui_text(
                 "... more applications",
                 content_x,
                 y,
@@ -88,7 +89,7 @@ fn application_panel_rect(offset_x: f32) -> Option<Rect> {
 
 fn draw_empty_applications(content_x: f32, y: f32, filter_apartment_id: Option<u32>) {
     if filter_apartment_id.is_some() {
-        draw_text(
+        draw_ui_text(
             "No applications for this unit",
             content_x,
             y,
@@ -98,14 +99,14 @@ fn draw_empty_applications(content_x: f32, y: f32, filter_apartment_id: Option<u
         return;
     }
 
-    draw_text(
+    draw_ui_text(
         "No pending applications",
         content_x,
         y,
         18.0,
         colors::TEXT_DIM,
     );
-    draw_text(
+    draw_ui_text(
         "List apartments for lease, then End Month!",
         content_x,
         y + 25.0,
@@ -207,14 +208,14 @@ fn draw_application_text(
     text_x: f32,
     y: f32,
 ) {
-    draw_text(
+    draw_ui_text(
         &application.tenant.name,
         text_x,
         y + 22.0,
         18.0,
         colors::TEXT,
     );
-    draw_text(
+    draw_ui_text(
         &format!("{:?}", application.tenant.archetype),
         text_x,
         y + 42.0,
@@ -223,7 +224,7 @@ fn draw_application_text(
     );
 
     if let Some(apartment) = building.get_apartment(application.apartment_id) {
-        draw_text(
+        draw_ui_text(
             &format!("-> Unit {}", apartment.unit_number),
             text_x + 140.0,
             y + 22.0,
@@ -239,7 +240,7 @@ fn draw_application_text(
     } else {
         colors::WARNING
     };
-    draw_text(
+    draw_ui_text(
         &format!("Match: {}%", application.match_result.score),
         text_x + 140.0,
         y + 42.0,
@@ -252,21 +253,21 @@ fn draw_application_text(
     } else {
         "Fit: Stretch"
     };
-    draw_text(fit_text, text_x + 240.0, y + 42.0, 14.0, colors::TEXT_DIM);
+    draw_ui_text(fit_text, text_x + 240.0, y + 42.0, 14.0, colors::TEXT_DIM);
 
     let credit_text = if application.revealed_reliability {
         format!("Credit: {}", application.tenant.rent_reliability)
     } else {
         "Credit: ?".to_string()
     };
-    draw_text(&credit_text, text_x, y + 67.0, 14.0, colors::TEXT_DIM);
+    draw_ui_text(&credit_text, text_x, y + 67.0, 14.0, colors::TEXT_DIM);
 
     let background_text = if application.revealed_behavior {
         format!("Behavior: {}", application.tenant.behavior_score)
     } else {
         "Behavior: ?".to_string()
     };
-    draw_text(
+    draw_ui_text(
         &background_text,
         text_x + 140.0,
         y + 67.0,

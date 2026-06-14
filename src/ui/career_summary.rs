@@ -1,6 +1,7 @@
 use crate::state::GameplayState;
 use crate::ui::{colors, UiAction};
 use macroquad::prelude::*;
+use macroquad_toolkit::ui::{draw_ui_text, measure_ui_text};
 
 pub fn draw_career_summary(state: &GameplayState) -> Option<UiAction> {
     let screen_w = screen_width();
@@ -145,7 +146,7 @@ pub fn draw_career_summary(state: &GameplayState) -> Option<UiAction> {
         draw_rectangle_lines(rect_x, ach_y, ach_w, ach_h, 2.0, border_color);
 
         if unlocked {
-            draw_text(
+            draw_ui_text(
                 &achievement.name,
                 rect_x + 10.0,
                 ach_y + 25.0,
@@ -153,7 +154,7 @@ pub fn draw_career_summary(state: &GameplayState) -> Option<UiAction> {
                 colors::TEXT_BRIGHT,
             );
             // Wrap description roughly
-            draw_text(
+            draw_ui_text(
                 &achievement.description,
                 rect_x + 10.0,
                 ach_y + 50.0,
@@ -161,8 +162,8 @@ pub fn draw_career_summary(state: &GameplayState) -> Option<UiAction> {
                 colors::TEXT_DIM,
             );
         } else {
-            draw_text("???", rect_x + 10.0, ach_y + 25.0, 20.0, colors::TEXT_DIM);
-            draw_text(
+            draw_ui_text("???", rect_x + 10.0, ach_y + 25.0, 20.0, colors::TEXT_DIM);
+            draw_ui_text(
                 "Locked",
                 rect_x + 10.0,
                 ach_y + 50.0,
@@ -212,8 +213,8 @@ pub fn draw_career_summary(state: &GameplayState) -> Option<UiAction> {
     );
 
     let text = "RETURN TO MENU";
-    let text_width = measure_text(text, None, 24, 1.0).width;
-    draw_text(
+    let text_width = measure_ui_text(text, None, 24, 1.0).width;
+    draw_ui_text(
         text,
         btn_x + (btn_w - text_width) / 2.0,
         btn_y + btn_h / 2.0 + 8.0,
@@ -238,6 +239,6 @@ fn draw_text_centered(text: &str, cx: f32, y: f32, size: f32, color: Color) {
 }
 
 fn draw_stat(label: &str, value: &str, x: f32, y: f32, color: Color) {
-    draw_text(label, x, y, 16.0, colors::TEXT_DIM);
-    draw_text(value, x, y + 25.0, 24.0, color);
+    draw_ui_text(label, x, y, 16.0, colors::TEXT_DIM);
+    draw_ui_text(value, x, y + 25.0, 24.0, color);
 }

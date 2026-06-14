@@ -1,6 +1,7 @@
 use super::{common::*, UiAction};
 use crate::assets::AssetManager;
 use macroquad::prelude::*;
+use macroquad_toolkit::ui::draw_ui_text;
 
 pub fn draw_header(
     money: i32,
@@ -17,7 +18,7 @@ pub fn draw_header(
     draw_rectangle(0.0, 0.0, w, layout::HEADER_HEIGHT, colors::PANEL_HEADER);
 
     // Building name
-    draw_text(building_name, 20.0, 38.0, 28.0, colors::TEXT);
+    draw_ui_text(building_name, 20.0, 38.0, 28.0, colors::TEXT);
 
     // Money
     let mut current_x = 250.0;
@@ -43,7 +44,7 @@ pub fn draw_header(
     } else {
         colors::POSITIVE
     };
-    draw_text(&money_text, current_x, 38.0, 24.0, money_color);
+    draw_ui_text(&money_text, current_x, 38.0, 24.0, money_color);
 
     // Month
     let mut month_x = 420.0;
@@ -62,7 +63,7 @@ pub fn draw_header(
     }
 
     let month_text = format!("Month {}", tick);
-    draw_text(&month_text, month_x, 38.0, 20.0, colors::TEXT_DIM);
+    draw_ui_text(&month_text, month_x, 38.0, 20.0, colors::TEXT_DIM);
 
     // Occupancy
     let mut occ_x = 560.0;
@@ -80,7 +81,7 @@ pub fn draw_header(
         occ_x += 32.0;
     }
     let occ_text = format!("{}/{}", occupancy, total_units);
-    draw_text(&occ_text, occ_x, 38.0, 20.0, colors::TEXT_DIM);
+    draw_ui_text(&occ_text, occ_x, 38.0, 20.0, colors::TEXT_DIM);
 
     // End Turn button (mouse-clickable)
     let btn_x = w - 150.0;
@@ -90,7 +91,7 @@ pub fn draw_header(
     }
 
     // Keyboard hint
-    draw_text(
+    draw_ui_text(
         "(Space)",
         btn_x + 30.0,
         btn_y + 55.0,

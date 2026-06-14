@@ -1,4 +1,5 @@
 use macroquad::prelude::*;
+use macroquad_toolkit::ui::draw_ui_text;
 
 /// A floating text particle
 #[derive(Clone, Debug)]
@@ -50,7 +51,7 @@ impl FloatingText {
 
         // Outline for readability
         let outline_color = Color::new(0.0, 0.0, 0.0, alpha);
-        draw_text(
+        draw_ui_text(
             &self.text,
             self.x + 1.0,
             self.y + 1.0,
@@ -58,7 +59,7 @@ impl FloatingText {
             outline_color,
         );
 
-        draw_text(&self.text, self.x, self.y, 20.0 * self.scale, color);
+        draw_ui_text(&self.text, self.x, self.y, 20.0 * self.scale, color);
     }
 }
 

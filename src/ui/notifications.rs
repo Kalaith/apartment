@@ -2,6 +2,7 @@ use super::common::*;
 use crate::assets::AssetManager;
 use crate::simulation::{EventLog, EventSeverity};
 use macroquad::prelude::*;
+use macroquad_toolkit::ui::draw_ui_text;
 
 pub fn draw_notifications(event_log: &EventLog, _current_tick: u32, _assets: &AssetManager) {
     let y = screen_height() - layout::FOOTER_HEIGHT;
@@ -13,7 +14,7 @@ pub fn draw_notifications(event_log: &EventLog, _current_tick: u32, _assets: &As
     draw_line(0.0, y, w, y, 2.0, colors::TEXT_DIM);
 
     // Title
-    draw_text("EVENTS", 15.0, y + 22.0, 16.0, colors::TEXT_DIM);
+    draw_ui_text("EVENTS", 15.0, y + 22.0, 16.0, colors::TEXT_DIM);
 
     // Recent events
     let recent = event_log.recent_events(5);
@@ -34,7 +35,7 @@ pub fn draw_notifications(event_log: &EventLog, _current_tick: u32, _assets: &As
             msg
         };
 
-        draw_text(&display_msg, 15.0, event_y, 14.0, color);
+        draw_ui_text(&display_msg, 15.0, event_y, 14.0, color);
         event_y += 18.0;
 
         if event_y > y + h - 10.0 {

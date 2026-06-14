@@ -3,6 +3,7 @@ use crate::assets::AssetManager;
 use crate::building::{Apartment, ApartmentSize, Building, DesignType, NoiseLevel};
 use crate::tenant::Tenant;
 use macroquad::prelude::*;
+use macroquad_toolkit::ui::draw_ui_text;
 
 pub fn draw_building_view(
     building: &Building,
@@ -56,7 +57,7 @@ pub fn draw_building_view(
         let floor_y = start_y - (floor as f32 * layout::FLOOR_HEIGHT);
 
         // Floor label
-        draw_text(
+        draw_ui_text(
             &format!("Floor {}", floor),
             start_x - 80.0,
             floor_y + layout::UNIT_HEIGHT / 2.0,
@@ -142,7 +143,7 @@ pub fn draw_building_view(
     }
 
     // Hallway label and condition
-    draw_text(
+    draw_ui_text(
         "HALLWAY",
         start_x + 10.0,
         hallway_y + 25.0,
@@ -264,7 +265,7 @@ fn draw_apartment_unit_sized(
     draw_rectangle_lines(x, y, w, h, border_width, border_color);
 
     // Unit number
-    draw_text(&apt.unit_number, x + 5.0, y + 18.0, 20.0, colors::TEXT);
+    draw_ui_text(&apt.unit_number, x + 5.0, y + 18.0, 20.0, colors::TEXT);
 
     // Size indicator
     let size_text = match apt.size {
@@ -273,7 +274,7 @@ fn draw_apartment_unit_sized(
         ApartmentSize::Large => "L",
         ApartmentSize::Penthouse => "PH",
     };
-    draw_text(size_text, x + w - 20.0, y + 18.0, 16.0, colors::TEXT_DIM);
+    draw_ui_text(size_text, x + w - 20.0, y + 18.0, 16.0, colors::TEXT_DIM);
 
     // Condition bar
     let cond_color = condition_color(apt.condition);
@@ -291,7 +292,7 @@ fn draw_apartment_unit_sized(
     // Maybe hide design text since we have visual? Or keep small?
     // KEEP for now.
     // let design_char = match apt.design { ... };
-    // draw_text(design_char, x + 5.0, y + 50.0, 16.0, colors::TEXT_DIM);
+    // draw_ui_text(design_char, x + 5.0, y + 50.0, 16.0, colors::TEXT_DIM);
 
     // Noise indicator (if high)
     if matches!(apt.effective_noise(), NoiseLevel::High) {
@@ -307,13 +308,13 @@ fn draw_apartment_unit_sized(
                 },
             );
         } else {
-            draw_text("!", x + 25.0, y + 50.0, 14.0, colors::WARNING);
+            draw_ui_text("!", x + 25.0, y + 50.0, 14.0, colors::WARNING);
         }
     }
 
     // Low Condition Warning (Leak/Damage)
     if apt.condition < 40 {
-        draw_text("⚠", x + w - 25.0, y + 50.0, 24.0, colors::NEGATIVE);
+        draw_ui_text("⚠", x + w - 25.0, y + 50.0, 24.0, colors::NEGATIVE);
     }
 
     // Soundproofing indicator
@@ -330,7 +331,7 @@ fn draw_apartment_unit_sized(
                 },
             );
         } else {
-            draw_text("S", x + 45.0, y + 50.0, 14.0, colors::POSITIVE);
+            draw_ui_text("S", x + 45.0, y + 50.0, 14.0, colors::POSITIVE);
         }
     }
 
@@ -364,7 +365,7 @@ fn draw_apartment_unit_sized(
             }
 
             // Truncate name to fit (maybe smaller now?)
-            // draw_text(&name, x + 12.0, y + 80.0, 14.0, colors::TEXT);
+            // draw_ui_text(&name, x + 12.0, y + 80.0, 14.0, colors::TEXT);
 
             // Happiness icon
             let happiness_level = if tenant.happiness >= 90 {
@@ -392,7 +393,7 @@ fn draw_apartment_unit_sized(
                 );
             } else {
                 let icon_char = happiness_icon(tenant.happiness);
-                draw_text(icon_char, x + w - 24.0, y + 80.0, 16.0, colors::TEXT);
+                draw_ui_text(icon_char, x + w - 24.0, y + 80.0, 16.0, colors::TEXT);
             }
         }
     } else {
@@ -416,10 +417,10 @@ fn draw_apartment_unit_sized(
             );
         }
 
-        draw_text("VACANT", x + 5.0, y + 68.0, 14.0, colors::TEXT_DIM);
+        draw_ui_text("VACANT", x + 5.0, y + 68.0, 14.0, colors::TEXT_DIM);
 
         // Rent
-        draw_text(
+        draw_ui_text(
             &format!("${}", apt.rent_price),
             x + w - 50.0,
             y + 68.0,

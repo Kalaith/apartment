@@ -1,6 +1,7 @@
 use crate::narrative::events::NarrativeEvent;
 use crate::ui::{colors, UiAction};
 use macroquad::prelude::*;
+use macroquad_toolkit::ui::{draw_ui_text, measure_ui_text};
 
 pub fn draw_event_modal(event: &NarrativeEvent) -> Option<UiAction> {
     let screen_w = screen_width();
@@ -20,7 +21,7 @@ pub fn draw_event_modal(event: &NarrativeEvent) -> Option<UiAction> {
 
     // Header
     draw_rectangle(x, y, modal_w, 60.0, colors::PANEL_HEADER);
-    draw_text(
+    draw_ui_text(
         &event.headline,
         x + 20.0,
         y + 40.0,
@@ -34,7 +35,7 @@ pub fn draw_event_modal(event: &NarrativeEvent) -> Option<UiAction> {
     let max_width = modal_w - 40.0;
 
     for line in wrap_text(&event.description, font_size, max_width) {
-        draw_text(&line, x + 20.0, current_y, font_size, colors::TEXT);
+        draw_ui_text(&line, x + 20.0, current_y, font_size, colors::TEXT);
         current_y += 25.0;
     }
 
@@ -68,7 +69,7 @@ pub fn draw_event_modal(event: &NarrativeEvent) -> Option<UiAction> {
                 colors::PANEL
             },
         );
-        draw_text(
+        draw_ui_text(
             "Continue",
             btn_rect.x + 30.0,
             btn_rect.y + 32.0,
@@ -110,7 +111,7 @@ pub fn draw_event_modal(event: &NarrativeEvent) -> Option<UiAction> {
                 },
             );
 
-            draw_text(
+            draw_ui_text(
                 &choice.label,
                 btn_rect.x + 10.0,
                 btn_rect.y + 32.0,
@@ -121,7 +122,7 @@ pub fn draw_event_modal(event: &NarrativeEvent) -> Option<UiAction> {
             // Draw reputation/cost hint
             if choice.reputation_change != 0 {
                 let rep_text = format!("Rep: {:+}", choice.reputation_change);
-                draw_text(
+                draw_ui_text(
                     &rep_text,
                     btn_rect.x + btn_w - 100.0,
                     btn_rect.y + 32.0,
@@ -154,7 +155,7 @@ fn wrap_text(text: &str, font_size: f32, max_width: f32) -> Vec<String> {
                 format!("{} {}", line, word)
             };
 
-            let dims = measure_text(&candidate, None, font_size as u16, 1.0);
+            let dims = measure_ui_text(&candidate, None, font_size as u16, 1.0);
             if dims.width > max_width && !line.is_empty() {
                 lines.push(line);
                 line = word.to_string();

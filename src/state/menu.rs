@@ -3,6 +3,7 @@ use crate::assets::AssetManager;
 use crate::data::templates::{load_templates, BuildingTemplate};
 use crate::save::{has_save_game, load_game, load_player_progress, PlayerProgress};
 use macroquad::prelude::*;
+use macroquad_toolkit::ui::{draw_ui_text, measure_ui_text};
 
 pub struct MenuState {
     has_save: bool,
@@ -121,8 +122,8 @@ impl MenuState {
         } else {
             let title = "APARTMENT";
             let title_size = 60.0;
-            let title_width = measure_text(title, None, title_size as u16, 1.0).width;
-            draw_text(
+            let title_width = measure_ui_text(title, None, title_size as u16, 1.0).width;
+            draw_ui_text(
                 title,
                 screen_width() / 2.0 - title_width / 2.0,
                 120.0,
@@ -134,8 +135,8 @@ impl MenuState {
         // Section title
         let section_title = "Select Building";
         let section_size = 28.0;
-        let section_width = measure_text(section_title, None, section_size as u16, 1.0).width;
-        draw_text(
+        let section_width = measure_ui_text(section_title, None, section_size as u16, 1.0).width;
+        draw_ui_text(
             section_title,
             screen_width() / 2.0 - section_width / 2.0,
             screen_height() * 0.40,
@@ -190,11 +191,11 @@ impl MenuState {
             } else {
                 Color::from_rgba(100, 100, 100, 255)
             };
-            draw_text(&template.name, x + 15.0, y + 30.0, 22.0, name_color);
+            draw_ui_text(&template.name, x + 15.0, y + 30.0, 22.0, name_color);
 
             // Difficulty badge
             let diff_color = border_color;
-            draw_text(&template.difficulty, x + 15.0, y + 52.0, 14.0, diff_color);
+            draw_ui_text(&template.difficulty, x + 15.0, y + 52.0, 14.0, diff_color);
 
             // Description (truncated)
             let desc = if template.description.len() > 40 {
@@ -207,11 +208,11 @@ impl MenuState {
             } else {
                 Color::from_rgba(80, 80, 80, 255)
             };
-            draw_text(&desc, x + 15.0, y + 75.0, 12.0, desc_color);
+            draw_ui_text(&desc, x + 15.0, y + 75.0, 12.0, desc_color);
 
             // Units count
             let units = template.apartments.len();
-            draw_text(
+            draw_ui_text(
                 &format!("{} units", units),
                 x + 15.0,
                 y + 100.0,
@@ -221,7 +222,7 @@ impl MenuState {
 
             // Locked overlay
             if !is_unlocked {
-                draw_text(
+                draw_ui_text(
                     "🔒 LOCKED",
                     x + card_w - 90.0,
                     y + 30.0,
@@ -232,7 +233,7 @@ impl MenuState {
 
             // Completed checkmark
             if is_completed {
-                draw_text(
+                draw_ui_text(
                     "✓",
                     x + card_w - 30.0,
                     y + 30.0,
@@ -267,8 +268,8 @@ impl MenuState {
             );
 
             let label = "Continue Saved Game";
-            let label_width = measure_text(label, None, 18, 1.0).width;
-            draw_text(
+            let label_width = measure_ui_text(label, None, 18, 1.0).width;
+            draw_ui_text(
                 label,
                 btn_x + (btn_w - label_width) / 2.0,
                 btn_y + 28.0,
@@ -304,8 +305,8 @@ impl MenuState {
         );
 
         let label = "Quit";
-        let label_width = measure_text(label, None, 18, 1.0).width;
-        draw_text(
+        let label_width = measure_ui_text(label, None, 18, 1.0).width;
+        draw_ui_text(
             label,
             quit_btn_x + (quit_btn_w - label_width) / 2.0,
             quit_btn_y + 26.0,

@@ -2,6 +2,7 @@ use crate::building::ownership::OwnershipType;
 use crate::building::Building;
 use crate::ui::{colors, UiAction};
 use macroquad::prelude::*;
+use macroquad_toolkit::ui::draw_ui_text_ex;
 
 pub fn draw_ownership_panel(building: &Building) -> Option<UiAction> {
     let panel_x = screen_width() * 0.5 + 10.0;
@@ -27,7 +28,7 @@ pub fn draw_ownership_panel(building: &Building) -> Option<UiAction> {
     );
 
     // Title
-    draw_text_ex(
+    draw_ui_text_ex(
         "Building Ownership",
         panel_x + 10.0,
         panel_y + 25.0,
@@ -50,7 +51,7 @@ pub fn draw_ownership_panel(building: &Building) -> Option<UiAction> {
         OwnershipType::SocialHousing => "Social Housing / Subsidized",
     };
 
-    draw_text_ex(
+    draw_ui_text_ex(
         model_name,
         panel_x + 10.0,
         y,
@@ -65,7 +66,7 @@ pub fn draw_ownership_panel(building: &Building) -> Option<UiAction> {
     // Handle different models
     match &building.ownership_model {
         OwnershipType::FullRental => {
-            draw_text_ex(
+            draw_ui_text_ex(
                 "You own 100% of this building and collect all rent.",
                 panel_x + 10.0,
                 y,
@@ -76,7 +77,7 @@ pub fn draw_ownership_panel(building: &Building) -> Option<UiAction> {
                 },
             );
             y += 20.0;
-            draw_text_ex(
+            draw_ui_text_ex(
                 "You can convert individual units to Condos to raise quick capital.",
                 panel_x + 10.0,
                 y,
@@ -91,7 +92,7 @@ pub fn draw_ownership_panel(building: &Building) -> Option<UiAction> {
             // Show conversion options for vacant units?
             // For now, let's just list unit counts
             let owned_count = building.apartments.len();
-            draw_text_ex(
+            draw_ui_text_ex(
                 &format!("Units Owned: {}", owned_count),
                 panel_x + 10.0,
                 y,
@@ -108,7 +109,7 @@ pub fn draw_ownership_panel(building: &Building) -> Option<UiAction> {
             // Maybe just a note: "Select a unit in the main view to Sell as Condo"
             // Or listed items.
 
-            draw_text_ex(
+            draw_ui_text_ex(
                 "Available Units for Conversion:",
                 panel_x + 10.0,
                 y,
@@ -125,7 +126,7 @@ pub fn draw_ownership_panel(building: &Building) -> Option<UiAction> {
                 draw_rectangle(panel_x + 10.0, y, panel_width - 20.0, 30.0, colors::PANEL);
 
                 // Unit Name
-                draw_text_ex(
+                draw_ui_text_ex(
                     &format!("Unit {}", apt.unit_number),
                     panel_x + 20.0,
                     y + 20.0,
@@ -142,7 +143,7 @@ pub fn draw_ownership_panel(building: &Building) -> Option<UiAction> {
                 } else {
                     "Occupied"
                 };
-                draw_text_ex(
+                draw_ui_text_ex(
                     status,
                     panel_x + 100.0,
                     y + 20.0,
@@ -180,7 +181,7 @@ pub fn draw_ownership_panel(building: &Building) -> Option<UiAction> {
         }
         OwnershipType::MixedOwnership(board) | OwnershipType::FullCondo(board) => {
             // Show condo board stats
-            draw_text_ex(
+            draw_ui_text_ex(
                 &format!("Reserve Fund: ${}", board.reserve_fund),
                 panel_x + 10.0,
                 y,
@@ -192,7 +193,7 @@ pub fn draw_ownership_panel(building: &Building) -> Option<UiAction> {
             );
             y += 25.0;
 
-            draw_text_ex(
+            draw_ui_text_ex(
                 &format!(
                     "Sold Units: {} | Remaining: {}",
                     board.units.len(),
@@ -219,7 +220,7 @@ pub fn draw_ownership_panel(building: &Building) -> Option<UiAction> {
                 .collect();
 
             if !unsold.is_empty() {
-                draw_text_ex(
+                draw_ui_text_ex(
                     "Remaining Units for Sale:",
                     panel_x + 10.0,
                     y,
@@ -236,7 +237,7 @@ pub fn draw_ownership_panel(building: &Building) -> Option<UiAction> {
                     draw_rectangle(panel_x + 10.0, y, panel_width - 20.0, 30.0, colors::PANEL);
 
                     // Unit Name
-                    draw_text_ex(
+                    draw_ui_text_ex(
                         &format!("Unit {}", apt.unit_number),
                         panel_x + 20.0,
                         y + 20.0,
@@ -253,7 +254,7 @@ pub fn draw_ownership_panel(building: &Building) -> Option<UiAction> {
                     } else {
                         "Occupied"
                     };
-                    draw_text_ex(
+                    draw_ui_text_ex(
                         status,
                         panel_x + 100.0,
                         y + 20.0,
@@ -289,7 +290,7 @@ pub fn draw_ownership_panel(building: &Building) -> Option<UiAction> {
                     }
                 }
             } else {
-                draw_text_ex(
+                draw_ui_text_ex(
                     "All units have been sold as condos.",
                     panel_x + 10.0,
                     y,
@@ -302,7 +303,7 @@ pub fn draw_ownership_panel(building: &Building) -> Option<UiAction> {
             }
         }
         _ => {
-            draw_text_ex(
+            draw_ui_text_ex(
                 "Management options not yet implemented for this ownership type.",
                 panel_x + 10.0,
                 y,

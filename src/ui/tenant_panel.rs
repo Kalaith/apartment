@@ -7,6 +7,7 @@ use macroquad::prelude::*;
 use std::collections::HashMap;
 
 use super::{common::*, UiAction};
+use macroquad_toolkit::ui::draw_ui_text;
 
 pub(super) fn draw_tenant_info(
     apt: &Apartment,
@@ -67,7 +68,7 @@ fn draw_occupied_tenant_info(
     };
 
     if *y > content_top && *y < content_bottom {
-        draw_text("TENANT", content_x, *y, 14.0, colors::TEXT_DIM);
+        draw_ui_text("TENANT", content_x, *y, 14.0, colors::TEXT_DIM);
     }
     *y += 20.0;
 
@@ -101,8 +102,8 @@ fn draw_occupied_tenant_info(
             draw_rectangle(content_x, *y, 4.0, 20.0, archetype_color(&tenant.archetype));
         }
 
-        draw_text(&tenant.name, text_x, *y + 16.0, 20.0, colors::TEXT);
-        draw_text(
+        draw_ui_text(&tenant.name, text_x, *y + 16.0, 20.0, colors::TEXT);
+        draw_ui_text(
             tenant.archetype.name(),
             text_x,
             *y + 36.0,
@@ -136,7 +137,7 @@ fn draw_occupied_tenant_info(
     );
 
     if *y > content_top && *y < content_bottom {
-        draw_text(
+        draw_ui_text(
             &format!("Months: {}", tenant.months_residing),
             content_x,
             *y,
@@ -171,12 +172,12 @@ fn draw_relationship_icons(tenant_id: u32, network: &TenantNetwork, text_x: f32,
             crate::consequences::RelationshipType::Neutral => "⚪",
         };
 
-        draw_text(icon, icon_x, icon_y + 15.0, 16.0, WHITE);
+        draw_ui_text(icon, icon_x, icon_y + 15.0, 16.0, WHITE);
         icon_x += 25.0;
     }
 
     if relationships.len() > 4 {
-        draw_text("+", icon_x, icon_y + 15.0, 14.0, colors::TEXT_DIM);
+        draw_ui_text("+", icon_x, icon_y + 15.0, 14.0, colors::TEXT_DIM);
     }
 }
 
@@ -196,16 +197,16 @@ fn draw_pending_request(
         return None;
     }
 
-    draw_text("PENDING REQUEST", content_x, *y, 14.0, colors::ACCENT);
+    draw_ui_text("PENDING REQUEST", content_x, *y, 14.0, colors::ACCENT);
     *y += 40.0;
 
     let req_text = request_text(request);
-    draw_text(&req_text, content_x, *y, 16.0, colors::TEXT);
+    draw_ui_text(&req_text, content_x, *y, 16.0, colors::TEXT);
     *y += 25.0;
 
     let effect_text = approval_effect_text(request);
     if !effect_text.is_empty() {
-        draw_text(
+        draw_ui_text(
             &format!("Effect: {}", effect_text),
             content_x,
             *y,
@@ -310,7 +311,7 @@ fn draw_tenant_happiness(
     content_bottom: f32,
 ) {
     if *y > content_top && *y < content_bottom {
-        draw_text("Happiness", content_x, *y, 14.0, colors::TEXT_DIM);
+        draw_ui_text("Happiness", content_x, *y, 14.0, colors::TEXT_DIM);
     }
     *y += 5.0;
 
@@ -351,7 +352,7 @@ fn draw_tenant_happiness(
             );
         } else {
             let icon_char = happiness_icon(tenant.happiness);
-            draw_text(
+            draw_ui_text(
                 icon_char,
                 content_x + panel_w - 50.0,
                 *y + 14.0,
@@ -373,7 +374,7 @@ fn draw_vacant_unit_actions(
     content_bottom: f32,
 ) -> Option<UiAction> {
     if *y > content_top && *y < content_bottom {
-        draw_text("VACANT", content_x, *y, 18.0, colors::WARNING);
+        draw_ui_text("VACANT", content_x, *y, 18.0, colors::WARNING);
     }
     *y += 25.0;
 
@@ -395,7 +396,7 @@ fn draw_listed_vacancy_actions(
     content_bottom: f32,
 ) -> Option<UiAction> {
     if *y > content_top && *y < content_bottom {
-        draw_text("Status: LISTED", content_x, *y, 16.0, colors::POSITIVE);
+        draw_ui_text("Status: LISTED", content_x, *y, 16.0, colors::POSITIVE);
     }
     *y += 20.0;
 
@@ -405,7 +406,7 @@ fn draw_listed_vacancy_actions(
         } else {
             "Target: Open (Any)".to_string()
         };
-        draw_text(&target_text, content_x, *y, 14.0, colors::TEXT);
+        draw_ui_text(&target_text, content_x, *y, 14.0, colors::TEXT);
     }
     *y += 30.0;
 
@@ -437,12 +438,12 @@ fn draw_unlisted_vacancy_actions(
     content_bottom: f32,
 ) -> Option<UiAction> {
     if *y > content_top && *y < content_bottom {
-        draw_text("Status: OFF MARKET", content_x, *y, 14.0, colors::TEXT_DIM);
+        draw_ui_text("Status: OFF MARKET", content_x, *y, 14.0, colors::TEXT_DIM);
     }
     *y += 30.0;
 
     if *y > content_top && *y < content_bottom {
-        draw_text(
+        draw_ui_text(
             &format!("Rent: ${}", apt.rent_price),
             content_x,
             *y,
@@ -467,7 +468,7 @@ fn draw_unlisted_vacancy_actions(
     *y += 40.0;
 
     if *y > content_top && *y < content_bottom {
-        draw_text("List for Lease:", content_x, *y, 14.0, colors::ACCENT);
+        draw_ui_text("List for Lease:", content_x, *y, 14.0, colors::ACCENT);
     }
     *y += 20.0;
 

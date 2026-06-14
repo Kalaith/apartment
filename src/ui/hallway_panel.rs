@@ -3,6 +3,7 @@ use crate::building::Building;
 use macroquad::prelude::*;
 
 use super::{common::*, UiAction};
+use macroquad_toolkit::ui::draw_ui_text;
 
 pub fn draw_hallway_panel(
     building: &Building,
@@ -46,7 +47,7 @@ pub fn draw_hallway_panel(
     let mut y = panel_y + 50.0 - new_scroll;
 
     if y + 20.0 > content_top && y < content_bottom {
-        draw_text("CONDITION", content_x, y, 14.0, colors::TEXT_DIM);
+        draw_ui_text("CONDITION", content_x, y, 14.0, colors::TEXT_DIM);
     }
     y += 5.0;
 
@@ -77,7 +78,7 @@ pub fn draw_hallway_panel(
                 },
             );
         }
-        draw_text(
+        draw_ui_text(
             &format!("{}%", building.hallway_condition),
             content_x + panel_w - 110.0,
             y + 15.0,
@@ -88,7 +89,7 @@ pub fn draw_hallway_panel(
     y += 45.0;
 
     if y + 14.0 > content_top && y < content_bottom {
-        draw_text(
+        draw_ui_text(
             "Affects overall building appeal",
             content_x,
             y,
@@ -100,7 +101,7 @@ pub fn draw_hallway_panel(
 
     if y + 18.0 > content_top && y < content_bottom {
         let appeal = building.building_appeal();
-        draw_text(
+        draw_ui_text(
             &format!("Building Appeal: {}", appeal),
             content_x,
             y,
@@ -111,7 +112,7 @@ pub fn draw_hallway_panel(
     y += 50.0;
 
     if y + 14.0 > content_top && y < content_bottom {
-        draw_text("STAFF", content_x, y, 14.0, colors::TEXT_DIM);
+        draw_ui_text("STAFF", content_x, y, 14.0, colors::TEXT_DIM);
     }
     y += 25.0;
 
@@ -133,7 +134,7 @@ pub fn draw_hallway_panel(
             };
 
             if y + 16.0 > content_top && y < content_bottom {
-                draw_text(
+                draw_ui_text(
                     &format!("{} (${}/mo)", label, cost),
                     content_x,
                     y,
@@ -148,7 +149,7 @@ pub fn draw_hallway_panel(
 
     if staff_count == 0 {
         if y + 16.0 > content_top && y < content_bottom {
-            draw_text("None hired", content_x, y, 16.0, colors::TEXT_DIM);
+            draw_ui_text("None hired", content_x, y, 16.0, colors::TEXT_DIM);
         }
         y += 25.0;
     }
@@ -229,7 +230,7 @@ pub fn draw_hallway_panel(
     }
 
     if y + 14.0 > content_top && y < content_bottom {
-        draw_text("UPGRADES", content_x, y, 14.0, colors::TEXT_DIM);
+        draw_ui_text("UPGRADES", content_x, y, 14.0, colors::TEXT_DIM);
     }
     y += 25.0;
 

@@ -6,6 +6,7 @@ use crate::city::{City, Neighborhood, NeighborhoodType, PropertyListing};
 use crate::narrative::NarrativeEventSystem;
 use crate::ui::colors;
 use macroquad::prelude::*;
+use macroquad_toolkit::ui::{draw_ui_text, draw_ui_text_ex};
 
 /// Draw the city map showing all neighborhoods
 pub fn draw_city_map(
@@ -36,7 +37,7 @@ pub fn draw_city_map(
     );
 
     // Title
-    draw_text_ex(
+    draw_ui_text_ex(
         &city.name,
         map_x + 10.0,
         map_y + 25.0,
@@ -144,7 +145,7 @@ fn draw_neighborhood_cell(
     draw_rectangle_lines(x, y, width, height, 2.0, base_color);
 
     // Neighborhood name
-    draw_text_ex(
+    draw_ui_text_ex(
         &neighborhood.name,
         x + 8.0,
         y + 22.0,
@@ -156,7 +157,7 @@ fn draw_neighborhood_cell(
     );
 
     // Neighborhood type
-    draw_text_ex(
+    draw_ui_text_ex(
         neighborhood.neighborhood_type.name(),
         x + 8.0,
         y + 40.0,
@@ -173,7 +174,7 @@ fn draw_neighborhood_cell(
         "Buildings: {}/{}",
         building_count, neighborhood.available_slots
     );
-    draw_text_ex(
+    draw_ui_text_ex(
         &slot_text,
         x + 8.0,
         y + 60.0,
@@ -190,7 +191,7 @@ fn draw_neighborhood_cell(
 
     // Stats preview
     let stats = &neighborhood.stats;
-    draw_text_ex(
+    draw_ui_text_ex(
         &format!(
             "Crime: {} | Transit: {}",
             stats.crime_level, stats.transit_access
@@ -207,7 +208,7 @@ fn draw_neighborhood_cell(
     // Reputation bar
     let bar_y = y + height - 25.0;
     let bar_width = width - 16.0;
-    draw_text_ex(
+    draw_ui_text_ex(
         &format!("Rep: {}", neighborhood.reputation),
         x + 8.0,
         bar_y - 3.0,
@@ -236,7 +237,7 @@ fn draw_neighborhood_cell(
         let icon_x = x + width - 30.0;
         let icon_y = y + 30.0;
         draw_circle(icon_x, icon_y, 12.0, colors::ACCENT);
-        draw_text("!", icon_x - 3.0, icon_y + 5.0, 20.0, colors::TEXT_BRIGHT);
+        draw_ui_text("!", icon_x - 3.0, icon_y + 5.0, 20.0, colors::TEXT_BRIGHT);
     }
 
     // Button area
@@ -276,7 +277,7 @@ pub fn draw_portfolio_panel(
     );
 
     // Title
-    draw_text_ex(
+    draw_ui_text_ex(
         "Your Properties",
         panel_x + 10.0,
         panel_y + 25.0,
@@ -329,7 +330,7 @@ pub fn draw_portfolio_panel(
         }
 
         // Building name
-        draw_text_ex(
+        draw_ui_text_ex(
             &building.name,
             item_x + 10.0,
             y + 22.0,
@@ -345,7 +346,7 @@ pub fn draw_portfolio_panel(
         );
 
         // Location
-        draw_text_ex(
+        draw_ui_text_ex(
             &neighborhood_name,
             item_x + 10.0,
             y + 40.0,
@@ -361,7 +362,7 @@ pub fn draw_portfolio_panel(
         let total = building.apartments.len();
         let appeal = building.building_appeal();
 
-        draw_text_ex(
+        draw_ui_text_ex(
             &format!("Occupancy: {}/{} | Appeal: {}", occupancy, total, appeal),
             item_x + 10.0,
             y + 58.0,
@@ -437,7 +438,7 @@ pub fn draw_market_panel(
     );
 
     // Title
-    draw_text_ex(
+    draw_ui_text_ex(
         "Property Market",
         panel_x + 15.0,
         panel_y + 28.0,
@@ -449,7 +450,7 @@ pub fn draw_market_panel(
     );
 
     // Budget display
-    draw_text_ex(
+    draw_ui_text_ex(
         &format!("Your Budget: ${}", player_funds),
         panel_x + panel_width - 200.0,
         panel_y + 28.0,

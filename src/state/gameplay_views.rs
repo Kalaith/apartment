@@ -10,6 +10,7 @@ use crate::ui::{
 use macroquad::prelude::*;
 
 use super::gameplay::{GameplayState, ViewMode};
+use macroquad_toolkit::ui::{draw_ui_text, draw_ui_text_ex, measure_ui_text};
 
 impl GameplayState {
     /// Main draw function - dispatches to appropriate view
@@ -181,7 +182,7 @@ impl GameplayState {
 
         // Show a loading indicator if assets aren't ready
         if !has_assets {
-            draw_text_ex(
+            draw_ui_text_ex(
                 "Loading...",
                 screen_width() - 100.0,
                 35.0,
@@ -193,7 +194,7 @@ impl GameplayState {
             );
         }
 
-        draw_text_ex(
+        draw_ui_text_ex(
             "Mailbox",
             20.0,
             35.0,
@@ -207,7 +208,7 @@ impl GameplayState {
         // Unread count
         let unread = self.mailbox.unread_count();
         if unread > 0 {
-            draw_text_ex(
+            draw_ui_text_ex(
                 &format!("{} unread", unread),
                 150.0,
                 35.0,
@@ -236,7 +237,7 @@ impl GameplayState {
             draw_rectangle(20.0, y, screen_width() - 40.0, mail_height, bg_color);
 
             // Icon
-            draw_text_ex(
+            draw_ui_text_ex(
                 mail.mail_type.icon(),
                 30.0,
                 y + 30.0,
@@ -248,7 +249,7 @@ impl GameplayState {
             );
 
             // Subject
-            draw_text_ex(
+            draw_ui_text_ex(
                 &mail.subject,
                 60.0,
                 y + 25.0,
@@ -264,7 +265,7 @@ impl GameplayState {
             );
 
             // Sender
-            draw_text_ex(
+            draw_ui_text_ex(
                 &format!("From: {}", mail.sender),
                 60.0,
                 y + 45.0,
@@ -276,7 +277,7 @@ impl GameplayState {
             );
 
             // Month
-            draw_text_ex(
+            draw_ui_text_ex(
                 &format!("Month {}", mail.month_received),
                 screen_width() - 120.0,
                 y + 25.0,
@@ -289,7 +290,7 @@ impl GameplayState {
         }
 
         // Back hint
-        draw_text_ex(
+        draw_ui_text_ex(
             "[Esc] Back to Building",
             20.0,
             screen_height() - 30.0,
@@ -323,8 +324,8 @@ impl GameplayState {
 
         // Title
         let title = "PAUSED";
-        let title_width = measure_text(title, None, 32, 1.0).width;
-        draw_text(
+        let title_width = measure_ui_text(title, None, 32, 1.0).width;
+        draw_ui_text(
             title,
             panel_x + (panel_w - title_width) / 2.0,
             panel_y + 40.0,
@@ -381,7 +382,7 @@ impl GameplayState {
         }
 
         // ESC hint
-        draw_text(
+        draw_ui_text(
             "Press ESC to resume",
             panel_x + (panel_w - 140.0) / 2.0,
             panel_y + panel_h - 20.0,
@@ -405,8 +406,8 @@ impl GameplayState {
         draw_rectangle(x, y, w, h, bg_color);
         draw_rectangle_lines(x, y, w, h, 2.0, colors::ACCENT);
 
-        let text_width = measure_text(text, None, 20, 1.0).width;
-        draw_text(
+        let text_width = measure_ui_text(text, None, 20, 1.0).width;
+        draw_ui_text(
             text,
             x + (w - text_width) / 2.0,
             y + h / 2.0 + 6.0,
@@ -454,7 +455,7 @@ impl GameplayState {
             );
         }
         draw_rectangle(portrait_x, portrait_y, portrait_size, portrait_size, GRAY);
-        draw_text(
+        draw_ui_text(
             "ARTIE",
             portrait_x + 20.0,
             portrait_y + 50.0,
@@ -463,7 +464,7 @@ impl GameplayState {
         );
 
         // Name
-        draw_text(
+        draw_ui_text(
             npc_name,
             panel_x + 140.0,
             panel_y + 30.0,
@@ -479,7 +480,7 @@ impl GameplayState {
 
         for word in words {
             if current_line.len() + word.len() > max_chars_per_line {
-                draw_text(&current_line, panel_x + 140.0, y, 18.0, colors::TEXT);
+                draw_ui_text(&current_line, panel_x + 140.0, y, 18.0, colors::TEXT);
                 y += 22.0;
                 current_line.clear();
             }
@@ -489,7 +490,7 @@ impl GameplayState {
             current_line.push_str(word);
         }
         if !current_line.is_empty() {
-            draw_text(&current_line, panel_x + 140.0, y, 18.0, colors::TEXT);
+            draw_ui_text(&current_line, panel_x + 140.0, y, 18.0, colors::TEXT);
         }
 
         // Next Button - draw and check click
@@ -514,8 +515,8 @@ impl GameplayState {
         draw_rectangle_lines(btn_x, btn_y, btn_w, btn_h, 2.0, colors::TEXT_BRIGHT);
 
         let text = "Next >";
-        let text_width = measure_text(text, None, 22, 1.0).width;
-        draw_text(
+        let text_width = measure_ui_text(text, None, 22, 1.0).width;
+        draw_ui_text(
             text,
             btn_x + (btn_w - text_width) / 2.0,
             btn_y + btn_h / 2.0 + 7.0,
@@ -552,7 +553,7 @@ impl GameplayState {
         draw_rectangle_lines(panel_x, panel_y, panel_w, panel_h, 3.0, border_color);
 
         // Icon
-        draw_text(
+        draw_ui_text(
             &notification.icon,
             panel_x + 20.0,
             panel_y + 50.0,
@@ -568,7 +569,7 @@ impl GameplayState {
 
         for word in words {
             if current_line.len() + word.len() > max_chars_per_line {
-                draw_text(&current_line, panel_x + 80.0, y, 20.0, colors::TEXT_BRIGHT);
+                draw_ui_text(&current_line, panel_x + 80.0, y, 20.0, colors::TEXT_BRIGHT);
                 y += 24.0;
                 current_line.clear();
             }
@@ -578,13 +579,13 @@ impl GameplayState {
             current_line.push_str(word);
         }
         if !current_line.is_empty() {
-            draw_text(&current_line, panel_x + 80.0, y, 20.0, colors::TEXT_BRIGHT);
+            draw_ui_text(&current_line, panel_x + 80.0, y, 20.0, colors::TEXT_BRIGHT);
             y += 24.0;
         }
 
         // Description (if any)
         if let Some(desc) = &notification.description {
-            draw_text(desc, panel_x + 80.0, y + 5.0, 14.0, colors::TEXT_DIM);
+            draw_ui_text(desc, panel_x + 80.0, y + 5.0, 14.0, colors::TEXT_DIM);
         }
 
         // OK Button
@@ -609,8 +610,8 @@ impl GameplayState {
         draw_rectangle_lines(btn_x, btn_y, btn_w, btn_h, 2.0, colors::TEXT_BRIGHT);
 
         let text = "OK";
-        let text_width = measure_text(text, None, 20, 1.0).width;
-        draw_text(
+        let text_width = measure_ui_text(text, None, 20, 1.0).width;
+        draw_ui_text(
             text,
             btn_x + (btn_w - text_width) / 2.0,
             btn_y + btn_h / 2.0 + 6.0,

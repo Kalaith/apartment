@@ -8,6 +8,7 @@ use crate::tenant::{Tenant, TenantApplication};
 use crate::ui::layout::HEADER_HEIGHT;
 use crate::ui::{colors, FloatingText, Selection, Tween, UiAction};
 use macroquad::prelude::*;
+use macroquad_toolkit::ui::draw_ui_text_ex;
 use std::collections::HashMap;
 
 // Phase 3 imports
@@ -523,7 +524,7 @@ impl GameplayState {
         );
 
         // Title
-        draw_text_ex(
+        draw_ui_text_ex(
             &format!("{} - City Overview", self.city.name),
             20.0,
             35.0,
@@ -535,7 +536,7 @@ impl GameplayState {
         );
 
         // Funds
-        draw_text_ex(
+        draw_ui_text_ex(
             &format!("${}", self.funds.balance),
             screen_width() - 200.0,
             35.0,
@@ -547,7 +548,7 @@ impl GameplayState {
         );
 
         // Buildings count
-        draw_text_ex(
+        draw_ui_text_ex(
             &format!(
                 "{} Buildings | Month {}",
                 self.city.buildings.len(),
@@ -563,7 +564,7 @@ impl GameplayState {
         );
 
         // Gentrification score
-        draw_text_ex(
+        draw_ui_text_ex(
             &format!(
                 "Gentrification Score: {} | Affordable Units: {}",
                 self.gentrification.gentrification_score, self.gentrification.affordable_units
@@ -586,7 +587,7 @@ impl GameplayState {
             ViewMode::CareerSummary => "",
         };
 
-        draw_text_ex(
+        draw_ui_text_ex(
             nav_hint,
             20.0,
             55.0,

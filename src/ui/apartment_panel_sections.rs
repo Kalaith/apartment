@@ -3,6 +3,7 @@ use crate::building::{Apartment, ApartmentSize, Building, DesignType, NoiseLevel
 use macroquad::prelude::*;
 
 use super::{common::*, UiAction};
+use macroquad_toolkit::ui::draw_ui_text;
 
 pub(super) fn draw_sold_condo_panel(
     apt: &Apartment,
@@ -24,7 +25,7 @@ pub(super) fn draw_sold_condo_panel(
     let content_x = panel_x + 15.0;
     let mut y = panel_y + 60.0;
 
-    draw_text(
+    draw_ui_text(
         "CONDO - PRIVATELY OWNED",
         content_x,
         y,
@@ -34,7 +35,7 @@ pub(super) fn draw_sold_condo_panel(
     y += 35.0;
 
     if let Some((owner_name, purchase_price)) = building.get_condo_info(apt.id) {
-        draw_text(
+        draw_ui_text(
             &format!("Owner: {}", owner_name),
             content_x,
             y,
@@ -42,7 +43,7 @@ pub(super) fn draw_sold_condo_panel(
             colors::TEXT,
         );
         y += 25.0;
-        draw_text(
+        draw_ui_text(
             &format!("Purchased for: ${}", purchase_price),
             content_x,
             y,
@@ -52,7 +53,7 @@ pub(super) fn draw_sold_condo_panel(
         y += 35.0;
 
         let buyback_price = (purchase_price as f32 * 1.1) as i32;
-        draw_text("Buyback Option:", content_x, y, 16.0, colors::ACCENT);
+        draw_ui_text("Buyback Option:", content_x, y, 16.0, colors::ACCENT);
         y += 25.0;
 
         let can_afford = money >= buyback_price;
@@ -66,12 +67,12 @@ pub(super) fn draw_sold_condo_panel(
         y += 45.0;
 
         if !can_afford {
-            draw_text("Insufficient funds", content_x, y, 14.0, colors::NEGATIVE);
+            draw_ui_text("Insufficient funds", content_x, y, 14.0, colors::NEGATIVE);
         }
     }
 
     y += 30.0;
-    draw_text(
+    draw_ui_text(
         "You cannot modify or rent this unit",
         content_x,
         y,
@@ -79,7 +80,7 @@ pub(super) fn draw_sold_condo_panel(
         colors::TEXT_DIM,
     );
     y += 20.0;
-    draw_text(
+    draw_ui_text(
         "while it is privately owned.",
         content_x,
         y,
@@ -100,7 +101,7 @@ pub(super) fn draw_apartment_stats(
     content_bottom: f32,
 ) {
     if *y + 20.0 > content_top && *y < content_bottom {
-        draw_text("CONDITION", content_x, *y, 14.0, colors::TEXT_DIM);
+        draw_ui_text("CONDITION", content_x, *y, 14.0, colors::TEXT_DIM);
     }
     *y += 5.0;
 
@@ -131,7 +132,7 @@ pub(super) fn draw_apartment_stats(
                 },
             );
         }
-        draw_text(
+        draw_ui_text(
             &format!("{}%", apt.condition),
             content_x + panel_w - 110.0,
             *y + 15.0,
@@ -149,7 +150,7 @@ pub(super) fn draw_apartment_stats(
             DesignType::Luxury => "Luxury",
             DesignType::Opulent => "Opulent",
         };
-        draw_text(
+        draw_ui_text(
             &format!("Design: {}", design_text),
             content_x,
             *y,
@@ -166,7 +167,7 @@ pub(super) fn draw_apartment_stats(
             ApartmentSize::Large => "Large",
             ApartmentSize::Penthouse => "Penthouse",
         };
-        draw_text(
+        draw_ui_text(
             &format!("Size: {}", size_text),
             content_x,
             *y,
@@ -186,7 +187,7 @@ pub(super) fn draw_apartment_stats(
         } else {
             colors::POSITIVE
         };
-        draw_text(
+        draw_ui_text(
             &format!("Noise: {}", noise_text),
             content_x,
             *y,
@@ -210,7 +211,7 @@ pub(super) fn draw_apartment_stats(
 
     if apt.has_soundproofing {
         if *y > content_top && *y < content_bottom {
-            draw_text("Soundproofed", content_x, *y, 16.0, colors::POSITIVE);
+            draw_ui_text("Soundproofed", content_x, *y, 16.0, colors::POSITIVE);
             if let Some(icon) = assets.get_texture("icon_soundproofing") {
                 draw_texture_ex(
                     icon,
@@ -228,7 +229,7 @@ pub(super) fn draw_apartment_stats(
     }
 
     if *y > content_top && *y < content_bottom {
-        draw_text(
+        draw_ui_text(
             &format!("Rent: ${}/mo", apt.rent_price),
             content_x,
             *y,
@@ -252,7 +253,7 @@ pub(super) fn draw_apartment_stats(
 
     if *y > content_top && *y < content_bottom {
         let quality = apt.quality_score();
-        draw_text(
+        draw_ui_text(
             &format!("Quality Score: {}", quality),
             content_x,
             *y,
@@ -288,7 +289,7 @@ pub(super) fn draw_upgrades(
     *y += 15.0;
 
     if *y > content_top && *y < content_bottom {
-        draw_text("UPGRADES", content_x, *y, 14.0, colors::TEXT_DIM);
+        draw_ui_text("UPGRADES", content_x, *y, 14.0, colors::TEXT_DIM);
     }
     *y += 25.0;
 
@@ -334,7 +335,7 @@ pub(super) fn draw_upgrades(
     if max_scroll > 0.0 {
         let scroll_hint_y = content_bottom - 20.0;
         if final_scroll < max_scroll - 5.0 {
-            draw_text(
+            draw_ui_text(
                 "▼ Scroll for more",
                 content_x,
                 scroll_hint_y,

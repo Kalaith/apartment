@@ -4,6 +4,7 @@ use crate::ui::colors;
 use macroquad::prelude::*;
 
 use super::city_view::CityMapAction;
+use macroquad_toolkit::ui::draw_ui_text_ex;
 
 pub(super) fn draw_listing_card(
     listing: &PropertyListing,
@@ -135,7 +136,7 @@ fn draw_listing_text(
     x: f32,
     y: f32,
 ) {
-    draw_text_ex(
+    draw_ui_text_ex(
         &listing.name,
         x + 15.0,
         y + 22.0,
@@ -147,13 +148,13 @@ fn draw_listing_text(
     );
 
     let location_name = neighborhood.map(|n| n.name.as_str()).unwrap_or("Unknown");
-    draw_text_ex(
+    draw_ui_text_ex(
         location_name,
         x + 15.0,
         y + 40.0,
         text_params(13, colors::TEXT_DIM),
     );
-    draw_text_ex(
+    draw_ui_text_ex(
         &format!(
             "{} floors, {} units | {} condition",
             listing.num_floors,
@@ -166,7 +167,7 @@ fn draw_listing_text(
     );
 
     if listing.existing_tenants > 0 {
-        draw_text_ex(
+        draw_ui_text_ex(
             &format!("{} existing tenants", listing.existing_tenants),
             x + 15.0,
             y + 73.0,
@@ -188,7 +189,7 @@ fn draw_listing_purchase(
     let btn_x = x + width - btn_width - 10.0;
     let btn_y = y + height - 30.0;
 
-    draw_text_ex(
+    draw_ui_text_ex(
         &format!("${}", listing.asking_price),
         x + 15.0,
         y + height - 12.0,
@@ -200,7 +201,7 @@ fn draw_listing_purchase(
     }
 
     if !can_afford {
-        draw_text_ex(
+        draw_ui_text_ex(
             "Can't afford",
             btn_x,
             btn_y + 15.0,

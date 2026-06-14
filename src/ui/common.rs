@@ -1,4 +1,5 @@
 use macroquad::prelude::*;
+use macroquad_toolkit::ui::{draw_ui_text, measure_ui_text};
 
 // Import toolkit utilities
 pub use macroquad_toolkit::input::{is_hovered, was_clicked};
@@ -120,8 +121,8 @@ pub fn colored_button(
         draw_rectangle_lines(x, y, w, h, 2.0, colors::TEXT_DIM);
 
         let text_size = 20.0;
-        let text_width = measure_text(text, None, text_size as u16, 1.0).width;
-        draw_text(
+        let text_width = measure_ui_text(text, None, text_size as u16, 1.0).width;
+        draw_ui_text(
             text,
             x + (w - text_width) / 2.0,
             y + h / 2.0 + 6.0,
