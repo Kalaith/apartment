@@ -25,3 +25,10 @@ Survive 36 months while keeping the building financially stable and livable. Com
 ## Current Scope
 
 Playable building progression with multiple properties, tenant systems, repairs, upgrades, missions, and month-by-month management.
+# Practical Future Improvements
+
+- Add month-step regression tests for rent changes, occupancy, tenant happiness, maintenance debt, and property unlock progression.
+- Separate building economics and tenant simulation from UI panels so city, hallway, tenant, and ownership views render derived state only.
+- Add validation for tenant applications and apartment assignments to prevent duplicate tenants, impossible vacancies, or stale lease records.
+- Create scenario fixtures for each property tier to make balancing repair costs, upgrades, and reputation less manual.
+
