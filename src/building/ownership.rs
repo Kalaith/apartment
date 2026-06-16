@@ -1,18 +1,13 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
 pub enum OwnershipType {
-    FullRental,                 // Player owns all, rents all (Default)
+    #[default]
+    FullRental, // Player owns all, rents all (Default)
     MixedOwnership(CondoBoard), // Some units sold
     FullCondo(CondoBoard),      // All units sold, player manages
     CooperativeHousing,         // Tenant-owned (Future)
     SocialHousing,              // Government subsidized (Future)
-}
-
-impl Default for OwnershipType {
-    fn default() -> Self {
-        Self::FullRental
-    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]

@@ -40,14 +40,13 @@ impl PlayerProgress {
 
 /// Save the current game state to disk
 pub fn save_game(state: &GameplayState) -> std::io::Result<()> {
-    save_json_key(GAME_NAME, SAVE_FILE_NAME, state)
-        .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))
+    save_json_key(GAME_NAME, SAVE_FILE_NAME, state).map_err(std::io::Error::other)
 }
 
 /// Load the game state from disk
 pub fn load_game() -> std::io::Result<GameplayState> {
-    let mut state: GameplayState = load_json_key(GAME_NAME, SAVE_FILE_NAME)
-        .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
+    let mut state: GameplayState =
+        load_json_key(GAME_NAME, SAVE_FILE_NAME).map_err(std::io::Error::other)?;
 
     // Restore non-serialized fields and repair older save shapes.
     state.post_load();
@@ -67,8 +66,7 @@ pub fn load_player_progress() -> PlayerProgress {
 
 /// Save player progress (persistent unlock state)
 pub fn save_player_progress(progress: &PlayerProgress) -> std::io::Result<()> {
-    save_json_key(GAME_NAME, PROGRESS_FILE_NAME, progress)
-        .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))
+    save_json_key(GAME_NAME, PROGRESS_FILE_NAME, progress).map_err(std::io::Error::other)
 }
 
 #[cfg(test)]

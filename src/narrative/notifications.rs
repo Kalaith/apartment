@@ -271,7 +271,7 @@ impl NotificationManager {
         // Full occupancy check
         if vacancy_count == 0 {
             if let Some(hint) = config.context_hints.get("full_occupancy") {
-                if best_hint.map_or(true, |(_, p)| hint.priority < p) {
+                if best_hint.is_none_or(|(_, p)| hint.priority < p) {
                     best_hint = Some(("full_occupancy", hint.priority));
                 }
             }
@@ -280,21 +280,20 @@ impl NotificationManager {
         // Low condition check
         if avg_condition < config.thresholds.low_condition {
             if let Some(hint) = config.context_hints.get("low_condition") {
-                if best_hint.map_or(true, |(_, p)| hint.priority < p) {
+                if best_hint.is_none_or(|(_, p)| hint.priority < p) {
                     best_hint = Some(("low_condition", hint.priority));
                 }
             }
         }
 
         // High vacancy check
-        let vacancy_percent = if total_units > 0 {
-            (vacancy_count * 100) / total_units
-        } else {
-            0
-        };
+        let vacancy_percent = vacancy_count
+            .saturating_mul(100)
+            .checked_div(total_units)
+            .unwrap_or(0);
         if vacancy_percent >= config.thresholds.high_vacancy_percent as usize {
             if let Some(hint) = config.context_hints.get("high_vacancy") {
-                if best_hint.map_or(true, |(_, p)| hint.priority < p) {
+                if best_hint.is_none_or(|(_, p)| hint.priority < p) {
                     best_hint = Some(("high_vacancy", hint.priority));
                 }
             }
@@ -303,7 +302,7 @@ impl NotificationManager {
         // Unhappy tenant check
         if any_unhappy {
             if let Some(hint) = config.context_hints.get("tenant_unhappy") {
-                if best_hint.map_or(true, |(_, p)| hint.priority < p) {
+                if best_hint.is_none_or(|(_, p)| hint.priority < p) {
                     best_hint = Some(("tenant_unhappy", hint.priority));
                 }
             }
@@ -312,13 +311,13 @@ impl NotificationManager {
         // Funds check
         if funds < config.thresholds.low_funds {
             if let Some(hint) = config.context_hints.get("low_funds") {
-                if best_hint.map_or(true, |(_, p)| hint.priority < p) {
+                if best_hint.is_none_or(|(_, p)| hint.priority < p) {
                     best_hint = Some(("low_funds", hint.priority));
                 }
             }
         } else if funds > config.thresholds.high_funds {
             if let Some(hint) = config.context_hints.get("high_funds") {
-                if best_hint.map_or(true, |(_, p)| hint.priority < p) {
+                if best_hint.is_none_or(|(_, p)| hint.priority < p) {
                     best_hint = Some(("high_funds", hint.priority));
                 }
             }

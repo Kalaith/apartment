@@ -1,3 +1,10 @@
+#![allow(
+    clippy::enum_variant_names,
+    clippy::large_enum_variant,
+    clippy::module_inception,
+    clippy::too_many_arguments
+)]
+
 use macroquad::prelude::*;
 
 mod building;

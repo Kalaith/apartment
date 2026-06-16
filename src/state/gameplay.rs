@@ -379,8 +379,7 @@ impl GameplayState {
             if let Some(next_template) = templates
                 .templates
                 .iter()
-                .filter(|t| t.unlock_order == current_order + 1)
-                .next()
+                .find(|t| t.unlock_order == current_order + 1)
             {
                 progress.unlock_building(&next_template.id);
             }

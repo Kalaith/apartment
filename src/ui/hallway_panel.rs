@@ -220,10 +220,11 @@ pub fn draw_hallway_panel(
                 cost
             );
 
-            if y + 36.0 > content_top && y < content_bottom {
-                if button(content_x, y, btn_w, 36.0, &label, can_afford) {
-                    action = Some(UiAction::UpgradeAction(upgrade));
-                }
+            if y + 36.0 > content_top
+                && y < content_bottom
+                && button(content_x, y, btn_w, 36.0, &label, can_afford)
+            {
+                action = Some(UiAction::UpgradeAction(upgrade));
             }
             y += 44.0;
         }
@@ -243,10 +244,11 @@ pub fn draw_hallway_panel(
                 cost
             );
 
-            if y + 36.0 > content_top && y < content_bottom {
-                if button(content_x, y, btn_w, 36.0, &label, can_afford) {
-                    action = Some(UiAction::UpgradeAction(upgrade));
-                }
+            if y + 36.0 > content_top
+                && y < content_bottom
+                && button(content_x, y, btn_w, 36.0, &label, can_afford)
+            {
+                action = Some(UiAction::UpgradeAction(upgrade));
             }
             y += 44.0;
         }

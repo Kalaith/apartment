@@ -63,9 +63,7 @@ fn draw_occupied_tenant_info(
     network: &TenantNetwork,
     stories: &HashMap<u32, TenantStory>,
 ) -> Option<UiAction> {
-    let Some(tenant) = tenants.iter().find(|t| t.id == tenant_id) else {
-        return None;
-    };
+    let tenant = tenants.iter().find(|t| t.id == tenant_id)?;
 
     if *y > content_top && *y < content_bottom {
         draw_ui_text("TENANT", content_x, *y, 14.0, colors::TEXT_DIM);
@@ -410,19 +408,21 @@ fn draw_listed_vacancy_actions(
     }
     *y += 30.0;
 
-    if *y + 30.0 > content_top && *y < content_bottom {
-        if button(content_x, *y, btn_w, 30.0, "View Applications", true) {
-            return Some(UiAction::SelectApplications(Some(apt.id)));
-        }
+    if *y + 30.0 > content_top
+        && *y < content_bottom
+        && button(content_x, *y, btn_w, 30.0, "View Applications", true)
+    {
+        return Some(UiAction::SelectApplications(Some(apt.id)));
     }
     *y += 35.0;
 
-    if *y + 30.0 > content_top && *y < content_bottom {
-        if button(content_x, *y, btn_w, 30.0, "Unlist Property", true) {
-            return Some(UiAction::UnlistApartment {
-                apartment_id: apt.id,
-            });
-        }
+    if *y + 30.0 > content_top
+        && *y < content_bottom
+        && button(content_x, *y, btn_w, 30.0, "Unlist Property", true)
+    {
+        return Some(UiAction::UnlistApartment {
+            apartment_id: apt.id,
+        });
     }
     *y += 40.0;
 
@@ -472,13 +472,14 @@ fn draw_unlisted_vacancy_actions(
     }
     *y += 20.0;
 
-    if *y + 30.0 > content_top && *y < content_bottom {
-        if button(content_x, *y, btn_w, 30.0, "Any Tenant", true) {
-            return Some(UiAction::ListApartment {
-                apartment_id: apt.id,
-                preference: None,
-            });
-        }
+    if *y + 30.0 > content_top
+        && *y < content_bottom
+        && button(content_x, *y, btn_w, 30.0, "Any Tenant", true)
+    {
+        return Some(UiAction::ListApartment {
+            apartment_id: apt.id,
+            preference: None,
+        });
     }
     *y += 35.0;
 
@@ -495,13 +496,14 @@ fn draw_unlisted_vacancy_actions(
         let col = index % 2;
         let x = content_x + col as f32 * (small_btn_w + 10.0);
 
-        if *y + 25.0 > content_top && *y < content_bottom {
-            if button(x, *y, small_btn_w, 25.0, label, true) {
-                return Some(UiAction::ListApartment {
-                    apartment_id: apt.id,
-                    preference: Some(archetype.clone()),
-                });
-            }
+        if *y + 25.0 > content_top
+            && *y < content_bottom
+            && button(x, *y, small_btn_w, 25.0, label, true)
+        {
+            return Some(UiAction::ListApartment {
+                apartment_id: apt.id,
+                preference: Some(archetype.clone()),
+            });
         }
 
         if col == 1 || index == tenant_types.len() - 1 {

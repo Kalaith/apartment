@@ -140,7 +140,7 @@ impl City {
         }
 
         // Refresh market listings periodically
-        if self.total_months % 3 == 0 {
+        if self.total_months.is_multiple_of(3) {
             self.market.refresh_listings(&self.neighborhoods);
         }
 

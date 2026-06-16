@@ -1,7 +1,7 @@
 use crate::narrative::events::NarrativeEffect;
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, Default)]
 pub struct RelationshipEventsConfig {
     #[serde(default)]
     pub hostile: Vec<RelationshipEventTemplate>,
@@ -32,16 +32,6 @@ pub struct RelationshipChoiceTemplate {
     pub effect: NarrativeEffect,
     #[serde(default)]
     pub reputation_change: i32,
-}
-
-impl Default for RelationshipEventsConfig {
-    fn default() -> Self {
-        Self {
-            hostile: Vec::new(),
-            friendly: Vec::new(),
-            romance: Vec::new(),
-        }
-    }
 }
 
 pub fn load_relationship_config() -> RelationshipEventsConfig {

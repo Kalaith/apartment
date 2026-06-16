@@ -497,19 +497,19 @@ impl TenantNetwork {
         {
             // Check if apartments are adjacent (same floor or floor ±1)
             if let (Some(a), Some(b)) = (apt_a, apt_b) {
-                if (a.floor as i32 - b.floor as i32).abs() <= 1 {
-                    if rng::gen_range(0, 100) < config.adjacent_hostile_chance {
-                        return RelationshipType::Hostile;
-                    }
+                if (a.floor as i32 - b.floor as i32).abs() <= 1
+                    && rng::gen_range(0, 100) < config.adjacent_hostile_chance
+                {
+                    return RelationshipType::Hostile;
                 }
             }
         }
 
         // Same archetype tends to be friendly
-        if tenant_a.archetype == tenant_b.archetype {
-            if rng::gen_range(0, 100) < config.same_archetype_friendly_chance {
-                return RelationshipType::Friendly;
-            }
+        if tenant_a.archetype == tenant_b.archetype
+            && rng::gen_range(0, 100) < config.same_archetype_friendly_chance
+        {
+            return RelationshipType::Friendly;
         }
 
         // Families tend to connect

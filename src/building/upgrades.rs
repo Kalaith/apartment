@@ -222,13 +222,13 @@ pub fn available_apartment_upgrades(
 
     // 2. Generic Upgrades (includes Design upgrades now)
     for (id, def) in upgrades {
-        if def.target == UpgradeTarget::Apartment {
-            if check_requirements(&def.requirements, apt, None) {
-                actions.push(UpgradeAction::Apply {
-                    upgrade_id: id.clone(),
-                    target_id: Some(apt.id),
-                });
-            }
+        if def.target == UpgradeTarget::Apartment
+            && check_requirements(&def.requirements, apt, None)
+        {
+            actions.push(UpgradeAction::Apply {
+                upgrade_id: id.clone(),
+                target_id: Some(apt.id),
+            });
         }
     }
 
@@ -249,13 +249,13 @@ pub fn available_building_upgrades(
 
     // 2. Generic Upgrades
     for (id, def) in upgrades {
-        if def.target == UpgradeTarget::Building {
-            if check_requirements_building(&def.requirements, building) {
-                actions.push(UpgradeAction::Apply {
-                    upgrade_id: id.clone(),
-                    target_id: None,
-                });
-            }
+        if def.target == UpgradeTarget::Building
+            && check_requirements_building(&def.requirements, building)
+        {
+            actions.push(UpgradeAction::Apply {
+                upgrade_id: id.clone(),
+                target_id: None,
+            });
         }
     }
 

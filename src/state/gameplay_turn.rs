@@ -36,7 +36,7 @@ impl GameplayState {
         self.sync_building();
         self.missions.generate_late_game_missions(self.current_tick);
 
-        if self.current_tick % 12 == 0 && self.current_tick > 0 {
+        if self.current_tick.is_multiple_of(12) && self.current_tick > 0 {
             self.check_annual_awards();
         }
 

@@ -164,12 +164,11 @@ pub fn process_upgrade(
                 crate::data::config::UpgradeTarget::Building => {
                     for req in &def.requirements {
                         match req {
-                            crate::data::config::UpgradeRequirement::MissingFlag(flag) => {
-                                if building.flags.contains(flag)
-                                    || (flag == "has_laundry" && building.has_laundry)
-                                {
-                                    return Err(format!("Requirement failed: {}", flag));
-                                }
+                            crate::data::config::UpgradeRequirement::MissingFlag(flag)
+                                if (building.flags.contains(flag)
+                                    || (flag == "has_laundry" && building.has_laundry)) =>
+                            {
+                                return Err(format!("Requirement failed: {}", flag));
                             }
                             // ... check other reqs
                             _ => {}

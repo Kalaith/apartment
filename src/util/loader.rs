@@ -2,7 +2,6 @@
 ///
 /// In WASM, files are embedded at compile time using include_str!
 /// In native, files are loaded from disk with embedded fallback
-
 /// Macro to load a JSON config file with WASM compatibility.
 /// Usage: load_json_config!("assets/config.json", GameConfig)
 ///

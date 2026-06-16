@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, Default)]
 pub struct TenantEventsConfig {
     pub requests: HashMap<String, Vec<RequestTemplate>>,
 }
@@ -33,14 +33,6 @@ pub enum RequestTemplate {
     None {
         weight: u32,
     },
-}
-
-impl Default for TenantEventsConfig {
-    fn default() -> Self {
-        Self {
-            requests: HashMap::new(),
-        }
-    }
 }
 
 pub fn load_events_config() -> TenantEventsConfig {

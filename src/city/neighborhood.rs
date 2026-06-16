@@ -117,12 +117,13 @@ impl NeighborhoodStats {
     /// Apply monthly changes to neighborhood (gentrification, crime changes, etc.)
     pub fn tick(&mut self, neighborhood_type: &NeighborhoodType) {
         // Gentrification slowly increases in industrial areas
-        if matches!(neighborhood_type, NeighborhoodType::Industrial) && self.gentrification < 100 {
-            if rng::gen_range(0, 100) < 10 {
-                self.gentrification = (self.gentrification + 1).min(100);
-                // Gentrification increases rent demand but pushes out long-term residents
-                self.rent_demand = (self.rent_demand + 0.01).min(1.5);
-            }
+        if matches!(neighborhood_type, NeighborhoodType::Industrial)
+            && self.gentrification < 100
+            && rng::gen_range(0, 100) < 10
+        {
+            self.gentrification = (self.gentrification + 1).min(100);
+            // Gentrification increases rent demand but pushes out long-term residents
+            self.rent_demand = (self.rent_demand + 0.01).min(1.5);
         }
 
         // Crime fluctuates slightly
@@ -182,6 +183,17 @@ impl Neighborhood {
     }
 }
 
+fn load_neighborhood_config() -> HashMap<String, NeighborhoodStats> {
+    #[cfg(target_arch = "wasm32")]
+    let json = include_str!("../../assets/neighborhoods.json");
+
+    #[cfg(not(target_arch = "wasm32"))]
+    let json = std::fs::read_to_string("assets/neighborhoods.json")
+        .unwrap_or_else(|_| include_str!("../../assets/neighborhoods.json").to_string());
+
+    serde_json::from_str(&json).unwrap_or_default()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -200,15 +212,4 @@ mod tests {
         // Allow for config values
         assert!(stats.crime_level <= 50);
     }
-}
-
-fn load_neighborhood_config() -> HashMap<String, NeighborhoodStats> {
-    #[cfg(target_arch = "wasm32")]
-    let json = include_str!("../../assets/neighborhoods.json");
-
-    #[cfg(not(target_arch = "wasm32"))]
-    let json = std::fs::read_to_string("assets/neighborhoods.json")
-        .unwrap_or_else(|_| include_str!("../../assets/neighborhoods.json").to_string());
-
-    serde_json::from_str(&json).unwrap_or_default()
 }

@@ -103,11 +103,9 @@ impl Building {
     /// Create a building from a template
     pub fn from_template(template: &crate::data::templates::BuildingTemplate) -> Self {
         let mut apartments = Vec::new();
-        let mut id = 0;
-
-        for apt_template in &template.apartments {
+        for (id, apt_template) in template.apartments.iter().enumerate() {
             let mut apt = Apartment::new(
-                id,
+                id as u32,
                 &apt_template.unit_number,
                 apt_template.floor,
                 apt_template.size(),
@@ -120,7 +118,6 @@ impl Building {
             apt.design = apt_template.initial_design();
 
             apartments.push(apt);
-            id += 1;
         }
 
         Self {

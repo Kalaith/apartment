@@ -178,10 +178,11 @@ pub fn apartment_meets_minimum(tenant: &Tenant, apartment: &Apartment) -> bool {
     }
 
     // Check noise for noise-sensitive tenants
-    if prefs.prefers_quiet {
-        if matches!(apartment.effective_noise(), NoiseLevel::High) && tenant.noise_tolerance < 40 {
-            return false;
-        }
+    if prefs.prefers_quiet
+        && matches!(apartment.effective_noise(), NoiseLevel::High)
+        && tenant.noise_tolerance < 40
+    {
+        return false;
     }
 
     true

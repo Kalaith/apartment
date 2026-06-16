@@ -323,10 +323,11 @@ pub(super) fn draw_upgrades(
                 cost
             );
 
-            if *y + btn_h > content_top && *y < content_bottom {
-                if button(content_x, *y, btn_w, btn_h, &label, can_afford) {
-                    action = Some(UiAction::UpgradeAction(upgrade));
-                }
+            if *y + btn_h > content_top
+                && *y < content_bottom
+                && button(content_x, *y, btn_w, btn_h, &label, can_afford)
+            {
+                action = Some(UiAction::UpgradeAction(upgrade));
             }
             *y += btn_h + 8.0;
         }

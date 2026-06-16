@@ -268,7 +268,7 @@ impl NarrativeEventSystem {
         }
 
         // Building milestones
-        for (_i, building) in buildings.iter().enumerate() {
+        for building in buildings.iter() {
             if building.occupancy_count() == building.apartments.len()
                 && rng::gen_range(0, 100) < 30
             {

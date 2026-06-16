@@ -243,7 +243,7 @@ impl MissionManager {
         total_tenants_housed: u32,
     ) {
         // Only check at year boundaries
-        if current_month % 12 != 0 || current_month == 0 {
+        if !current_month.is_multiple_of(12) || current_month == 0 {
             return;
         }
 

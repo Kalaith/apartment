@@ -26,7 +26,7 @@ pub fn draw_application_panel(
     let filtered_apps: Vec<(usize, &TenantApplication)> = applications
         .iter()
         .enumerate()
-        .filter(|(_, app)| filter_apartment_id.map_or(true, |id| app.apartment_id == id))
+        .filter(|(_, app)| filter_apartment_id.is_none_or(|id| app.apartment_id == id))
         .collect();
 
     if filtered_apps.is_empty() {

@@ -55,7 +55,7 @@ pub fn update_missions(state: &mut GameplayState) {
                         .filter(|t| {
                             archetype
                                 .as_ref()
-                                .map_or(true, |arch| t.archetype.name() == arch)
+                                .is_none_or(|arch| t.archetype.name() == arch)
                         })
                         .count();
                     if current_count as u32 >= *count {
@@ -69,11 +69,9 @@ pub fn update_missions(state: &mut GameplayState) {
                         completed = true;
                     }
                 }
-                MissionGoal::AcquireBuilding => {
-                    if state.city.buildings.len() > 1 {
-                        // Started with 1
-                        completed = true;
-                    }
+                MissionGoal::AcquireBuilding if state.city.buildings.len() > 1 => {
+                    // Started with 1
+                    completed = true;
                 }
                 // Implement other goals...
                 _ => {}

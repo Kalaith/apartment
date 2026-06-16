@@ -32,7 +32,7 @@ pub fn update_tutorial(state: &mut GameplayState) {
     // Display hint for current milestone if stuck for a while
     if let Some(hint) = state.tutorial.get_hint() {
         // Show hint as floating text occasionally (every 5 ticks if no progress)
-        if state.current_tick % 5 == 0 && state.current_tick > 0 {
+        if state.current_tick.is_multiple_of(5) && state.current_tick > 0 {
             state.floating_texts.push(FloatingText::new(
                 hint,
                 screen_width() / 2.0,

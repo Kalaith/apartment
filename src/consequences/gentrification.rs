@@ -90,10 +90,7 @@ impl GentrificationTracker {
         new_avg: i32,
         config: &GentrificationConfig,
     ) {
-        let history = self
-            .rent_history
-            .entry(building_id)
-            .or_insert_with(Vec::new);
+        let history = self.rent_history.entry(building_id).or_default();
         history.push((month, old_avg, new_avg));
 
         // If significant rent increase, add to gentrification score

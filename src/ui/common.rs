@@ -152,7 +152,7 @@ pub fn colored_button(
             bg_color.a,
         ),
         border: colors::TEXT_DIM,
-        text_color: text_color,
+        text_color,
         disabled: Color::new(0.1, 0.1, 0.1, 1.0),
     };
 

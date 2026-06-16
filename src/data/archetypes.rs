@@ -38,6 +38,7 @@ pub struct NamePool {
 }
 
 /// Global archetype registry loaded from JSON
+#[derive(Default)]
 pub struct ArchetypeRegistry {
     pub definitions: HashMap<String, ArchetypeDefinition>,
 }
@@ -99,14 +100,6 @@ impl ArchetypeRegistry {
             "practical" => Some(DesignType::Practical),
             "cozy" => Some(DesignType::Cozy),
             _ => None,
-        }
-    }
-}
-
-impl Default for ArchetypeRegistry {
-    fn default() -> Self {
-        Self {
-            definitions: HashMap::new(),
         }
     }
 }

@@ -133,7 +133,7 @@ impl GameTick {
 
     fn collect_rent(
         building: &mut Building,
-        tenants: &mut Vec<Tenant>,
+        tenants: &[Tenant],
         funds: &mut PlayerFunds,
         current_tick: u32,
         result: &mut TickResult,
@@ -238,7 +238,7 @@ impl GameTick {
         }
     }
 
-    fn process_staff_effects(building: &mut Building, tenants: &mut Vec<Tenant>) {
+    fn process_staff_effects(building: &mut Building, tenants: &mut [Tenant]) {
         // Janitor: Auto-repair small decay
         if building.flags.contains("staff_janitor") {
             for apt in &mut building.apartments {
@@ -268,7 +268,7 @@ impl GameTick {
 
     fn process_critical_failures(
         building: &mut Building,
-        tenants: &mut Vec<Tenant>,
+        tenants: &mut [Tenant],
         funds: &mut PlayerFunds,
         current_tick: u32,
         result: &mut TickResult,
@@ -339,7 +339,7 @@ impl GameTick {
 
     fn update_tenants(
         building: &Building,
-        tenants: &mut Vec<Tenant>,
+        tenants: &mut [Tenant],
         result: &mut TickResult,
         config: &crate::data::config::HappinessConfig,
     ) {

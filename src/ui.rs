@@ -36,20 +36,15 @@ pub use visuals::{FloatingText, Tween};
 use serde::{Deserialize, Serialize};
 
 /// What's currently selected for the detail panel
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Default)]
 pub enum Selection {
+    #[default]
     None,
     Apartment(u32),            // Apartment ID
     Tenant(u32),               // Tenant ID
     Applications(Option<u32>), // Show pending applications (Optionally filtered by apartment)
     Hallway,                   // Hallway details
     Ownership,                 // Ownership View
-}
-
-impl Default for Selection {
-    fn default() -> Self {
-        Self::None
-    }
 }
 
 use crate::building::UpgradeAction;
