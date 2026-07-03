@@ -6,13 +6,24 @@ use crate::data::config::OperatingCostsConfig;
 pub struct OperatingCosts;
 
 impl OperatingCosts {
-    /// Calculate monthly property tax based on building value/income
+    /// Calculate monthly property tax based on rent income.
+    /// The effective rate escalates yearly as the property is reassessed.
     pub fn calculate_property_tax(
         _building: &Building,
         rent_income: i32,
         config: &OperatingCostsConfig,
+        current_tick: u32,
     ) -> i32 {
-        (rent_income as f32 * config.property_tax_rate) as i32
+        let years_owned = (current_tick / 12) as f32;
+        let effective_rate =
+            config.property_tax_rate + config.property_tax_annual_increase * years_owned;
+        (rent_income as f32 * effective_rate) as i32
+    }
+
+    /// Fixed monthly overhead (mortgage/upkeep) charged for every unit
+    /// regardless of occupancy — a structural drawdown that occupancy must beat.
+    pub fn calculate_base_overhead(building: &Building, config: &OperatingCostsConfig) -> i32 {
+        building.apartments.len() as i32 * config.base_monthly_cost_per_unit
     }
 
     /// Calculate monthly utilities
@@ -255,4 +266,37 @@ pub fn process_upgrade(
     apply_upgrade(building, action, &config.upgrades).ok_or("Failed to apply upgrade")?;
 
     Ok(cost)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::config::OperatingCostsConfig;
+
+    #[test]
+    fn base_overhead_scales_with_unit_count() {
+        let building = Building::new("Test", 3, 2); // 6 units
+        let config = OperatingCostsConfig::default();
+        assert_eq!(
+            OperatingCosts::calculate_base_overhead(&building, &config),
+            6 * config.base_monthly_cost_per_unit
+        );
+    }
+
+    #[test]
+    fn property_tax_escalates_each_year() {
+        let building = Building::new("Test", 1, 1);
+        let config = OperatingCostsConfig {
+            property_tax_rate: 0.10,
+            property_tax_annual_increase: 0.02,
+            ..OperatingCostsConfig::default()
+        };
+
+        let year0 = OperatingCosts::calculate_property_tax(&building, 1000, &config, 0);
+        let year2 = OperatingCosts::calculate_property_tax(&building, 1000, &config, 24);
+
+        assert_eq!(year0, 100); // 10% of 1000
+        assert_eq!(year2, 140); // (0.10 + 0.02*2) * 1000
+        assert!(year2 > year0);
+    }
 }

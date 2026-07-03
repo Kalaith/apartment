@@ -19,6 +19,10 @@ mod ui;
 mod assets;
 mod save;
 
+// Headless balance-simulation harness (test-only).
+#[cfg(test)]
+mod sim_harness;
+
 // Phase 3 modules
 mod city;
 mod consequences;
@@ -42,7 +46,7 @@ async fn main() {
     let mut game = Game::new().await;
 
     loop {
-        clear_background(Color::from_rgba(30, 30, 35, 255));
+        clear_background(ui::theme::color::BACKGROUND);
         game.update();
         game.draw();
         next_frame().await;

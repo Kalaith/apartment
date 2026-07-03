@@ -1,10 +1,14 @@
 use super::GameEvent;
 use crate::building::Building;
-use crate::data::config::ThresholdsConfig;
+use crate::data::config::{DecayConfig, ThresholdsConfig};
 
 /// Apply monthly decay to all building elements
 /// Returns events for significant decay milestones
-pub fn apply_decay(building: &mut Building, thresholds: &ThresholdsConfig) -> Vec<GameEvent> {
+pub fn apply_decay(
+    building: &mut Building,
+    decay: &DecayConfig,
+    thresholds: &ThresholdsConfig,
+) -> Vec<GameEvent> {
     let mut events = Vec::new();
 
     // Track conditions before decay for event generation
@@ -17,7 +21,7 @@ pub fn apply_decay(building: &mut Building, thresholds: &ThresholdsConfig) -> Ve
     let hallway_before = building.hallway_condition;
 
     // Apply decay
-    building.apply_monthly_decay();
+    building.apply_monthly_decay(decay.apartment_per_tick, decay.hallway_per_tick);
 
     // Check for significant condition changes in apartments
     for (id, unit, old_condition) in conditions_before {

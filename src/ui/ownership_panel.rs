@@ -10,33 +10,13 @@ pub fn draw_ownership_panel(building: &Building) -> Option<UiAction> {
     let panel_width = screen_width() * 0.5 - 30.0;
     let panel_height = screen_height() - 140.0;
 
-    // Background
-    draw_rectangle(
+    // Themed panel frame + header.
+    crate::ui::common::panel(
         panel_x,
         panel_y,
         panel_width,
         panel_height,
-        Color::from_rgba(30, 30, 35, 255),
-    );
-    draw_rectangle_lines(
-        panel_x,
-        panel_y,
-        panel_width,
-        panel_height,
-        2.0,
-        Color::from_rgba(60, 60, 70, 255),
-    );
-
-    // Title
-    draw_ui_text_ex(
         "Building Ownership",
-        panel_x + 10.0,
-        panel_y + 25.0,
-        TextParams {
-            font_size: 20,
-            color: colors::TEXT_BRIGHT,
-            ..Default::default()
-        },
     );
 
     let mut action = None;
@@ -161,12 +141,11 @@ pub fn draw_ownership_panel(building: &Building) -> Option<UiAction> {
                 // Sell Button - use calculated market value
                 let sale_price = apt.market_value();
 
-                if draw_button_mini(
+                if crate::ui::widgets::button_at(
+                    Rect::new(panel_x + panel_width - 160.0, y + 4.0, 148.0, 24.0),
                     &format!("Sell Condo (${})", sale_price),
-                    panel_x + panel_width - 160.0,
-                    y + 5.0,
-                    140.0,
-                    20.0,
+                    true,
+                    crate::ui::theme::Tone::Positive,
                 ) {
                     action = Some(UiAction::SellUnitAsCondo {
                         apartment_id: apt.id,
@@ -272,12 +251,11 @@ pub fn draw_ownership_panel(building: &Building) -> Option<UiAction> {
                     // Sell Button
                     let sale_price = apt.market_value();
 
-                    if draw_button_mini(
+                    if crate::ui::widgets::button_at(
+                        Rect::new(panel_x + panel_width - 140.0, y + 4.0, 128.0, 24.0),
                         &format!("Sell (${})", sale_price),
-                        panel_x + panel_width - 140.0,
-                        y + 5.0,
-                        120.0,
-                        20.0,
+                        true,
+                        crate::ui::theme::Tone::Positive,
                     ) {
                         action = Some(UiAction::SellUnitAsCondo {
                             apartment_id: apt.id,
@@ -317,54 +295,16 @@ pub fn draw_ownership_panel(building: &Building) -> Option<UiAction> {
     }
 
     // Close / Back button
-    if draw_button_icon(
-        "Close Panel",
+    if crate::ui::common::button(
         panel_x + 10.0,
         panel_y + panel_height - 40.0,
         120.0,
         30.0,
+        "Close Panel",
+        true,
     ) {
         action = Some(UiAction::ClearSelection);
     }
 
     action
-}
-
-// Helper duplicates (should be in common really, but for speed)
-fn draw_button_mini(label: &str, x: f32, y: f32, width: f32, height: f32) -> bool {
-    let style = macroquad_toolkit::ui::ButtonStyle {
-        normal: Color::from_rgba(60, 90, 120, 255),
-        hovered: colors::ACCENT,
-        pressed: Color::from_rgba(45, 70, 100, 255),
-        border: colors::ACCENT,
-        text_color: colors::TEXT_BRIGHT,
-        disabled: Color::from_rgba(35, 35, 40, 255),
-    };
-    macroquad_toolkit::ui::button_rect_enabled_styled_ex(
-        Rect::new(x, y, width, height),
-        label,
-        true,
-        &style,
-        macroquad_toolkit::ui::TextStyle::new(12.0, colors::TEXT_BRIGHT),
-        macroquad_toolkit::ui::ButtonTrigger::Press,
-    )
-}
-
-fn draw_button_icon(label: &str, x: f32, y: f32, width: f32, height: f32) -> bool {
-    let style = macroquad_toolkit::ui::ButtonStyle {
-        normal: Color::from_rgba(50, 55, 65, 255),
-        hovered: Color::from_rgba(70, 80, 100, 255),
-        pressed: Color::from_rgba(42, 46, 56, 255),
-        border: Color::from_rgba(80, 90, 110, 255),
-        text_color: colors::TEXT_BRIGHT,
-        disabled: Color::from_rgba(35, 35, 40, 255),
-    };
-    macroquad_toolkit::ui::button_rect_enabled_styled_ex(
-        Rect::new(x, y, width, height),
-        label,
-        true,
-        &style,
-        macroquad_toolkit::ui::TextStyle::new(14.0, colors::TEXT_BRIGHT),
-        macroquad_toolkit::ui::ButtonTrigger::Press,
-    )
 }

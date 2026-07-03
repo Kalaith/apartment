@@ -70,11 +70,7 @@ impl GameplayState {
             }
         }
 
-        // Draw notifications (hints, etc) on top
-        if !self.tutorial.active {
-            self.draw_notification_overlay();
-        }
-
+        // Footer event log.
         draw_notifications(&self.event_log, self.current_tick, assets);
 
         // Floating text
@@ -400,11 +396,22 @@ impl GameplayState {
         let bg_color = if hovered {
             colors::HOVERED
         } else {
-            Color::new(0.25, 0.25, 0.3, 1.0)
+            colors::SURFACE_ALT
         };
 
         draw_rectangle(x, y, w, h, bg_color);
-        draw_rectangle_lines(x, y, w, h, 2.0, colors::ACCENT);
+        draw_rectangle_lines(
+            x,
+            y,
+            w,
+            h,
+            1.0,
+            if hovered {
+                colors::PRIMARY
+            } else {
+                colors::BORDER_STRONG
+            },
+        );
 
         let text_width = measure_ui_text(text, None, 20, 1.0).width;
         draw_ui_text(
@@ -418,205 +425,43 @@ impl GameplayState {
         clicked
     }
 
-    /// Draw the tutorial overlay
-    pub(super) fn draw_tutorial_overlay(&mut self, assets: &AssetManager) {
+    /// Draw the tutorial overlay as a bottom toast. Dismisses on "Next".
+    pub(super) fn draw_tutorial_overlay(&mut self, _assets: &AssetManager) {
         if self.tutorial.pending_messages.is_empty() {
             return;
         }
-
-        let message = &self.tutorial.pending_messages[0];
-        // "Uncle Artie"
-        let npc_name = "Uncle Artie";
-
-        // Layout - increased width
-        let panel_w = 650.0;
-        let panel_h = 180.0;
-        let panel_x = (screen_width() - panel_w) / 2.0;
-        let panel_y = screen_height() - panel_h - 20.0;
-
-        // Background
-        draw_rectangle(panel_x, panel_y, panel_w, panel_h, colors::PANEL);
-        draw_rectangle_lines(panel_x, panel_y, panel_w, panel_h, 3.0, colors::ACCENT);
-
-        // Portrait placeholder (use assets if available)
-        let portrait_size = 100.0;
-        let portrait_x = panel_x + 20.0;
-        let portrait_y = panel_y + 40.0;
-
-        if assets.loaded {
-            // Draw a nice golden border around portrait when assets loaded
-            draw_rectangle_lines(
-                portrait_x - 2.0,
-                portrait_y - 2.0,
-                portrait_size + 4.0,
-                portrait_size + 4.0,
-                2.0,
-                colors::ACCENT,
-            );
+        let message = self.tutorial.pending_messages[0].clone();
+        if crate::ui::widgets::draw_toast(
+            "",
+            "Uncle Artie",
+            &message,
+            crate::ui::widgets::ToastKind::Info,
+            "Next",
+        ) {
+            self.tutorial.pending_messages.remove(0);
         }
-        draw_rectangle(portrait_x, portrait_y, portrait_size, portrait_size, GRAY);
-        draw_ui_text(
-            "ARTIE",
-            portrait_x + 20.0,
-            portrait_y + 50.0,
-            20.0,
-            DARKGRAY,
-        );
-
-        // Name
-        draw_ui_text(
-            npc_name,
-            panel_x + 140.0,
-            panel_y + 30.0,
-            24.0,
-            colors::TEXT_BRIGHT,
-        );
-
-        // Message (with better wrapping)
-        let max_chars_per_line = 55;
-        let mut y = panel_y + 60.0;
-        let words: Vec<&str> = message.split(' ').collect();
-        let mut current_line = String::new();
-
-        for word in words {
-            if current_line.len() + word.len() > max_chars_per_line {
-                draw_ui_text(&current_line, panel_x + 140.0, y, 18.0, colors::TEXT);
-                y += 22.0;
-                current_line.clear();
-            }
-            if !current_line.is_empty() {
-                current_line.push(' ');
-            }
-            current_line.push_str(word);
-        }
-        if !current_line.is_empty() {
-            draw_ui_text(&current_line, panel_x + 140.0, y, 18.0, colors::TEXT);
-        }
-
-        // Next Button - draw and check click
-        let btn_w = 120.0;
-        let btn_h = 35.0;
-        let btn_x = panel_x + panel_w - btn_w - 20.0;
-        let btn_y = panel_y + panel_h - btn_h - 15.0;
-
-        let mouse = mouse_position();
-        let hovered = mouse.0 >= btn_x
-            && mouse.0 <= btn_x + btn_w
-            && mouse.1 >= btn_y
-            && mouse.1 <= btn_y + btn_h;
-
-        let bg_color = if hovered {
-            colors::HOVERED
-        } else {
-            colors::ACCENT
-        };
-
-        draw_rectangle(btn_x, btn_y, btn_w, btn_h, bg_color);
-        draw_rectangle_lines(btn_x, btn_y, btn_w, btn_h, 2.0, colors::TEXT_BRIGHT);
-
-        let text = "Next >";
-        let text_width = measure_ui_text(text, None, 22, 1.0).width;
-        draw_ui_text(
-            text,
-            btn_x + (btn_w - text_width) / 2.0,
-            btn_y + btn_h / 2.0 + 7.0,
-            22.0,
-            colors::TEXT_BRIGHT,
-        );
-        // Click handling is done in gameplay.rs update function
     }
 
-    /// Draw the notification overlay (similar to tutorial but for game hints and relationship changes)
-    pub(super) fn draw_notification_overlay(&self) {
-        if self.notifications.pending.is_empty() {
+    /// Draw the hint/relationship notification as a bottom toast. Dismisses on
+    /// "OK".
+    pub(super) fn draw_notification_overlay(&mut self) {
+        let Some(notification) = self.notifications.pending.first() else {
             return;
-        }
-
-        let notification = &self.notifications.pending[0];
-
-        // Layout - similar to tutorial overlay
-        let panel_w = 550.0;
-        let panel_h = 150.0;
-        let panel_x = (screen_width() - panel_w) / 2.0;
-        let panel_y = screen_height() - panel_h - 20.0;
-
-        // Category-based border color
-        let border_color = match notification.category {
-            NotificationCategory::Positive => colors::POSITIVE,
-            NotificationCategory::Warning => colors::WARNING,
-            NotificationCategory::Info => colors::ACCENT,
-            NotificationCategory::Hint => colors::TEXT_DIM,
         };
-
-        // Background
-        draw_rectangle(panel_x, panel_y, panel_w, panel_h, colors::PANEL);
-        draw_rectangle_lines(panel_x, panel_y, panel_w, panel_h, 3.0, border_color);
-
-        // Icon
-        draw_ui_text(
-            &notification.icon,
-            panel_x + 20.0,
-            panel_y + 50.0,
-            40.0,
-            WHITE,
-        );
-
-        // Message (with word wrapping)
-        let max_chars_per_line: usize = 50;
-        let mut y = panel_y + 40.0;
-        let words: Vec<&str> = notification.message.split(' ').collect();
-        let mut current_line = String::new();
-
-        for word in words {
-            if current_line.len() + word.len() > max_chars_per_line {
-                draw_ui_text(&current_line, panel_x + 80.0, y, 20.0, colors::TEXT_BRIGHT);
-                y += 24.0;
-                current_line.clear();
-            }
-            if !current_line.is_empty() {
-                current_line.push(' ');
-            }
-            current_line.push_str(word);
-        }
-        if !current_line.is_empty() {
-            draw_ui_text(&current_line, panel_x + 80.0, y, 20.0, colors::TEXT_BRIGHT);
-            y += 24.0;
-        }
-
-        // Description (if any)
+        let kind = match notification.category {
+            NotificationCategory::Positive => crate::ui::widgets::ToastKind::Positive,
+            NotificationCategory::Warning => crate::ui::widgets::ToastKind::Warning,
+            NotificationCategory::Info => crate::ui::widgets::ToastKind::Info,
+            NotificationCategory::Hint => crate::ui::widgets::ToastKind::Hint,
+        };
+        let icon = notification.icon.clone();
+        let mut body = notification.message.clone();
         if let Some(desc) = &notification.description {
-            draw_ui_text(desc, panel_x + 80.0, y + 5.0, 14.0, colors::TEXT_DIM);
+            body.push('\n');
+            body.push_str(desc);
         }
-
-        // OK Button
-        let btn_w = 100.0;
-        let btn_h = 32.0;
-        let btn_x = panel_x + panel_w - btn_w - 15.0;
-        let btn_y = panel_y + panel_h - btn_h - 12.0;
-
-        let mouse = mouse_position();
-        let hovered = mouse.0 >= btn_x
-            && mouse.0 <= btn_x + btn_w
-            && mouse.1 >= btn_y
-            && mouse.1 <= btn_y + btn_h;
-
-        let bg_color = if hovered {
-            colors::HOVERED
-        } else {
-            border_color
-        };
-
-        draw_rectangle(btn_x, btn_y, btn_w, btn_h, bg_color);
-        draw_rectangle_lines(btn_x, btn_y, btn_w, btn_h, 2.0, colors::TEXT_BRIGHT);
-
-        let text = "OK";
-        let text_width = measure_ui_text(text, None, 20, 1.0).width;
-        draw_ui_text(
-            text,
-            btn_x + (btn_w - text_width) / 2.0,
-            btn_y + btn_h / 2.0 + 6.0,
-            20.0,
-            colors::TEXT_BRIGHT,
-        );
+        if crate::ui::widgets::draw_toast(&icon, "", &body, kind, "OK") {
+            self.notifications.pop();
+        }
     }
 }

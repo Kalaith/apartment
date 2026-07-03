@@ -3,7 +3,7 @@ use crate::building::{Apartment, ApartmentSize, Building, DesignType, NoiseLevel
 use macroquad::prelude::*;
 
 use super::{common::*, UiAction};
-use macroquad_toolkit::ui::draw_ui_text;
+use macroquad_toolkit::ui::{draw_ui_text, measure_ui_text};
 
 pub(super) fn draw_sold_condo_panel(
     apt: &Apartment,
@@ -93,175 +93,95 @@ pub(super) fn draw_sold_condo_panel(
 
 pub(super) fn draw_apartment_stats(
     apt: &Apartment,
-    assets: &AssetManager,
+    _assets: &AssetManager,
     content_x: f32,
     y: &mut f32,
     panel_w: f32,
     content_top: f32,
     content_bottom: f32,
 ) {
-    if *y + 20.0 > content_top && *y < content_bottom {
-        draw_ui_text("CONDITION", content_x, *y, 14.0, colors::TEXT_DIM);
-    }
-    *y += 5.0;
+    use crate::ui::widgets::{kv_row, section_label, stat_meter};
+    let w = panel_w - 30.0;
+    let vis = |yy: f32| yy + 22.0 > content_top && yy < content_bottom;
 
-    if *y + 20.0 > content_top && *y < content_bottom {
-        let cond_color = condition_color(apt.condition);
-        progress_bar(
+    if vis(*y) {
+        section_label(content_x, *y, "CONDITION");
+    }
+    *y += 22.0;
+    if vis(*y) {
+        stat_meter(
             content_x,
             *y,
-            panel_w - 30.0,
-            20.0,
-            apt.condition as f32,
-            100.0,
-            cond_color,
-        );
-        if let Some(icon) = if apt.condition > 50 {
-            assets.get_texture("icon_condition_good")
-        } else {
-            assets.get_texture("icon_condition_poor")
-        } {
-            draw_texture_ex(
-                icon,
-                content_x + panel_w - 60.0,
-                *y - 2.0,
-                WHITE,
-                DrawTextureParams {
-                    dest_size: Some(Vec2::new(24.0, 24.0)),
-                    ..Default::default()
-                },
-            );
-        }
-        draw_ui_text(
-            &format!("{}%", apt.condition),
-            content_x + panel_w - 110.0,
-            *y + 15.0,
-            16.0,
-            colors::TEXT,
+            w,
+            apt.condition,
+            100,
+            condition_color(apt.condition),
         );
     }
-    *y += 35.0;
+    *y += 28.0;
 
-    if *y > content_top && *y < content_bottom {
-        let design_text = match apt.design {
-            DesignType::Bare => "Bare",
-            DesignType::Practical => "Practical",
-            DesignType::Cozy => "Cozy",
-            DesignType::Luxury => "Luxury",
-            DesignType::Opulent => "Opulent",
-        };
-        draw_ui_text(
-            &format!("Design: {}", design_text),
-            content_x,
-            *y,
-            18.0,
-            colors::TEXT,
-        );
+    let design_text = match apt.design {
+        DesignType::Bare => "Bare",
+        DesignType::Practical => "Practical",
+        DesignType::Cozy => "Cozy",
+        DesignType::Luxury => "Luxury",
+        DesignType::Opulent => "Opulent",
+    };
+    if vis(*y) {
+        kv_row(content_x, *y, w, "Design", design_text, colors::TEXT);
     }
-    *y += 25.0;
+    *y += 24.0;
 
-    if *y > content_top && *y < content_bottom {
-        let size_text = match apt.size {
-            ApartmentSize::Small => "Small",
-            ApartmentSize::Medium => "Medium",
-            ApartmentSize::Large => "Large",
-            ApartmentSize::Penthouse => "Penthouse",
-        };
-        draw_ui_text(
-            &format!("Size: {}", size_text),
-            content_x,
-            *y,
-            18.0,
-            colors::TEXT,
-        );
+    let size_text = match apt.size {
+        ApartmentSize::Small => "Small",
+        ApartmentSize::Medium => "Medium",
+        ApartmentSize::Large => "Large",
+        ApartmentSize::Penthouse => "Penthouse",
+    };
+    if vis(*y) {
+        kv_row(content_x, *y, w, "Size", size_text, colors::TEXT);
     }
-    *y += 25.0;
+    *y += 24.0;
 
-    if *y > content_top && *y < content_bottom {
-        let noise_text = match apt.effective_noise() {
-            NoiseLevel::Low => "Quiet",
-            NoiseLevel::High => "Noisy",
-        };
-        let noise_color = if matches!(apt.effective_noise(), NoiseLevel::High) {
-            colors::WARNING
-        } else {
-            colors::POSITIVE
-        };
-        draw_ui_text(
-            &format!("Noise: {}", noise_text),
-            content_x,
-            *y,
-            18.0,
-            noise_color,
-        );
-        if let Some(icon) = assets.get_texture("icon_noise") {
-            draw_texture_ex(
-                icon,
-                content_x + 120.0,
-                *y - 15.0,
-                WHITE,
-                DrawTextureParams {
-                    dest_size: Some(Vec2::new(24.0, 24.0)),
-                    ..Default::default()
-                },
-            );
-        }
+    let (noise_text, noise_color) = match apt.effective_noise() {
+        NoiseLevel::Low => ("Quiet", colors::POSITIVE),
+        NoiseLevel::High => ("Noisy", colors::WARNING),
+    };
+    if vis(*y) {
+        kv_row(content_x, *y, w, "Noise", noise_text, noise_color);
     }
-    *y += 25.0;
+    *y += 24.0;
 
     if apt.has_soundproofing {
-        if *y > content_top && *y < content_bottom {
-            draw_ui_text("Soundproofed", content_x, *y, 16.0, colors::POSITIVE);
-            if let Some(icon) = assets.get_texture("icon_soundproofing") {
-                draw_texture_ex(
-                    icon,
-                    content_x + 110.0,
-                    *y - 15.0,
-                    WHITE,
-                    DrawTextureParams {
-                        dest_size: Some(Vec2::new(24.0, 24.0)),
-                        ..Default::default()
-                    },
-                );
-            }
+        if vis(*y) {
+            kv_row(content_x, *y, w, "Soundproofing", "Yes", colors::POSITIVE);
         }
-        *y += 25.0;
+        *y += 24.0;
     }
 
-    if *y > content_top && *y < content_bottom {
-        draw_ui_text(
-            &format!("Rent: ${}/mo", apt.rent_price),
+    if vis(*y) {
+        kv_row(
             content_x,
             *y,
-            20.0,
-            colors::ACCENT,
+            w,
+            "Rent",
+            &format!("${}/mo", apt.rent_price),
+            colors::PRIMARY,
         );
-        if let Some(icon) = assets.get_texture("icon_rent") {
-            draw_texture_ex(
-                icon,
-                content_x + 150.0,
-                *y - 18.0,
-                WHITE,
-                DrawTextureParams {
-                    dest_size: Some(Vec2::new(24.0, 24.0)),
-                    ..Default::default()
-                },
-            );
-        }
     }
-    *y += 35.0;
+    *y += 24.0;
 
-    if *y > content_top && *y < content_bottom {
-        let quality = apt.quality_score();
-        draw_ui_text(
-            &format!("Quality Score: {}", quality),
+    if vis(*y) {
+        kv_row(
             content_x,
             *y,
-            16.0,
+            w,
+            "Quality Score",
+            &apt.quality_score().to_string(),
             colors::TEXT_DIM,
         );
     }
-    *y += 40.0;
+    *y += 30.0;
 }
 
 pub(super) fn draw_upgrades(
@@ -276,30 +196,23 @@ pub(super) fn draw_upgrades(
     current_scroll: f32,
     config: &crate::data::config::GameConfig,
 ) -> (Option<UiAction>, f32) {
+    let w = panel_w - 30.0;
     if *y > content_top && *y < content_bottom {
-        draw_line(
-            content_x,
-            *y,
-            content_x + panel_w - 30.0,
-            *y,
-            1.0,
-            colors::TEXT_DIM,
-        );
+        draw_line(content_x, *y, content_x + w, *y, 1.0, colors::BORDER);
     }
-    *y += 15.0;
+    *y += 14.0;
 
-    if *y > content_top && *y < content_bottom {
-        draw_ui_text("UPGRADES", content_x, *y, 14.0, colors::TEXT_DIM);
-    }
-    *y += 25.0;
+    // Section header is drawn after the buttons (so the scroll hint can reflect
+    // overflow), but reserve its row here.
+    let header_y = *y;
+    *y += 24.0;
 
-    let btn_w = panel_w - 30.0;
-    let btn_h = 36.0;
+    let btn_w = w;
+    let btn_h = 34.0;
     let available = crate::building::upgrades::available_apartment_upgrades(apt, &config.upgrades);
 
     let upgrades_start_y = *y;
     let mut total_upgrade_height = 0.0;
-
     for upgrade in &available {
         if upgrade
             .cost(building, &config.economy, &config.upgrades)
@@ -318,7 +231,7 @@ pub(super) fn draw_upgrades(
         if let Some(cost) = upgrade.cost(building, &config.economy, &config.upgrades) {
             let can_afford = money >= cost;
             let label = format!(
-                "{} (${})",
+                "{} — ${}",
                 upgrade.label(building, &config.ui, &config.upgrades),
                 cost
             );
@@ -333,14 +246,17 @@ pub(super) fn draw_upgrades(
         }
     }
 
-    if max_scroll > 0.0 {
-        let scroll_hint_y = content_bottom - 20.0;
-        if final_scroll < max_scroll - 5.0 {
+    // UPGRADES header + right-aligned scroll hint (no longer overlaps buttons).
+    if header_y + 20.0 > content_top && header_y < content_bottom {
+        crate::ui::widgets::section_label(content_x, header_y, "UPGRADES");
+        if max_scroll > final_scroll + 5.0 {
+            let hint = "scroll for more \u{25be}";
+            let hw = measure_ui_text(hint, None, 13, 1.0).width;
             draw_ui_text(
-                "▼ Scroll for more",
-                content_x,
-                scroll_hint_y,
-                12.0,
+                hint,
+                content_x + w - hw,
+                header_y + 13.0,
+                13.0,
                 colors::TEXT_DIM,
             );
         }

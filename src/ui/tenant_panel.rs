@@ -6,8 +6,9 @@ use crate::tenant::Tenant;
 use macroquad::prelude::*;
 use std::collections::HashMap;
 
+use super::theme::scale;
 use super::{common::*, UiAction};
-use macroquad_toolkit::ui::draw_ui_text;
+use macroquad_toolkit::ui::{draw_ui_text, wrap_text_ex};
 
 pub(super) fn draw_tenant_info(
     apt: &Apartment,
@@ -64,65 +65,62 @@ fn draw_occupied_tenant_info(
     stories: &HashMap<u32, TenantStory>,
 ) -> Option<UiAction> {
     let tenant = tenants.iter().find(|t| t.id == tenant_id)?;
+    let w = panel_w - 30.0;
 
-    if *y > content_top && *y < content_bottom {
-        draw_ui_text("TENANT", content_x, *y, 14.0, colors::TEXT_DIM);
+    if *y + 22.0 > content_top && *y < content_bottom {
+        crate::ui::widgets::section_label(content_x, *y, "TENANT");
     }
-    *y += 20.0;
+    *y += 22.0;
 
+    // Portrait + name/archetype/relationship block — a fixed 84px-tall row so
+    // nothing that follows can draw on top of it.
     let portrait_id = format!("tenant_{}", tenant.archetype.name().to_lowercase());
-    let has_portrait = if let Some(tex) = assets.get_texture(&portrait_id) {
-        if *y + 80.0 > content_top && *y < content_bottom {
+    let row_top = *y;
+    if row_top + 84.0 > content_top && row_top < content_bottom {
+        let has_portrait = if let Some(tex) = assets.get_texture(&portrait_id) {
             draw_texture_ex(
                 tex,
                 content_x,
-                *y,
+                row_top,
                 WHITE,
                 DrawTextureParams {
                     dest_size: Some(Vec2::new(80.0, 80.0)),
                     ..Default::default()
                 },
             );
-        }
-        true
-    } else {
-        false
-    };
-
-    let text_x = if has_portrait {
-        content_x + 90.0
-    } else {
-        content_x + 10.0
-    };
-
-    if *y + 40.0 > content_top && *y < content_bottom {
-        if !has_portrait {
-            draw_rectangle(content_x, *y, 4.0, 20.0, archetype_color(&tenant.archetype));
-        }
-
-        draw_ui_text(&tenant.name, text_x, *y + 16.0, 20.0, colors::TEXT);
+            true
+        } else {
+            draw_rectangle(
+                content_x,
+                row_top,
+                4.0,
+                60.0,
+                archetype_color(&tenant.archetype),
+            );
+            false
+        };
+        let text_x = if has_portrait {
+            content_x + 92.0
+        } else {
+            content_x + 12.0
+        };
+        draw_ui_text(
+            &tenant.name,
+            text_x,
+            row_top + 20.0,
+            scale::TITLE,
+            colors::TEXT,
+        );
         draw_ui_text(
             tenant.archetype.name(),
             text_x,
-            *y + 36.0,
-            16.0,
+            row_top + 40.0,
+            scale::LABEL,
             colors::TEXT_DIM,
         );
-
-        draw_relationship_icons(tenant.id, network, text_x, *y + 45.0);
-
-        if let Some(action) =
-            draw_pending_request(tenant, stories, content_x, y, content_top, content_bottom)
-        {
-            return Some(action);
-        }
+        draw_relationship_icons(tenant.id, network, text_x, row_top + 50.0);
     }
-
-    if has_portrait {
-        *y += 85.0;
-    } else {
-        *y += 75.0;
-    }
+    *y += 88.0;
 
     draw_tenant_happiness(
         tenant,
@@ -134,21 +132,32 @@ fn draw_occupied_tenant_info(
         content_bottom,
     );
 
-    if *y > content_top && *y < content_bottom {
-        draw_ui_text(
-            &format!("Months: {}", tenant.months_residing),
+    if *y + 20.0 > content_top && *y < content_bottom {
+        crate::ui::widgets::kv_row(
             content_x,
             *y,
-            14.0,
+            w,
+            "Tenure",
+            &format!("{} months", tenant.months_residing),
             colors::TEXT_DIM,
         );
     }
-    *y += 30.0;
+    *y += 26.0;
 
-    None
+    // Pending request as its own section, below the tenant info.
+    draw_pending_request(
+        tenant,
+        stories,
+        content_x,
+        y,
+        panel_w,
+        content_top,
+        content_bottom,
+    )
 }
 
 fn draw_relationship_icons(tenant_id: u32, network: &TenantNetwork, text_x: f32, icon_y: f32) {
+    use crate::consequences::RelationshipType;
     let relationships: Vec<_> = network
         .relationships
         .iter()
@@ -159,23 +168,36 @@ fn draw_relationship_icons(tenant_id: u32, network: &TenantNetwork, text_x: f32,
         return;
     }
 
+    // Small colored chips (the bundled UI font can't render emoji glyphs).
     let mut icon_x = text_x;
-
+    let chip_h = 16.0;
     for rel in relationships.iter().take(4) {
-        let icon = match rel.relationship_type {
-            crate::consequences::RelationshipType::Friendly => "💚",
-            crate::consequences::RelationshipType::Hostile => "⚡",
-            crate::consequences::RelationshipType::Romantic => "💕",
-            crate::consequences::RelationshipType::Family => "👨‍👩‍👧",
-            crate::consequences::RelationshipType::Neutral => "⚪",
+        let (label, fill) = match rel.relationship_type {
+            RelationshipType::Friendly => ("Friend", colors::POSITIVE),
+            RelationshipType::Hostile => ("Feud", colors::NEGATIVE),
+            RelationshipType::Romantic => ("Romance", colors::ARTIST),
+            RelationshipType::Family => ("Family", colors::FAMILY),
+            RelationshipType::Neutral => ("Neutral", colors::TEXT_DIM),
         };
-
-        draw_ui_text(icon, icon_x, icon_y + 15.0, 16.0, WHITE);
-        icon_x += 25.0;
+        let w = crate::ui::widgets::draw_badge(
+            icon_x,
+            icon_y,
+            chip_h,
+            label,
+            fill,
+            colors::TEXT_BRIGHT,
+        );
+        icon_x += w + 4.0;
     }
 
     if relationships.len() > 4 {
-        draw_ui_text("+", icon_x, icon_y + 15.0, 14.0, colors::TEXT_DIM);
+        draw_ui_text(
+            "+",
+            icon_x + 2.0,
+            icon_y + chip_h - 3.0,
+            13.0,
+            colors::TEXT_DIM,
+        );
     }
 }
 
@@ -184,67 +206,78 @@ fn draw_pending_request(
     stories: &HashMap<u32, TenantStory>,
     content_x: f32,
     y: &mut f32,
+    panel_w: f32,
     content_top: f32,
     content_bottom: f32,
 ) -> Option<UiAction> {
     let story = stories.get(&tenant.id)?;
     let request = story.pending_request.as_ref()?;
+    let w = panel_w - 30.0;
 
-    *y += 40.0;
-    if *y <= content_top || *y >= content_bottom {
-        return None;
+    // Divider + section header.
+    if *y > content_top && *y < content_bottom {
+        draw_line(content_x, *y, content_x + w, *y, 1.0, colors::BORDER);
     }
+    *y += 14.0;
+    if *y + 18.0 > content_top && *y < content_bottom {
+        crate::ui::widgets::section_label(content_x, *y, "PENDING REQUEST");
+    }
+    *y += 22.0;
 
-    draw_ui_text("PENDING REQUEST", content_x, *y, 14.0, colors::ACCENT);
-    *y += 40.0;
-
+    // Wrapped request text.
     let req_text = request_text(request);
-    draw_ui_text(&req_text, content_x, *y, 16.0, colors::TEXT);
-    *y += 25.0;
+    for line in wrap_text_ex(&req_text, w, None, scale::BODY) {
+        if *y + scale::BODY > content_top && *y < content_bottom {
+            draw_ui_text(
+                &line,
+                content_x,
+                *y + scale::BODY,
+                scale::BODY,
+                colors::TEXT,
+            );
+        }
+        *y += scale::BODY * 1.35;
+    }
+    *y += 4.0;
 
     let effect_text = approval_effect_text(request);
     if !effect_text.is_empty() {
-        draw_ui_text(
-            &format!("Effect: {}", effect_text),
-            content_x,
-            *y,
-            14.0,
-            colors::ACCENT,
-        );
-        *y += 25.0;
+        if *y + 16.0 > content_top && *y < content_bottom {
+            draw_ui_text(
+                &format!("Effect: {}", effect_text),
+                content_x,
+                *y + scale::LABEL,
+                scale::LABEL,
+                colors::ACCENT,
+            );
+        }
+        *y += 24.0;
     }
 
-    if crate::ui::common::colored_button(
-        content_x,
-        *y,
-        100.0,
-        30.0,
-        "APPROVE",
+    *y += 6.0;
+    let btn_w = ((w - 10.0) / 2.0).min(140.0);
+    if crate::ui::widgets::button_at(
+        Rect::new(content_x, *y, btn_w, 32.0),
+        "Approve",
         true,
-        colors::POSITIVE,
-        colors::TEXT_BRIGHT,
+        crate::ui::theme::Tone::Positive,
     ) {
         return Some(UiAction::ApproveRequest {
             tenant_id: tenant.id,
         });
     }
-
-    if crate::ui::common::colored_button(
-        content_x + 110.0,
-        *y,
-        100.0,
-        30.0,
-        "DENY",
+    if crate::ui::widgets::button_at(
+        Rect::new(content_x + btn_w + 10.0, *y, btn_w, 32.0),
+        "Deny",
         true,
-        colors::NEGATIVE,
-        colors::TEXT_BRIGHT,
+        crate::ui::theme::Tone::Danger,
     ) {
         return Some(UiAction::DenyRequest {
             tenant_id: tenant.id,
         });
     }
 
-    *y += 35.0;
+    *y += 38.0;
     None
 }
 
@@ -301,66 +334,29 @@ fn append_effect_text(effect_text: &mut String, value: &str) {
 
 fn draw_tenant_happiness(
     tenant: &Tenant,
-    assets: &AssetManager,
+    _assets: &AssetManager,
     content_x: f32,
     y: &mut f32,
     panel_w: f32,
     content_top: f32,
     content_bottom: f32,
 ) {
-    if *y > content_top && *y < content_bottom {
-        draw_ui_text("Happiness", content_x, *y, 14.0, colors::TEXT_DIM);
+    let w = panel_w - 30.0;
+    if *y + 22.0 > content_top && *y < content_bottom {
+        crate::ui::widgets::section_label(content_x, *y, "HAPPINESS");
     }
-    *y += 5.0;
-
-    if *y + 16.0 > content_top && *y < content_bottom {
-        let happy_color = happiness_color(tenant.happiness);
-        progress_bar(
+    *y += 22.0;
+    if *y + 20.0 > content_top && *y < content_bottom {
+        crate::ui::widgets::stat_meter(
             content_x,
             *y,
-            panel_w - 60.0,
-            16.0,
-            tenant.happiness as f32,
-            100.0,
-            happy_color,
+            w,
+            tenant.happiness,
+            100,
+            happiness_color(tenant.happiness),
         );
-
-        let happiness_level = if tenant.happiness >= 90 {
-            "happiness_ecstatic"
-        } else if tenant.happiness >= 70 {
-            "happiness_happy"
-        } else if tenant.happiness >= 40 {
-            "happiness_neutral"
-        } else if tenant.happiness >= 20 {
-            "happiness_unhappy"
-        } else {
-            "happiness_miserable"
-        };
-
-        if let Some(icon) = assets.get_texture(happiness_level) {
-            draw_texture_ex(
-                icon,
-                content_x + panel_w - 55.0,
-                *y - 4.0,
-                WHITE,
-                DrawTextureParams {
-                    dest_size: Some(Vec2::new(24.0, 24.0)),
-                    ..Default::default()
-                },
-            );
-        } else {
-            let icon_char = happiness_icon(tenant.happiness);
-            draw_ui_text(
-                icon_char,
-                content_x + panel_w - 50.0,
-                *y + 14.0,
-                20.0,
-                colors::TEXT,
-            );
-        }
     }
-
-    *y += 25.0;
+    *y += 28.0;
 }
 
 fn draw_vacant_unit_actions(

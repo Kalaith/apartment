@@ -83,14 +83,16 @@ impl Tenant {
         tenant
     }
 
-    /// Check if tenant is at risk of leaving
-    pub fn is_unhappy(&self) -> bool {
-        self.happiness < 30
+    /// Check if tenant is at risk of leaving (early warning threshold)
+    pub fn is_unhappy(&self, unhappy_threshold: i32) -> bool {
+        self.happiness < unhappy_threshold
     }
 
-    /// Check if tenant will leave this tick
-    pub fn will_leave(&self) -> bool {
-        self.happiness == 0
+    /// Roll whether an unhappy-enough tenant actually leaves this tick.
+    /// Once at/below `leave_threshold`, there's a monthly chance they move out
+    /// rather than an instant, deterministic exit.
+    pub fn will_leave(&self, leave_threshold: i32, leave_chance_percent: i32) -> bool {
+        self.happiness <= leave_threshold && rng::gen_range(0, 100) < leave_chance_percent
     }
 
     /// Update happiness (called each tick)

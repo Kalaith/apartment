@@ -45,7 +45,7 @@ pub fn draw_application_panel(
 
     let mut action = None;
     for (index, application) in filtered_apps {
-        if y > panel_rect.y + panel_rect.h - 100.0 {
+        if y > panel_rect.y + panel_rect.h - 60.0 {
             draw_ui_text(
                 "... more applications",
                 content_x,
@@ -56,7 +56,7 @@ pub fn draw_application_panel(
             break;
         }
 
-        if let Some(card_action) = draw_application_card(
+        let (card_action, card_h) = draw_application_card(
             index,
             application,
             building,
@@ -64,10 +64,11 @@ pub fn draw_application_panel(
             y,
             panel_rect.w - 30.0,
             assets,
-        ) {
-            action = Some(card_action);
+        );
+        if card_action.is_some() {
+            action = card_action;
         }
-        y += 135.0;
+        y += card_h + 12.0;
     }
 
     action
@@ -115,6 +116,9 @@ fn draw_empty_applications(content_x: f32, y: f32, filter_apartment_id: Option<u
     );
 }
 
+/// Draw one application card. Returns the chosen action (if any) and the card
+/// height, which grows when the action buttons wrap to a second row on narrow
+/// panels — so cards never overlap.
 fn draw_application_card(
     index: usize,
     application: &TenantApplication,
@@ -123,83 +127,96 @@ fn draw_application_card(
     y: f32,
     width: f32,
     assets: &AssetManager,
-) -> Option<UiAction> {
-    let card_h = 125.0;
-    draw_rectangle(x, y, width, card_h, colors::PANEL_HEADER);
-    draw_rectangle_lines(x, y, width, card_h, 1.0, colors::TEXT_DIM);
+) -> (Option<UiAction>, f32) {
+    use crate::ui::theme::Tone;
+    use crate::ui::widgets::button_at;
 
-    let text_x = draw_application_portrait(application, assets, x, y);
-    draw_application_text(application, building, text_x, y);
-
-    let btn_y = y + 88.0;
-    let btn_w = 70.0;
-    if button(text_x, btn_y, btn_w, 28.0, "Accept", true) {
-        return Some(UiAction::AcceptApplication {
-            application_index: index,
-        });
-    }
-
-    if button(text_x + 78.0, btn_y, btn_w, 28.0, "Reject", true) {
-        return Some(UiAction::RejectApplication {
-            application_index: index,
-        });
-    }
-
-    if button(
-        text_x + 156.0,
-        btn_y,
-        btn_w,
-        28.0,
-        "Credit",
-        !application.revealed_reliability,
-    ) {
-        return Some(UiAction::CreditCheck {
-            application_index: index,
-        });
-    }
-
-    if button(
-        text_x + 234.0,
-        btn_y,
-        95.0,
-        28.0,
-        "BG Check",
-        !application.revealed_behavior,
-    ) {
-        return Some(UiAction::BackgroundCheck {
-            application_index: index,
-        });
-    }
-
-    None
-}
-
-fn draw_application_portrait(
-    application: &TenantApplication,
-    assets: &AssetManager,
-    x: f32,
-    y: f32,
-) -> f32 {
+    // Does a portrait exist? (Cheap check so we can lay out before drawing.)
     let portrait_id = format!(
         "tenant_{}",
         format!("{:?}", application.tenant.archetype).to_lowercase()
     );
+    let has_portrait = assets.get_texture(&portrait_id).is_some();
+    let text_x = if has_portrait { x + 95.0 } else { x + 12.0 };
 
+    let btn_y = y + 88.0;
+    let bh = 28.0;
+    let gap = 6.0;
+    let right = x + width - 8.0;
+
+    // Adaptive grid: 4 across when there's room, otherwise 2x2.
+    let cols = if right - text_x >= 4.0 * 74.0 + 3.0 * gap {
+        4
+    } else {
+        2
+    };
+    let rows = 4_usize.div_ceil(cols);
+    let bw = ((right - text_x) - (cols - 1) as f32 * gap) / cols as f32;
+    let card_h = 88.0 + rows as f32 * (bh + gap) + 4.0;
+
+    // Card frame (sized to fit the buttons), then portrait + content on top.
+    crate::ui::widgets::draw_card(Rect::new(x, y, width, card_h), false);
     if let Some(texture) = assets.get_texture(&portrait_id) {
         draw_texture_ex(
             texture,
-            x + 5.0,
-            y + 5.0,
+            x + 8.0,
+            y + 8.0,
             WHITE,
             DrawTextureParams {
-                dest_size: Some(Vec2::new(80.0, 80.0)),
+                dest_size: Some(Vec2::new(78.0, 78.0)),
                 ..Default::default()
             },
         );
-        x + 95.0
-    } else {
-        x + 10.0
     }
+    draw_application_text(application, building, text_x, y);
+
+    let specs: [(&str, bool, Tone, UiAction); 4] = [
+        (
+            "Accept",
+            true,
+            Tone::Positive,
+            UiAction::AcceptApplication {
+                application_index: index,
+            },
+        ),
+        (
+            "Reject",
+            true,
+            Tone::Danger,
+            UiAction::RejectApplication {
+                application_index: index,
+            },
+        ),
+        (
+            "Credit",
+            !application.revealed_reliability,
+            Tone::Secondary,
+            UiAction::CreditCheck {
+                application_index: index,
+            },
+        ),
+        (
+            "BG Check",
+            !application.revealed_behavior,
+            Tone::Secondary,
+            UiAction::BackgroundCheck {
+                application_index: index,
+            },
+        ),
+    ];
+
+    let mut action = None;
+    for (i, (label, enabled, tone, act)) in specs.into_iter().enumerate() {
+        let col = i % cols;
+        let row = i / cols;
+        let bx = text_x + col as f32 * (bw + gap);
+        let by = btn_y + row as f32 * (bh + gap);
+        if button_at(Rect::new(bx, by, bw, bh), label, enabled, tone) {
+            action = Some(act);
+        }
+    }
+
+    (action, card_h)
 }
 
 fn draw_application_text(

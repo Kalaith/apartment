@@ -28,13 +28,29 @@
     }
   },
   "decay": {
-    "apartment_per_tick": 2,
+    "apartment_per_tick": 3,
     "hallway_per_tick": 1
+  },
+  "staff_effects": {
+    "janitor_units_maintained": 5,
+    "security_happiness_bonus": 6,
+    "security_failure_reduction_percent": 50,
+    "manager_happiness_bonus": 4,
+    "manager_auto_approve_requests": true
+  },
+  "tenant_risk": {
+    "unreliable_threshold": 50,
+    "skip_rent_chance_percent": 20,
+    "low_behavior_threshold": 50,
+    "damage_chance_percent": 25,
+    "damage_amount": 6,
+    "hallway_disturbance_amount": 3
   },
   "happiness": {
     "base": 50,
     "min_for_victory": 60,
-    "leave_threshold": 0,
+    "leave_threshold": 15,
+    "leave_chance_percent": 35,
     "unhappy_threshold": 30,
     "tenure_bonus_max": 12,
     "rent_bonus_multiplier": 0.02,
@@ -43,8 +59,8 @@
     "rent_penalty_cap": -30,
     "condition_bonus_multiplier": 0.3,
     "condition_bonus_cap": 20,
-    "condition_penalty_multiplier": 0.5,
-    "condition_penalty_cap": 40,
+    "condition_penalty_multiplier": 1.0,
+    "condition_penalty_cap": 55,
     "noise_quiet_bonus": 10.0,
     "noise_high_penalty_base": -25,
     "noise_tolerance_multiplier": 0.3,
@@ -56,7 +72,7 @@
       "Cozy": 10
     },
     "hallway_condition_base": 50,
-    "hallway_condition_multiplier": 0.1
+    "hallway_condition_multiplier": 0.2
   },
   "win_conditions": {
     "full_occupancy_required": true,
@@ -118,6 +134,8 @@
   },
   "operating_costs": {
     "property_tax_rate": 0.10,
+    "property_tax_annual_increase": 0.035,
+    "base_monthly_cost_per_unit": 140,
     "utility_cost_per_unit": 50,
     "insurance_base_rate": 150,
     "insurance_good_condition_discount": 50,

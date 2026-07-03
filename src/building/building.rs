@@ -189,12 +189,12 @@ impl Building {
         self.hallway_condition = (self.hallway_condition - amount).max(0);
     }
 
-    /// Apply decay to all apartments and hallway
-    pub fn apply_monthly_decay(&mut self) {
+    /// Apply decay to all apartments and hallway using configured rates.
+    pub fn apply_monthly_decay(&mut self, apartment_decay: i32, hallway_decay: i32) {
         for apt in &mut self.apartments {
-            apt.decay_condition(2); // Slow decay
+            apt.decay_condition(apartment_decay);
         }
-        self.decay_hallway(1); // Even slower for shared space
+        self.decay_hallway(hallway_decay);
     }
 
     /// Calculate average condition of all apartments
@@ -356,9 +356,9 @@ mod tests {
         let initial_hallway = building.hallway_condition;
         let initial_apt_condition = building.apartments[0].condition;
 
-        building.apply_monthly_decay();
+        building.apply_monthly_decay(3, 1);
 
         assert_eq!(building.hallway_condition, initial_hallway - 1);
-        assert_eq!(building.apartments[0].condition, initial_apt_condition - 2);
+        assert_eq!(building.apartments[0].condition, initial_apt_condition - 3);
     }
 }

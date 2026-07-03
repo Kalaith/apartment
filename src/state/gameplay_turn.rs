@@ -32,6 +32,7 @@ impl GameplayState {
         self.apply_active_tax_breaks();
         self.update_city_systems();
         self.generate_monthly_narrative(&result);
+        self.auto_approve_manager_requests();
         self.expire_narrative_events();
         self.sync_building();
         self.missions.generate_late_game_missions(self.current_tick);
@@ -235,6 +236,41 @@ impl GameplayState {
         }
     }
 
+    /// With a manager employed, routine tenant requests are handled for you
+    /// (approved) instead of piling up as manual to-dos — the manager's job.
+    fn auto_approve_manager_requests(&mut self) {
+        if !self.config.staff_effects.manager_auto_approve_requests
+            || !self.building.flags.contains("staff_manager")
+        {
+            return;
+        }
+
+        let tenant_ids: Vec<u32> = self
+            .tenant_stories
+            .iter()
+            .filter(|(_, story)| story.pending_request.is_some())
+            .map(|(id, _)| *id)
+            .collect();
+
+        for tenant_id in tenant_ids {
+            let effect = self.tenant_stories.get_mut(&tenant_id).and_then(|story| {
+                story.pending_request.take().map(|request| {
+                    let effect = request.approval_effect();
+                    story.add_event(
+                        self.current_tick,
+                        "Request approved by property manager",
+                        effect.clone(),
+                    );
+                    effect
+                })
+            });
+
+            if let Some(effect) = effect {
+                self.apply_story_impact(tenant_id, effect);
+            }
+        }
+    }
+
     fn generate_tenant_requests(&mut self) {
         for tenant in &self.tenants {
             if let Some(story) = self.tenant_stories.get_mut(&tenant.id) {
@@ -296,7 +332,10 @@ impl GameplayState {
             .filter(|apartment| apartment.is_vacant())
             .count();
         let avg_condition = self.building.average_condition();
-        let any_unhappy = self.tenants.iter().any(|tenant| tenant.is_unhappy());
+        let any_unhappy = self
+            .tenants
+            .iter()
+            .any(|tenant| tenant.is_unhappy(self.config.happiness.unhappy_threshold));
 
         self.notifications.check_context_hints(
             self.current_tick,
@@ -420,10 +459,11 @@ impl GameplayState {
             self.tenants.len() as u32,
         );
 
-        if self
-            .tenant_network
-            .should_form_council(&self.tenants, &self.config.gentrification)
-        {
+        if self.tenant_network.should_form_council(
+            &self.tenants,
+            &self.config.gentrification,
+            self.config.happiness.unhappy_threshold,
+        ) {
             self.spawn_center_text("Tenants forming a council!", 0.0, 30.0, colors::ACCENT);
             self.missions.record_legacy_event(
                 self.current_tick,

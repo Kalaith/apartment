@@ -8,7 +8,7 @@ impl Default for GameConfig {
             starting_conditions: default_starting_conditions(),
             economy: default_economy(),
             decay: DecayConfig {
-                apartment_per_tick: 2,
+                apartment_per_tick: 3,
                 hallway_per_tick: 1,
             },
             happiness: default_happiness(),
@@ -29,6 +29,8 @@ impl Default for GameConfig {
             matching: MatchingConfig::default(),
             thresholds: ThresholdsConfig::default(),
             operating_costs: OperatingCostsConfig::default(),
+            staff_effects: StaffEffectsConfig::default(),
+            tenant_risk: TenantRiskConfig::default(),
             vetting: VettingConfig::default(),
             marketing: MarketingConfig::default(),
             relationships: RelationshipsConfig::default(),
@@ -89,7 +91,8 @@ fn default_happiness() -> HappinessConfig {
     HappinessConfig {
         base: 50,
         min_for_victory: 60,
-        leave_threshold: 0,
+        leave_threshold: 15,
+        leave_chance_percent: 35,
         unhappy_threshold: 30,
         tenure_bonus_max: 12,
         rent_bonus_multiplier: 0.02,
@@ -98,8 +101,8 @@ fn default_happiness() -> HappinessConfig {
         rent_penalty_cap: -30,
         condition_bonus_multiplier: 0.3,
         condition_bonus_cap: 20,
-        condition_penalty_multiplier: 0.5,
-        condition_penalty_cap: 40,
+        condition_penalty_multiplier: 1.0,
+        condition_penalty_cap: 55,
         noise_quiet_bonus: 10.0,
         noise_high_penalty_base: -25,
         noise_tolerance_multiplier: 0.3,
@@ -107,7 +110,7 @@ fn default_happiness() -> HappinessConfig {
         design_hated_penalty: -25,
         design_style_modifiers: default_design_style_modifiers(),
         hallway_condition_base: 50,
-        hallway_condition_multiplier: 0.1,
+        hallway_condition_multiplier: 0.2,
     }
 }
 

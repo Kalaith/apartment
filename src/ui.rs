@@ -6,6 +6,9 @@
 //! - `Visuals`: Floating text and animations.
 //! - Strictly separation of concerns: No game state mutation happens here.
 
+pub mod theme;
+pub mod widgets;
+
 mod apartment_panel;
 mod apartment_panel_sections;
 mod application_panel;

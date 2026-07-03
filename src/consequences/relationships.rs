@@ -582,12 +582,16 @@ impl TenantNetwork {
         &self,
         tenants: &[crate::tenant::Tenant],
         config: &crate::data::config::GentrificationConfig,
+        unhappy_threshold: i32,
     ) -> bool {
         if tenants.len() < config.council_min_tenants {
             return false;
         }
 
-        let unhappy_count = tenants.iter().filter(|t| t.is_unhappy()).count();
+        let unhappy_count = tenants
+            .iter()
+            .filter(|t| t.is_unhappy(unhappy_threshold))
+            .count();
         let relative_unhappiness = unhappy_count as f32 / tenants.len() as f32;
 
         // Formation threshold from config

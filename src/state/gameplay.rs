@@ -443,50 +443,7 @@ impl GameplayState {
         // Update tutorial
         self.update_tutorial();
 
-        // Handle tutorial "Next" button click
-        if self.tutorial.active && !self.tutorial.pending_messages.is_empty() {
-            // Button layout must match draw_tutorial_overlay
-            let panel_w = 650.0;
-            let panel_h = 180.0;
-            let panel_x = (screen_width() - panel_w) / 2.0;
-            let panel_y = screen_height() - panel_h - 20.0;
-            let btn_w = 120.0;
-            let btn_h = 35.0;
-            let btn_x = panel_x + panel_w - btn_w - 20.0;
-            let btn_y = panel_y + panel_h - btn_h - 15.0;
-
-            let mouse = mouse_position();
-            if mouse.0 >= btn_x
-                && mouse.0 <= btn_x + btn_w
-                && mouse.1 >= btn_y
-                && mouse.1 <= btn_y + btn_h
-                && is_mouse_button_pressed(MouseButton::Left)
-            {
-                self.tutorial.pending_messages.remove(0);
-            }
-        }
-        // Handle notification "OK" button click (when tutorial is not blocking)
-        else if self.notifications.has_pending() {
-            // Button layout must match draw_notification_overlay
-            let panel_w = 550.0;
-            let panel_h = 150.0;
-            let panel_x = (screen_width() - panel_w) / 2.0;
-            let panel_y = screen_height() - panel_h - 20.0;
-            let btn_w = 100.0;
-            let btn_h = 32.0;
-            let btn_x = panel_x + panel_w - btn_w - 15.0;
-            let btn_y = panel_y + panel_h - btn_h - 12.0;
-
-            let mouse = mouse_position();
-            if mouse.0 >= btn_x
-                && mouse.0 <= btn_x + btn_w
-                && mouse.1 >= btn_y
-                && mouse.1 <= btn_y + btn_h
-                && is_mouse_button_pressed(MouseButton::Left)
-            {
-                self.notifications.pop();
-            }
-        }
+        // Tutorial/notification toasts handle their own dismissal in draw().
 
         // Handle keyboard input for ending turn (Space)
         if is_key_pressed(KeyCode::Space) && matches!(self.view_mode, ViewMode::Building) {

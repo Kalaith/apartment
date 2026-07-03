@@ -81,12 +81,6 @@ pub fn generate_applications(
             * marketing_multiplier
             * open_house_multiplier;
 
-        // Debug print
-        println!(
-            "Gen App Check: Apt {} Chance {:.2}",
-            apt.unit_number, chance
-        );
-
         // Random check to see if we generate an applicant this tick
         if rng::gen_range(0.0, 1.0) < chance {
             // Pick archetype based on preference + marketing
@@ -113,36 +107,12 @@ pub fn generate_applications(
                     });
 
                 if !already_applied {
-                    println!(
-                        "SUCCESS: Added applicant for unit {} (Archetype: {:?})",
-                        apt.unit_number, tenant.archetype
-                    ); // Debug print
                     new_applications.push(TenantApplication::new(
                         tenant,
                         apt.id,
                         match_result,
                         current_tick,
                     ));
-                } else {
-                    println!(
-                        "SKIPPED: Duplicate application for unit {}",
-                        apt.unit_number
-                    );
-                }
-            } else {
-                // Debug: Why did they reject?
-                let prefs = tenant.archetype.preferences();
-                if apt.rent_price > tenant.rent_tolerance {
-                    println!("SKIPPED: Tenant {:?} rejected unit {} due to RENT (Rent: {}, Tolerance: {})", 
-                        tenant.archetype, apt.unit_number, apt.rent_price, tenant.rent_tolerance);
-                } else if apt.condition < prefs.min_acceptable_condition {
-                    println!("SKIPPED: Tenant {:?} rejected unit {} due to CONDITION (Cond: {}, Min: {})",
-                        tenant.archetype, apt.unit_number, apt.condition, prefs.min_acceptable_condition);
-                } else {
-                    println!(
-                        "SKIPPED: Tenant {:?} rejected unit {} due to other factors (Noise/Design)",
-                        tenant.archetype, apt.unit_number
-                    );
                 }
             }
         }
@@ -215,17 +185,24 @@ fn pick_archetype_with_preference(
 }
 
 /// Process tenant decisions to leave
-pub fn process_departures(tenants: &mut Vec<Tenant>, building: &mut Building) -> Vec<String> {
+pub fn process_departures(
+    tenants: &mut Vec<Tenant>,
+    building: &mut Building,
+    config: &crate::data::config::HappinessConfig,
+) -> Vec<String> {
     let mut notifications = Vec::new();
     let mut departing_ids = Vec::new();
 
     for tenant in tenants.iter_mut() {
-        // Check for unhappy tenants (early warning)
-        if tenant.is_unhappy() && !tenant.will_leave() {
+        // Roll once — will_leave is probabilistic, so reuse the result rather
+        // than re-rolling it for the early-warning check below.
+        let leaving = tenant.will_leave(config.leave_threshold, config.leave_chance_percent);
+
+        if tenant.is_unhappy(config.unhappy_threshold) && !leaving {
             notifications.push(format!("{} is unhappy and may leave soon!", tenant.name));
         }
 
-        if tenant.will_leave() {
+        if leaving {
             notifications.push(format!("{} has moved out!", tenant.name));
             departing_ids.push(tenant.id);
 

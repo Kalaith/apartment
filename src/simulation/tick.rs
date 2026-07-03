@@ -44,12 +44,18 @@ impl GameTick {
         };
 
         // 1. Collect Rent
-        Self::collect_rent(building, tenants, funds, current_tick, &mut result);
+        Self::collect_rent(building, tenants, funds, current_tick, config, &mut result);
 
         // 2. Operating Costs & Staff
         Self::process_operating_costs(building, funds, current_tick, &mut result, config);
-        Self::process_staff_effects(building, tenants);
-        Self::process_critical_failures(building, tenants, funds, current_tick, &mut result);
+        Self::process_critical_failures(
+            building,
+            tenants,
+            funds,
+            current_tick,
+            &mut result,
+            config,
+        );
 
         // 3. Random Events
         let mut event_system = EventSystem::new();
@@ -60,14 +66,24 @@ impl GameTick {
         if building.update_ownership(current_tick) {
             // Logic for handling ownership updates could go here
         }
-        let decay_events = decay::apply_decay(building, &config.thresholds);
+        let decay_events = decay::apply_decay(building, &config.decay, &config.thresholds);
         result.events.extend(decay_events);
 
+        // 4b. Staff maintenance offsets decay; disruptive tenants add damage.
+        Self::process_janitor_maintenance(building, config);
+        Self::process_tenant_risk(building, tenants, config, &mut result);
+
         // 5. Tenant Happiness & Updates
-        Self::update_tenants(building, tenants, &mut result, &config.happiness);
+        Self::update_tenants(
+            building,
+            tenants,
+            &mut result,
+            &config.happiness,
+            &config.staff_effects,
+        );
 
         // 6. Move-outs
-        let departure_notices = process_departures(tenants, building);
+        let departure_notices = process_departures(tenants, building, &config.happiness);
         for notice in departure_notices {
             result.events.push(GameEvent::TenantMovedOut {
                 message: notice.clone(),
@@ -136,9 +152,10 @@ impl GameTick {
         tenants: &[Tenant],
         funds: &mut PlayerFunds,
         current_tick: u32,
+        config: &crate::data::config::GameConfig,
         result: &mut TickResult,
     ) {
-        let rent_result = collect_rent(tenants, building, funds, current_tick);
+        let rent_result = collect_rent(tenants, building, funds, current_tick, &config.tenant_risk);
         result.rent_collected = rent_result.total_collected;
 
         for payment in &rent_result.payments {
@@ -191,11 +208,23 @@ impl GameTick {
             }
         }
 
+        // Fixed monthly overhead (mortgage/upkeep) — always-on structural cost.
+        let overhead = OperatingCosts::calculate_base_overhead(building, &config.operating_costs);
+        if overhead > 0 {
+            funds.apply_required_expense(Transaction::expense(
+                TransactionType::Mortgage,
+                overhead,
+                "Mortgage & Upkeep",
+                current_tick,
+            ));
+        }
+
         // Taxes & Expenses
         let tax = OperatingCosts::calculate_property_tax(
             building,
             result.rent_collected,
             &config.operating_costs,
+            current_tick,
         );
         if tax > 0 {
             funds.apply_required_expense(Transaction::expense(
@@ -238,32 +267,30 @@ impl GameTick {
         }
     }
 
-    fn process_staff_effects(building: &mut Building, tenants: &mut [Tenant]) {
-        // Janitor: Auto-repair small decay
-        if building.flags.contains("staff_janitor") {
-            for apt in &mut building.apartments {
-                if apt.condition < 90 && apt.condition > 50 {
-                    apt.condition += 1;
-                }
-            }
-            if building.hallway_condition < 90 && building.hallway_condition > 50 {
-                building.hallway_condition += 1;
-            }
+    /// Janitor maintenance runs *after* decay so it genuinely offsets it:
+    /// the most-worn `janitor_units_maintained` units (and the hallway) are
+    /// repaired by exactly one month of decay, so the player only maintains
+    /// the units the janitor can't cover.
+    fn process_janitor_maintenance(
+        building: &mut Building,
+        config: &crate::data::config::GameConfig,
+    ) {
+        if !building.flags.contains("staff_janitor") {
+            return;
         }
 
-        // Security: Boost happiness
-        if building.flags.contains("staff_security") {
-            for t in tenants.iter_mut() {
-                t.happiness = (t.happiness + 2).min(100);
-            }
+        let apt_decay = config.decay.apartment_per_tick;
+        let hallway_decay = config.decay.hallway_per_tick;
+        let units_maintained = config.staff_effects.janitor_units_maintained;
+
+        // Repair the lowest-condition units first (most in need of upkeep).
+        let mut indices: Vec<usize> = (0..building.apartments.len()).collect();
+        indices.sort_by_key(|&i| building.apartments[i].condition);
+        for &i in indices.iter().take(units_maintained) {
+            building.apartments[i].repair(apt_decay);
         }
 
-        // Manager: Bonus happiness (simplification of "handles issues")
-        if building.flags.contains("staff_manager") {
-            for t in tenants.iter_mut() {
-                t.happiness = (t.happiness + 1).min(100);
-            }
-        }
+        building.repair_hallway(hallway_decay);
     }
 
     fn process_critical_failures(
@@ -272,6 +299,7 @@ impl GameTick {
         funds: &mut PlayerFunds,
         current_tick: u32,
         result: &mut TickResult,
+        config: &crate::data::config::GameConfig,
     ) {
         use macroquad_toolkit::rng;
 
@@ -279,7 +307,11 @@ impl GameTick {
         let mut prob = base_prob;
         // Security reduces failure probability
         if building.flags.contains("staff_security") {
-            prob /= 2;
+            let reduction = config
+                .staff_effects
+                .security_failure_reduction_percent
+                .clamp(0, 100);
+            prob = prob * (100 - reduction) / 100;
         }
 
         // Boiler Failure (prob out of 1000)
@@ -337,16 +369,60 @@ impl GameTick {
         }
     }
 
+    /// Low-quality tenants create real, visible losses so that vetting and
+    /// rejecting risky applicants actually matters. Disruptive (low behavior)
+    /// tenants damage their own unit and the shared hallway; unreliable rent
+    /// payers are handled in `collect_rent`.
+    fn process_tenant_risk(
+        building: &mut Building,
+        tenants: &[Tenant],
+        config: &crate::data::config::GameConfig,
+        result: &mut TickResult,
+    ) {
+        use macroquad_toolkit::rng;
+
+        let risk = &config.tenant_risk;
+
+        for tenant in tenants {
+            let Some(apt_id) = tenant.apartment_id else {
+                continue;
+            };
+            if tenant.behavior_score >= risk.low_behavior_threshold {
+                continue;
+            }
+            if rng::gen_range(0, 100) >= risk.damage_chance_percent {
+                continue;
+            }
+
+            let unit_number = building
+                .get_apartment(apt_id)
+                .map(|a| a.unit_number.clone())
+                .unwrap_or_default();
+
+            if let Some(apt) = building.get_apartment_mut(apt_id) {
+                apt.decay_condition(risk.damage_amount);
+            }
+            building.decay_hallway(risk.hallway_disturbance_amount);
+
+            result.events.push(GameEvent::TenantDamage {
+                tenant_name: tenant.name.clone(),
+                apartment_unit: unit_number,
+                damage: risk.damage_amount,
+            });
+        }
+    }
+
     fn update_tenants(
         building: &Building,
         tenants: &mut [Tenant],
         result: &mut TickResult,
         config: &crate::data::config::HappinessConfig,
+        staff: &crate::data::config::StaffEffectsConfig,
     ) {
         for tenant in tenants.iter_mut() {
             if let Some(apt_id) = tenant.apartment_id {
                 if let Some(apartment) = building.get_apartment(apt_id) {
-                    let factors = calculate_happiness(tenant, apartment, building, config);
+                    let factors = calculate_happiness(tenant, apartment, building, config, staff);
                     let old_happiness = tenant.happiness;
                     let new_happiness = factors.total();
                     tenant.set_happiness(new_happiness);
@@ -401,4 +477,75 @@ pub fn advance_tick(
         next_tenant_id,
         config,
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::building::Building;
+    use crate::data::config::GameConfig;
+    use crate::tenant::{Tenant, TenantArchetype};
+
+    fn empty_result() -> TickResult {
+        TickResult {
+            events: Vec::new(),
+            rent_collected: 0,
+            tenants_moved_out: Vec::new(),
+            new_applications: 0,
+            outcome: None,
+        }
+    }
+
+    #[test]
+    fn janitor_offsets_decay_on_maintained_units() {
+        let mut config = GameConfig::default();
+        config.decay.apartment_per_tick = 3;
+        config.staff_effects.janitor_units_maintained = 5;
+
+        let mut building = Building::new("Test", 3, 2); // 6 units at condition 50
+        building.flags.insert("staff_janitor".to_string());
+
+        building.apply_monthly_decay(3, 1); // every unit -> 47
+        GameTick::process_janitor_maintenance(&mut building, &config);
+
+        // 5 of 6 units are restored to their pre-decay condition; one is not.
+        let restored = building
+            .apartments
+            .iter()
+            .filter(|a| a.condition == 50)
+            .count();
+        let unmaintained = building
+            .apartments
+            .iter()
+            .filter(|a| a.condition == 47)
+            .count();
+        assert_eq!(restored, 5);
+        assert_eq!(unmaintained, 1);
+    }
+
+    #[test]
+    fn low_behavior_tenant_damages_property() {
+        let mut config = GameConfig::default();
+        config.tenant_risk.low_behavior_threshold = 100;
+        config.tenant_risk.damage_chance_percent = 100;
+        config.tenant_risk.damage_amount = 6;
+
+        let mut building = Building::new("Test", 1, 1);
+        let apt_id = building.apartments[0].id;
+        let before = building.apartments[0].condition;
+
+        let mut tenant = Tenant::new(1, "Risky", TenantArchetype::Student);
+        tenant.behavior_score = 10;
+        tenant.apartment_id = Some(apt_id);
+        let tenants = vec![tenant];
+
+        let mut result = empty_result();
+        GameTick::process_tenant_risk(&mut building, &tenants, &config, &mut result);
+
+        assert_eq!(building.apartments[0].condition, before - 6);
+        assert!(result
+            .events
+            .iter()
+            .any(|e| matches!(e, GameEvent::TenantDamage { .. })));
+    }
 }

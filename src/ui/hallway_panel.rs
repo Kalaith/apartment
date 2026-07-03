@@ -10,7 +10,7 @@ pub fn draw_hallway_panel(
     money: i32,
     offset_x: f32,
     scroll_offset: f32,
-    assets: &AssetManager,
+    _assets: &AssetManager,
     config: &crate::data::config::GameConfig,
 ) -> (Option<UiAction>, f32) {
     let mut action = None;
@@ -42,51 +42,27 @@ pub fn draw_hallway_panel(
     }
 
     let content_x = panel_x + 15.0;
+    let content_w = panel_w - 30.0;
     let content_top = panel_y + 40.0;
     let content_bottom = panel_y + panel_h - 10.0;
     let mut y = panel_y + 50.0 - new_scroll;
 
     if y + 20.0 > content_top && y < content_bottom {
-        draw_ui_text("CONDITION", content_x, y, 14.0, colors::TEXT_DIM);
+        crate::ui::widgets::section_label(content_x, y, "CONDITION");
     }
-    y += 5.0;
+    y += 22.0;
 
     if y + 20.0 > content_top && y < content_bottom {
-        let cond_color = condition_color(building.hallway_condition);
-        progress_bar(
+        crate::ui::widgets::stat_meter(
             content_x,
             y,
-            panel_w - 30.0,
-            20.0,
-            building.hallway_condition as f32,
-            100.0,
-            cond_color,
-        );
-        if let Some(icon) = if building.hallway_condition > 50 {
-            assets.get_texture("icon_condition_good")
-        } else {
-            assets.get_texture("icon_condition_poor")
-        } {
-            draw_texture_ex(
-                icon,
-                content_x + panel_w - 60.0,
-                y - 2.0,
-                WHITE,
-                DrawTextureParams {
-                    dest_size: Some(Vec2::new(24.0, 24.0)),
-                    ..Default::default()
-                },
-            );
-        }
-        draw_ui_text(
-            &format!("{}%", building.hallway_condition),
-            content_x + panel_w - 110.0,
-            y + 15.0,
-            16.0,
-            colors::TEXT,
+            content_w,
+            building.hallway_condition,
+            100,
+            condition_color(building.hallway_condition),
         );
     }
-    y += 45.0;
+    y += 30.0;
 
     if y + 14.0 > content_top && y < content_bottom {
         draw_ui_text(

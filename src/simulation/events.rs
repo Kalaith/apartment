@@ -51,6 +51,11 @@ pub enum GameEvent {
     NoiseComplaint {
         tenant_name: String,
     },
+    TenantDamage {
+        tenant_name: String,
+        apartment_unit: String,
+        damage: i32,
+    },
     ConditionComplaint {
         tenant_name: String,
         apartment_unit: String,
@@ -153,6 +158,16 @@ impl GameEvent {
             }
             GameEvent::NoiseComplaint { tenant_name } => {
                 format!("Noise complaint from {}", tenant_name)
+            }
+            GameEvent::TenantDamage {
+                tenant_name,
+                apartment_unit,
+                damage,
+            } => {
+                format!(
+                    "🔨 {} damaged Unit {} (-{} condition)",
+                    tenant_name, apartment_unit, damage
+                )
             }
             GameEvent::ConditionComplaint {
                 tenant_name,
@@ -264,6 +279,7 @@ impl GameEvent {
             GameEvent::RentMissed { .. } => EventSeverity::Warning,
             GameEvent::TenantUnhappy { .. } => EventSeverity::Warning,
             GameEvent::NoiseComplaint { .. } => EventSeverity::Warning,
+            GameEvent::TenantDamage { .. } => EventSeverity::Negative,
             GameEvent::ConditionComplaint { .. } => EventSeverity::Warning,
             GameEvent::PoorCondition { .. } => EventSeverity::Warning,
             GameEvent::HallwayDeteriorating { .. } => EventSeverity::Warning,

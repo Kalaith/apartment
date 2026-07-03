@@ -48,6 +48,7 @@ impl FinancialLedger {
                 TransactionType::BuildingPurchase => upgrade_costs += t.amount.abs(), // Count as capital upgrade for now
                 TransactionType::AssetSale => rent_income += t.amount.abs(), // Count condo sales as income
                 TransactionType::PropertyTax
+                | TransactionType::Mortgage
                 | TransactionType::Utilities
                 | TransactionType::Insurance
                 | TransactionType::StaffSalary

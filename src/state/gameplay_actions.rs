@@ -515,7 +515,7 @@ impl GameplayState {
         }
     }
 
-    fn apply_story_impact(&mut self, tenant_id: u32, impact: StoryImpact) {
+    pub(super) fn apply_story_impact(&mut self, tenant_id: u32, impact: StoryImpact) {
         let mut stack = vec![impact];
         while let Some(effect) = stack.pop() {
             match effect {

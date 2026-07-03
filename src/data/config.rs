@@ -20,6 +20,10 @@ pub struct GameConfig {
     #[serde(default)]
     pub operating_costs: OperatingCostsConfig,
     #[serde(default)]
+    pub staff_effects: StaffEffectsConfig,
+    #[serde(default)]
+    pub tenant_risk: TenantRiskConfig,
+    #[serde(default)]
     pub vetting: VettingConfig,
     #[serde(default)]
     pub marketing: MarketingConfig,
@@ -107,11 +111,19 @@ pub struct DecayConfig {
     pub hallway_per_tick: i32,
 }
 
+fn default_leave_chance_percent() -> i32 {
+    35
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct HappinessConfig {
     pub base: i32,
     pub min_for_victory: i32,
+    /// Happiness at/below which a tenant may decide to move out.
     pub leave_threshold: i32,
+    /// Monthly chance (percent) that a tenant at/below `leave_threshold` actually leaves.
+    #[serde(default = "default_leave_chance_percent")]
+    pub leave_chance_percent: i32,
     pub unhappy_threshold: i32,
     pub tenure_bonus_max: i32,
 
@@ -268,6 +280,12 @@ impl Default for ThresholdsConfig {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct OperatingCostsConfig {
     pub property_tax_rate: f32,
+    /// Additional property tax rate added per year of ownership (reassessment).
+    #[serde(default)]
+    pub property_tax_annual_increase: f32,
+    /// Fixed monthly overhead charged per unit regardless of occupancy (mortgage/upkeep).
+    #[serde(default)]
+    pub base_monthly_cost_per_unit: i32,
     pub utility_cost_per_unit: i32,
     pub insurance_base_rate: i32,
     pub insurance_good_condition_discount: i32,
@@ -278,10 +296,67 @@ impl Default for OperatingCostsConfig {
     fn default() -> Self {
         Self {
             property_tax_rate: 0.10,
+            property_tax_annual_increase: 0.035,
+            base_monthly_cost_per_unit: 140,
             utility_cost_per_unit: 50,
             insurance_base_rate: 150,
             insurance_good_condition_discount: 50,
             insurance_good_condition_threshold: 80,
+        }
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct StaffEffectsConfig {
+    /// Number of units the janitor fully maintains (offsets their monthly decay).
+    pub janitor_units_maintained: usize,
+    /// Happiness bonus applied to every tenant while security is employed.
+    pub security_happiness_bonus: i32,
+    /// Percent reduction to critical-failure odds while security is employed.
+    pub security_failure_reduction_percent: i32,
+    /// Happiness bonus applied to every tenant while a manager is employed.
+    pub manager_happiness_bonus: i32,
+    /// Whether the manager automatically approves pending tenant requests.
+    pub manager_auto_approve_requests: bool,
+}
+
+impl Default for StaffEffectsConfig {
+    fn default() -> Self {
+        Self {
+            janitor_units_maintained: 5,
+            security_happiness_bonus: 6,
+            security_failure_reduction_percent: 50,
+            manager_happiness_bonus: 4,
+            manager_auto_approve_requests: true,
+        }
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct TenantRiskConfig {
+    /// Tenants with rent_reliability below this may skip rent even when content.
+    pub unreliable_threshold: i32,
+    /// Monthly chance (percent) an unreliable tenant skips rent.
+    pub skip_rent_chance_percent: i32,
+    /// Tenants with behavior_score below this may damage the property.
+    pub low_behavior_threshold: i32,
+    /// Monthly chance (percent) a low-behavior tenant causes damage.
+    pub damage_chance_percent: i32,
+    /// Condition points removed from the unit when damage occurs.
+    pub damage_amount: i32,
+    /// Hallway condition points removed when a disruptive tenant acts up.
+    pub hallway_disturbance_amount: i32,
+}
+
+impl Default for TenantRiskConfig {
+    fn default() -> Self {
+        Self {
+            unreliable_threshold: 50,
+            skip_rent_chance_percent: 20,
+            low_behavior_threshold: 50,
+            damage_chance_percent: 25,
+            damage_amount: 6,
+            hallway_disturbance_amount: 3,
         }
     }
 }

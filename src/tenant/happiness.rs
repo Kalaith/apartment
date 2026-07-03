@@ -11,6 +11,7 @@ pub struct HappinessFactors {
     pub design_factor: i32,    // Based on design preference
     pub hallway_factor: i32,   // Building shared space condition
     pub tenure_bonus: i32,     // Small bonus for long-term residents
+    pub staff_factor: i32,     // Security/manager presence
 }
 
 impl HappinessFactors {
@@ -21,12 +22,13 @@ impl HappinessFactors {
             + self.noise_factor
             + self.design_factor
             + self.hallway_factor
-            + self.tenure_bonus)
+            + self.tenure_bonus
+            + self.staff_factor)
             .clamp(0, 100)
     }
 }
 
-use crate::data::config::HappinessConfig;
+use crate::data::config::{HappinessConfig, StaffEffectsConfig};
 
 /// Calculate happiness factors for a tenant in their apartment
 pub fn calculate_happiness(
@@ -34,6 +36,7 @@ pub fn calculate_happiness(
     apartment: &Apartment,
     building: &Building,
     config: &HappinessConfig,
+    staff: &StaffEffectsConfig,
 ) -> HappinessFactors {
     let prefs = tenant.archetype.preferences();
 
@@ -50,7 +53,21 @@ pub fn calculate_happiness(
         design_factor: calculate_design_factor(&apartment.design, &prefs, config),
         hallway_factor: calculate_hallway_factor(building.hallway_condition, config),
         tenure_bonus: calculate_tenure_bonus(tenant.months_residing, config),
+        staff_factor: calculate_staff_factor(building, staff),
     }
+}
+
+/// Happiness contribution from on-site staff. Persisted through the happiness
+/// recompute (unlike a one-off nudge), so hiring security/a manager is felt.
+fn calculate_staff_factor(building: &Building, staff: &StaffEffectsConfig) -> i32 {
+    let mut factor = 0;
+    if building.flags.contains("staff_security") {
+        factor += staff.security_happiness_bonus;
+    }
+    if building.flags.contains("staff_manager") {
+        factor += staff.manager_happiness_bonus;
+    }
+    factor
 }
 
 fn calculate_rent_factor(rent: i32, prefs: &ArchetypePreferences, config: &HappinessConfig) -> i32 {
@@ -204,4 +221,26 @@ pub fn calculate_relationship_happiness(
 
     // Cap the relationship bonus
     bonus.clamp(-20, 20)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::config::StaffEffectsConfig;
+
+    #[test]
+    fn staff_factor_reflects_security_and_manager() {
+        let mut building = Building::new("Test", 1, 1);
+        let staff = StaffEffectsConfig::default();
+
+        assert_eq!(calculate_staff_factor(&building, &staff), 0);
+
+        building.flags.insert("staff_security".to_string());
+        building.flags.insert("staff_manager".to_string());
+
+        assert_eq!(
+            calculate_staff_factor(&building, &staff),
+            staff.security_happiness_bonus + staff.manager_happiness_bonus
+        );
+    }
 }

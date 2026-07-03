@@ -9,6 +9,7 @@ pub enum TransactionType {
     BuildingPurchase,
     AssetSale,
     PropertyTax,
+    Mortgage,
     Utilities,
     Insurance,
     StaffSalary,
