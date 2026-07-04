@@ -6,6 +6,7 @@
 )]
 
 use macroquad::prelude::*;
+use macroquad_toolkit::capture;
 
 mod building;
 mod data;
@@ -32,18 +33,25 @@ mod util;
 use game::Game;
 
 fn window_conf() -> Conf {
-    Conf {
-        window_title: "Apartment".to_owned(),
-        window_width: 1280,
-        window_height: 720,
-        window_resizable: true,
-        ..Default::default()
-    }
+    capture::capture_window_conf("APARTMENT", "Apartment", 1280, 720)
 }
 
 #[macroquad::main(window_conf)]
 async fn main() {
     let mut game = Game::new().await;
+
+    // Screenshot harness: when APARTMENT_CAPTURE_PATH is set, seed a scene,
+    // simulate deterministic frames, write a PNG, and exit.
+    if let Some(config) = capture::CaptureConfig::from_env("APARTMENT") {
+        game.begin_capture_scene(&config.scene);
+        capture::run_capture(&config, |_dt| {
+            clear_background(ui::theme::color::BACKGROUND);
+            game.update();
+            game.draw();
+        })
+        .await;
+        return;
+    }
 
     loop {
         clear_background(ui::theme::color::BACKGROUND);
