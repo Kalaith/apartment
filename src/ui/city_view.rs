@@ -5,8 +5,18 @@ use crate::assets::AssetManager;
 use crate::city::{City, Neighborhood, NeighborhoodType, PropertyListing};
 use crate::narrative::NarrativeEventSystem;
 use crate::ui::colors;
+use crate::ui::theme::scale;
+use crate::ui::widgets::{draw_card, draw_panel};
 use macroquad::prelude::*;
 use macroquad_toolkit::ui::{draw_ui_text, draw_ui_text_ex};
+
+fn text_params(font_size: f32, color: Color) -> TextParams<'static> {
+    TextParams {
+        font_size: font_size as u16,
+        color,
+        ..Default::default()
+    }
+}
 
 /// Draw the city map showing all neighborhoods
 pub fn draw_city_map(
@@ -19,40 +29,13 @@ pub fn draw_city_map(
     let map_width = screen_width() * 0.5 - 40.0;
     let map_height = screen_height() - 140.0;
 
-    // Background
-    draw_rectangle(
-        map_x,
-        map_y,
-        map_width,
-        map_height,
-        Color::from_rgba(25, 25, 30, 255),
-    );
-    draw_rectangle_lines(
-        map_x,
-        map_y,
-        map_width,
-        map_height,
-        2.0,
-        Color::from_rgba(60, 60, 70, 255),
-    );
-
-    // Title
-    draw_ui_text_ex(
-        &city.name,
-        map_x + 10.0,
-        map_y + 25.0,
-        TextParams {
-            font_size: 24,
-            color: colors::TEXT_BRIGHT,
-            ..Default::default()
-        },
-    );
+    let content = draw_panel(Rect::new(map_x, map_y, map_width, map_height), &city.name);
 
     // Draw neighborhoods as a 2x2 grid
-    let grid_x = map_x + 20.0;
-    let grid_y = map_y + 50.0;
-    let cell_width = (map_width - 60.0) / 2.0;
-    let cell_height = (map_height - 100.0) / 2.0;
+    let grid_x = content.x;
+    let grid_y = content.y;
+    let cell_width = (content.w - 20.0) / 2.0;
+    let cell_height = (content.h - 20.0) / 2.0;
     let padding = 10.0;
 
     let mut action = None;
@@ -149,11 +132,7 @@ fn draw_neighborhood_cell(
         &neighborhood.name,
         x + 8.0,
         y + 22.0,
-        TextParams {
-            font_size: 18,
-            color: colors::TEXT_BRIGHT,
-            ..Default::default()
-        },
+        text_params(scale::HEADING, colors::TEXT_BRIGHT),
     );
 
     // Neighborhood type
@@ -161,11 +140,7 @@ fn draw_neighborhood_cell(
         neighborhood.neighborhood_type.name(),
         x + 8.0,
         y + 40.0,
-        TextParams {
-            font_size: 14,
-            color: colors::TEXT_DIM,
-            ..Default::default()
-        },
+        text_params(scale::LABEL, colors::TEXT_DIM),
     );
 
     // Building count
@@ -178,15 +153,14 @@ fn draw_neighborhood_cell(
         &slot_text,
         x + 8.0,
         y + 60.0,
-        TextParams {
-            font_size: 14,
-            color: if building_count > 0 {
+        text_params(
+            scale::LABEL,
+            if building_count > 0 {
                 colors::POSITIVE
             } else {
                 colors::TEXT_DIM
             },
-            ..Default::default()
-        },
+        ),
     );
 
     // Stats preview
@@ -198,11 +172,7 @@ fn draw_neighborhood_cell(
         ),
         x + 8.0,
         y + 80.0,
-        TextParams {
-            font_size: 12,
-            color: colors::TEXT_DIM,
-            ..Default::default()
-        },
+        text_params(scale::CAPTION, colors::TEXT_DIM),
     );
 
     // Reputation bar
@@ -212,11 +182,7 @@ fn draw_neighborhood_cell(
         &format!("Rep: {}", neighborhood.reputation),
         x + 8.0,
         bar_y - 3.0,
-        TextParams {
-            font_size: 12,
-            color: colors::TEXT_DIM,
-            ..Default::default()
-        },
+        text_params(scale::CAPTION, colors::TEXT_DIM),
     );
     draw_progress_bar(
         x + 8.0,
@@ -237,7 +203,13 @@ fn draw_neighborhood_cell(
         let icon_x = x + width - 30.0;
         let icon_y = y + 30.0;
         draw_circle(icon_x, icon_y, 12.0, colors::ACCENT);
-        draw_ui_text("!", icon_x - 3.0, icon_y + 5.0, 20.0, colors::TEXT_BRIGHT);
+        draw_ui_text(
+            "!",
+            icon_x - 3.0,
+            icon_y + 5.0,
+            scale::HEADING,
+            colors::TEXT_BRIGHT,
+        );
     }
 
     // Button area
@@ -259,52 +231,25 @@ pub fn draw_portfolio_panel(
     let panel_width = screen_width() * 0.5 - 30.0;
     let panel_height = screen_height() - 140.0;
 
-    // Background
-    draw_rectangle(
-        panel_x,
-        panel_y,
-        panel_width,
-        panel_height,
-        Color::from_rgba(30, 30, 35, 255),
-    );
-    draw_rectangle_lines(
-        panel_x,
-        panel_y,
-        panel_width,
-        panel_height,
-        2.0,
-        Color::from_rgba(60, 60, 70, 255),
-    );
-
-    // Title
-    draw_ui_text_ex(
+    let content = draw_panel(
+        Rect::new(panel_x, panel_y, panel_width, panel_height),
         "Your Properties",
-        panel_x + 10.0,
-        panel_y + 25.0,
-        TextParams {
-            font_size: 20,
-            color: colors::TEXT_BRIGHT,
-            ..Default::default()
-        },
     );
 
     let mut action = None;
-    let mut y = panel_y + 50.0;
+    let mut y = content.y;
     let item_height = 80.0;
 
     for (index, building, neighborhood_name) in city.buildings_with_info() {
         let is_selected = index == selected_building;
 
-        let item_width = panel_width - 20.0;
-        let item_x = panel_x + 10.0;
+        let item_width = content.w;
+        let item_x = content.x;
 
-        // Background
-        let bg_color = if is_selected {
-            Color::from_rgba(50, 60, 80, 255)
-        } else {
-            Color::from_rgba(40, 40, 45, 255)
-        };
-        draw_rectangle(item_x, y, item_width, item_height - 5.0, bg_color);
+        draw_card(
+            Rect::new(item_x, y, item_width, item_height - 5.0),
+            is_selected,
+        );
 
         // Building Icon/Thumbnail?
         // Maybe just use a generic icon for now or small building exterior
@@ -314,15 +259,6 @@ pub fn draw_portfolio_panel(
         }
 
         if is_selected {
-            draw_rectangle_lines(
-                item_x,
-                y,
-                item_width,
-                item_height - 5.0,
-                2.0,
-                colors::ACCENT,
-            );
-
             // Enter Button
             if draw_button_mini("Enter", item_x + item_width - 70.0, y + 25.0, 60.0, 30.0) {
                 action = Some(CityMapAction::EnterBuilding(index));
@@ -334,15 +270,14 @@ pub fn draw_portfolio_panel(
             &building.name,
             item_x + 10.0,
             y + 22.0,
-            TextParams {
-                font_size: 18,
-                color: if is_selected {
+            text_params(
+                scale::HEADING,
+                if is_selected {
                     colors::ACCENT
                 } else {
                     colors::TEXT_BRIGHT
                 },
-                ..Default::default()
-            },
+            ),
         );
 
         // Location
@@ -350,11 +285,7 @@ pub fn draw_portfolio_panel(
             &neighborhood_name,
             item_x + 10.0,
             y + 40.0,
-            TextParams {
-                font_size: 14,
-                color: colors::TEXT_DIM,
-                ..Default::default()
-            },
+            text_params(scale::LABEL, colors::TEXT_DIM),
         );
 
         // Stats
@@ -366,15 +297,14 @@ pub fn draw_portfolio_panel(
             &format!("Occupancy: {}/{} | Appeal: {}", occupancy, total, appeal),
             item_x + 10.0,
             y + 58.0,
-            TextParams {
-                font_size: 14,
-                color: if occupancy == total {
+            text_params(
+                scale::LABEL,
+                if occupancy == total {
                     colors::POSITIVE
                 } else {
                     colors::TEXT_DIM
                 },
-                ..Default::default()
-            },
+            ),
         );
 
         // Click to select
@@ -390,15 +320,15 @@ pub fn draw_portfolio_panel(
 
         y += item_height;
 
-        if y > panel_y + panel_height - item_height {
+        if y > content.y + content.h - item_height {
             break;
         }
     }
 
     // "Add Building" button if there's space
-    if y < panel_y + panel_height - 50.0 {
-        let btn_width = panel_width - 40.0;
-        let btn_x = panel_x + 20.0;
+    if y < content.y + content.h - 50.0 {
+        let btn_width = content.w;
+        let btn_x = content.x;
 
         if draw_button_icon("+ Acquire New Building", btn_x, y + 10.0, btn_width, 35.0) {
             action = Some(CityMapAction::OpenMarket);
@@ -420,60 +350,35 @@ pub fn draw_market_panel(
     let panel_width = screen_width() - 40.0;
     let panel_height = screen_height() - 140.0;
 
-    // Background
-    draw_rectangle(
-        panel_x,
-        panel_y,
-        panel_width,
-        panel_height,
-        Color::from_rgba(25, 28, 35, 255),
-    );
-    draw_rectangle_lines(
-        panel_x,
-        panel_y,
-        panel_width,
-        panel_height,
-        2.0,
-        Color::from_rgba(70, 80, 100, 255),
-    );
-
-    // Title
-    draw_ui_text_ex(
+    let content = draw_panel(
+        Rect::new(panel_x, panel_y, panel_width, panel_height),
         "Property Market",
-        panel_x + 15.0,
-        panel_y + 28.0,
-        TextParams {
-            font_size: 22,
-            color: colors::TEXT_BRIGHT,
-            ..Default::default()
-        },
     );
 
     // Budget display
+    let budget_text = format!("Your Budget: ${}", player_funds);
+    let budget_w =
+        macroquad_toolkit::ui::measure_ui_text(&budget_text, None, scale::LABEL as u16, 1.0).width;
     draw_ui_text_ex(
-        &format!("Your Budget: ${}", player_funds),
-        panel_x + panel_width - 200.0,
+        &budget_text,
+        content.x + content.w - budget_w,
         panel_y + 28.0,
-        TextParams {
-            font_size: 16,
-            color: colors::POSITIVE,
-            ..Default::default()
-        },
+        text_params(scale::LABEL, colors::POSITIVE),
     );
 
     let mut action = None;
-    let start_y = panel_y + 50.0;
+    let start_y = content.y;
     let listing_height = 120.0;
-    let listing_width = (panel_width - 60.0) / 2.0;
+    let listing_width = (content.w - 20.0) / 2.0;
 
     for (i, listing) in listings.iter().enumerate() {
         let col = i % 2;
         let row = i / 2;
 
-        let x = panel_x + 20.0 + col as f32 * (listing_width + 20.0);
+        let x = content.x + col as f32 * (listing_width + 20.0);
         let y = start_y + row as f32 * (listing_height + 15.0);
 
-        if y + listing_height > panel_y + panel_height - 20.0 {
+        if y + listing_height > content.y + content.h - 20.0 {
             break;
         }
 
@@ -494,7 +399,7 @@ pub fn draw_market_panel(
     // Back button
     if draw_button_icon(
         "← Back to Map",
-        panel_x + 15.0,
+        content.x,
         panel_y + panel_height - 60.0,
         150.0,
         35.0,

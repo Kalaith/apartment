@@ -1,3 +1,4 @@
+use crate::ui::theme::scale;
 use macroquad::prelude::*;
 use macroquad_toolkit::ui::draw_ui_text;
 
@@ -51,15 +52,10 @@ impl FloatingText {
 
         // Outline for readability
         let outline_color = Color::new(0.0, 0.0, 0.0, alpha);
-        draw_ui_text(
-            &self.text,
-            self.x + 1.0,
-            self.y + 1.0,
-            20.0 * self.scale,
-            outline_color,
-        );
+        let size = scale::HEADING * self.scale;
+        draw_ui_text(&self.text, self.x + 1.0, self.y + 1.0, size, outline_color);
 
-        draw_ui_text(&self.text, self.x, self.y, 20.0 * self.scale, color);
+        draw_ui_text(&self.text, self.x, self.y, size, color);
     }
 }
 

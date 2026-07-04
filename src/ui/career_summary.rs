@@ -1,7 +1,9 @@
 use crate::state::GameplayState;
+use crate::ui::theme::{color, scale, space, Tone};
+use crate::ui::widgets::{button_at, draw_card};
 use crate::ui::{colors, UiAction};
 use macroquad::prelude::*;
-use macroquad_toolkit::ui::{draw_ui_text, measure_ui_text};
+use macroquad_toolkit::ui::draw_ui_text;
 
 pub fn draw_career_summary(state: &GameplayState) -> Option<UiAction> {
     let screen_w = screen_width();
@@ -129,46 +131,39 @@ pub fn draw_career_summary(state: &GameplayState) -> Option<UiAction> {
     for achievement in &state.achievements.list {
         let unlocked = state.achievements.is_unlocked(&achievement.id);
         let rect_x = start_ach_x + (col as f32 * (ach_w + gap));
-
-        // Draw card
-        let bg_color = if unlocked {
-            colors::PANEL
-        } else {
-            Color::new(0.1, 0.1, 0.1, 1.0)
-        };
-        let border_color = if unlocked {
-            colors::ACCENT
-        } else {
-            colors::TEXT_DIM
-        };
-
-        draw_rectangle(rect_x, ach_y, ach_w, ach_h, bg_color);
-        draw_rectangle_lines(rect_x, ach_y, ach_w, ach_h, 2.0, border_color);
+        let rect = Rect::new(rect_x, ach_y, ach_w, ach_h);
+        draw_card(rect, unlocked);
 
         if unlocked {
             draw_ui_text(
                 &achievement.name,
-                rect_x + 10.0,
+                rect_x + space::SM,
                 ach_y + 25.0,
-                20.0,
-                colors::TEXT_BRIGHT,
+                scale::HEADING,
+                color::TEXT_BRIGHT,
             );
             // Wrap description roughly
             draw_ui_text(
                 &achievement.description,
-                rect_x + 10.0,
+                rect_x + space::SM,
                 ach_y + 50.0,
-                14.0,
-                colors::TEXT_DIM,
+                scale::CAPTION,
+                color::TEXT_DIM,
             );
         } else {
-            draw_ui_text("???", rect_x + 10.0, ach_y + 25.0, 20.0, colors::TEXT_DIM);
+            draw_ui_text(
+                "???",
+                rect_x + space::SM,
+                ach_y + 25.0,
+                scale::HEADING,
+                color::TEXT_DIM,
+            );
             draw_ui_text(
                 "Locked",
-                rect_x + 10.0,
+                rect_x + space::SM,
                 ach_y + 50.0,
-                14.0,
-                colors::TEXT_DIM,
+                scale::CAPTION,
+                color::TEXT_DIM,
             );
         }
 
@@ -188,41 +183,8 @@ pub fn draw_career_summary(state: &GameplayState) -> Option<UiAction> {
     let btn_x = cx - btn_w / 2.0;
     let btn_y = final_ach_y + 30.0; // After all achievements
 
-    // Draw more prominent button
-    let mouse = mouse_position();
-    let hovered = mouse.0 >= btn_x
-        && mouse.0 <= btn_x + btn_w
-        && mouse.1 >= btn_y
-        && mouse.1 <= btn_y + btn_h;
-    let clicked = hovered && is_mouse_button_pressed(MouseButton::Left);
-
-    let bg_color = if hovered {
-        Color::from_rgba(80, 140, 80, 255)
-    } else {
-        Color::from_rgba(60, 110, 60, 255)
-    };
-
-    draw_rectangle(btn_x, btn_y, btn_w, btn_h, bg_color);
-    draw_rectangle_lines(
-        btn_x,
-        btn_y,
-        btn_w,
-        btn_h,
-        3.0,
-        Color::from_rgba(100, 180, 100, 255),
-    );
-
-    let text = "RETURN TO MENU";
-    let text_width = measure_ui_text(text, None, 24, 1.0).width;
-    draw_ui_text(
-        text,
-        btn_x + (btn_w - text_width) / 2.0,
-        btn_y + btn_h / 2.0 + 8.0,
-        24.0,
-        WHITE,
-    );
-
-    if clicked {
+    let rect = Rect::new(btn_x, btn_y, btn_w, btn_h);
+    if button_at(rect, "RETURN TO MENU", true, Tone::Positive) {
         return Some(UiAction::ReturnToMenu);
     }
 

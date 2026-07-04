@@ -1,10 +1,11 @@
 use crate::assets::AssetManager;
 use crate::city::{Neighborhood, NeighborhoodType, PropertyListing};
 use crate::ui::colors;
+use crate::ui::theme::{self, scale, Tone};
 use macroquad::prelude::*;
 
 use super::city_view::CityMapAction;
-use macroquad_toolkit::ui::draw_ui_text_ex;
+use macroquad_toolkit::ui::{draw_surface, draw_ui_text_ex, SurfaceStyle};
 
 pub(super) fn draw_listing_card(
     listing: &PropertyListing,
@@ -40,39 +41,25 @@ pub(super) fn draw_progress_bar(
 }
 
 pub(super) fn draw_button_icon(label: &str, x: f32, y: f32, width: f32, height: f32) -> bool {
-    let style = macroquad_toolkit::ui::ButtonStyle {
-        normal: Color::from_rgba(50, 55, 65, 255),
-        hovered: Color::from_rgba(70, 80, 100, 255),
-        pressed: Color::from_rgba(42, 46, 56, 255),
-        border: Color::from_rgba(80, 90, 110, 255),
-        text_color: colors::TEXT_BRIGHT,
-        disabled: Color::from_rgba(35, 35, 40, 255),
-    };
+    let style = theme::button_style(Tone::Secondary);
     macroquad_toolkit::ui::button_rect_enabled_styled_ex(
         Rect::new(x, y, width, height),
         label,
         true,
         &style,
-        macroquad_toolkit::ui::TextStyle::new(14.0, colors::TEXT_BRIGHT),
+        macroquad_toolkit::ui::TextStyle::new(scale::LABEL, style.text_color),
         macroquad_toolkit::ui::ButtonTrigger::Press,
     )
 }
 
 pub(super) fn draw_button_mini(label: &str, x: f32, y: f32, width: f32, height: f32) -> bool {
-    let style = macroquad_toolkit::ui::ButtonStyle {
-        normal: Color::from_rgba(60, 90, 120, 255),
-        hovered: colors::ACCENT,
-        pressed: Color::from_rgba(45, 70, 100, 255),
-        border: colors::ACCENT,
-        text_color: colors::TEXT_BRIGHT,
-        disabled: Color::from_rgba(35, 35, 40, 255),
-    };
+    let style = theme::button_style(Tone::Positive);
     macroquad_toolkit::ui::button_rect_enabled_styled_ex(
         Rect::new(x, y, width, height),
         label,
         true,
         &style,
-        macroquad_toolkit::ui::TextStyle::new(12.0, colors::TEXT_BRIGHT),
+        macroquad_toolkit::ui::TextStyle::new(scale::CAPTION, style.text_color),
         macroquad_toolkit::ui::ButtonTrigger::Press,
     )
 }
@@ -86,16 +73,18 @@ fn draw_listing_background(
     neighborhood: Option<&Neighborhood>,
 ) {
     let bg_color = if hovered {
-        Color::from_rgba(50, 55, 65, 255)
+        colors::SURFACE_ALT
     } else {
-        Color::from_rgba(35, 38, 45, 255)
+        colors::SURFACE
     };
     let neighborhood_color = neighborhood
         .map(|n| n.neighborhood_type.color())
-        .unwrap_or(Color::from_rgba(100, 100, 100, 255));
+        .unwrap_or(colors::BORDER_STRONG);
 
-    draw_rectangle(x, y, width, height, bg_color);
-    draw_rectangle(x, y, 5.0, height, neighborhood_color);
+    let style = SurfaceStyle::new(bg_color)
+        .with_border(1.0, colors::BORDER)
+        .with_left_accent(5.0, neighborhood_color);
+    draw_surface(Rect::new(x, y, width, height), &style);
 }
 
 fn draw_neighborhood_preview(
@@ -140,11 +129,7 @@ fn draw_listing_text(
         &listing.name,
         x + 15.0,
         y + 22.0,
-        TextParams {
-            font_size: 16,
-            color: colors::TEXT_BRIGHT,
-            ..Default::default()
-        },
+        text_params(scale::HEADING as u16, colors::TEXT_BRIGHT),
     );
 
     let location_name = neighborhood.map(|n| n.name.as_str()).unwrap_or("Unknown");
@@ -152,7 +137,7 @@ fn draw_listing_text(
         location_name,
         x + 15.0,
         y + 40.0,
-        text_params(13, colors::TEXT_DIM),
+        text_params(scale::LABEL as u16, colors::TEXT_DIM),
     );
     draw_ui_text_ex(
         &format!(
@@ -163,7 +148,7 @@ fn draw_listing_text(
         ),
         x + 15.0,
         y + 58.0,
-        text_params(12, colors::TEXT_DIM),
+        text_params(scale::CAPTION as u16, colors::TEXT_DIM),
     );
 
     if listing.existing_tenants > 0 {
@@ -171,7 +156,7 @@ fn draw_listing_text(
             &format!("{} existing tenants", listing.existing_tenants),
             x + 15.0,
             y + 73.0,
-            text_params(11, colors::WARNING),
+            text_params(scale::CAPTION as u16, colors::WARNING),
         );
     }
 }
@@ -193,7 +178,7 @@ fn draw_listing_purchase(
         &format!("${}", listing.asking_price),
         x + 15.0,
         y + height - 12.0,
-        text_params(18, price_color(listing, player_funds)),
+        text_params(scale::HEADING as u16, price_color(listing, player_funds)),
     );
 
     if can_afford && draw_button_mini("Buy", btn_x, btn_y, btn_width, 22.0) {
@@ -205,7 +190,7 @@ fn draw_listing_purchase(
             "Can't afford",
             btn_x,
             btn_y + 15.0,
-            text_params(11, colors::TEXT_DIM),
+            text_params(scale::CAPTION as u16, colors::TEXT_DIM),
         );
     }
 

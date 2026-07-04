@@ -1,173 +1,85 @@
 use crate::narrative::events::NarrativeEvent;
-use crate::ui::{colors, UiAction};
+use crate::ui::theme::{color, scale, space, Tone};
+use crate::ui::widgets::{self, button_at, draw_panel, line_height, wrap};
+use crate::ui::UiAction;
 use macroquad::prelude::*;
-use macroquad_toolkit::ui::{draw_ui_text, measure_ui_text};
+use macroquad_toolkit::ui::draw_ui_text;
 
 pub fn draw_event_modal(event: &NarrativeEvent) -> Option<UiAction> {
     let screen_w = screen_width();
     let screen_h = screen_height();
 
-    // Dim background
     draw_rectangle(0., 0., screen_w, screen_h, Color::new(0., 0., 0., 0.6));
 
-    let modal_w = 600.0;
-    let modal_h = 400.0;
+    let modal_w = (screen_w * 0.55).clamp(480.0, 680.0);
+    let content_w = modal_w - space::PAD * 2.0;
+
+    let body_lines = wrap(&event.description, content_w, scale::BODY);
+    let body_h = body_lines.len() as f32 * line_height(scale::BODY);
+
+    let btn_h = 44.0;
+    let btn_count = event.choices.len().max(1) as f32;
+    let buttons_h = btn_count * btn_h + (btn_count - 1.0).max(0.0) * space::SM;
+
+    let header_h = 38.0;
+    let modal_h = header_h + space::SM + body_h + space::LG + buttons_h + space::MD;
+
     let x = (screen_w - modal_w) / 2.0;
-    let y = (screen_h - modal_h) / 2.0;
+    let y = ((screen_h - modal_h) / 2.0).max(space::XL);
 
-    // Main Panel
-    draw_rectangle(x, y, modal_w, modal_h, colors::PANEL);
-    draw_rectangle_lines(x, y, modal_w, modal_h, 3.0, colors::TEXT_DIM);
+    let content = draw_panel(Rect::new(x, y, modal_w, modal_h), &event.headline);
 
-    // Header
-    draw_rectangle(x, y, modal_w, 60.0, colors::PANEL_HEADER);
-    draw_ui_text(
-        &event.headline,
-        x + 20.0,
-        y + 40.0,
-        30.0,
-        colors::TEXT_BRIGHT,
-    );
-
-    let body_y = y + 90.0;
-    let mut current_y = body_y;
-    let font_size = 20.0;
-    let max_width = modal_w - 40.0;
-
-    for line in wrap_text(&event.description, font_size, max_width) {
-        draw_ui_text(&line, x + 20.0, current_y, font_size, colors::TEXT);
-        current_y += 25.0;
+    let mut text_y = content.y;
+    for line in &body_lines {
+        draw_ui_text(
+            line,
+            content.x,
+            text_y + scale::BODY,
+            scale::BODY,
+            color::TEXT,
+        );
+        text_y += line_height(scale::BODY);
     }
 
-    // Draw Choices
-    let mouse_pos = mouse_position();
-    let btn_height = 50.0;
-
-    let start_btn_y = y + modal_h - 20.0 - btn_height;
+    let btn_x = content.x;
+    let btn_w = content.w;
 
     if event.choices.is_empty() {
-        // "Continue" Button
-        let btn_w = 150.0;
-        let btn_rect = Rect::new(x + modal_w - btn_w - 20.0, start_btn_y, btn_w, btn_height);
-        let hovered = btn_rect.contains(vec2(mouse_pos.0, mouse_pos.1));
-
-        if hovered && is_mouse_button_pressed(MouseButton::Left) {
+        let w = widgets::button_width("Continue", btn_h).max(120.0);
+        let rect = Rect::new(btn_x + btn_w - w, y + modal_h - space::MD - btn_h, w, btn_h);
+        if button_at(rect, "Continue", true, Tone::Primary) {
             return Some(UiAction::ResolveEventChoice {
                 event_id: event.id,
                 choice_index: 0,
             });
         }
+        return None;
+    }
 
-        draw_rectangle(
-            btn_rect.x,
-            btn_rect.y,
-            btn_rect.w,
-            btn_rect.h,
-            if hovered {
-                colors::HOVERED
-            } else {
-                colors::PANEL
-            },
-        );
-        draw_ui_text(
-            "Continue",
-            btn_rect.x + 30.0,
-            btn_rect.y + 32.0,
-            20.0,
-            colors::TEXT_BRIGHT,
-        );
-    } else {
-        // Multiple choices
-        // Render them vertically stacked if descriptions are long?
-        // Or horizontally?
-        // Let's do horizontal but check width. If many choices, stick to horizontal row.
-        // Or vertical stack is safer for text.
-        // Let's do Vertical stack for clarity, from bottom up.
+    let mut btn_y = y + modal_h - space::MD - btn_h;
+    for (i, choice) in event.choices.iter().enumerate().rev() {
+        let label = if choice.reputation_change != 0 {
+            format!("{}   (Rep {:+})", choice.label, choice.reputation_change)
+        } else {
+            choice.label.clone()
+        };
+        let tone = if choice.reputation_change > 0 {
+            Tone::Positive
+        } else if choice.reputation_change < 0 {
+            Tone::Danger
+        } else {
+            Tone::Secondary
+        };
 
-        let btn_w = modal_w - 40.0;
-        let mut btn_y = y + modal_h - 20.0 - btn_height;
-
-        // Reverse iterate to stack from bottom?
-        for (i, choice) in event.choices.iter().enumerate().rev() {
-            let btn_rect = Rect::new(x + 20.0, btn_y, btn_w, btn_height);
-            let hovered = btn_rect.contains(vec2(mouse_pos.0, mouse_pos.1));
-
-            if hovered && is_mouse_button_pressed(MouseButton::Left) {
-                return Some(UiAction::ResolveEventChoice {
-                    event_id: event.id,
-                    choice_index: i,
-                });
-            }
-
-            draw_rectangle(
-                btn_rect.x,
-                btn_rect.y,
-                btn_rect.w,
-                btn_rect.h,
-                if hovered {
-                    colors::HOVERED
-                } else {
-                    colors::PANEL
-                },
-            );
-
-            draw_ui_text(
-                &choice.label,
-                btn_rect.x + 10.0,
-                btn_rect.y + 32.0,
-                20.0,
-                colors::TEXT_BRIGHT,
-            );
-
-            // Draw reputation/cost hint
-            if choice.reputation_change != 0 {
-                let rep_text = format!("Rep: {:+}", choice.reputation_change);
-                draw_ui_text(
-                    &rep_text,
-                    btn_rect.x + btn_w - 100.0,
-                    btn_rect.y + 32.0,
-                    18.0,
-                    if choice.reputation_change > 0 {
-                        colors::POSITIVE
-                    } else {
-                        colors::NEGATIVE
-                    },
-                );
-            }
-
-            btn_y -= btn_height + 10.0;
+        let rect = Rect::new(btn_x, btn_y, btn_w, btn_h);
+        if button_at(rect, &label, true, tone) {
+            return Some(UiAction::ResolveEventChoice {
+                event_id: event.id,
+                choice_index: i,
+            });
         }
+        btn_y -= btn_h + space::SM;
     }
 
     None
-}
-
-fn wrap_text(text: &str, font_size: f32, max_width: f32) -> Vec<String> {
-    let mut lines = Vec::new();
-
-    for paragraph in text.lines() {
-        let mut line = String::new();
-
-        for word in paragraph.split_whitespace() {
-            let candidate = if line.is_empty() {
-                word.to_string()
-            } else {
-                format!("{} {}", line, word)
-            };
-
-            let dims = measure_ui_text(&candidate, None, font_size as u16, 1.0);
-            if dims.width > max_width && !line.is_empty() {
-                lines.push(line);
-                line = word.to_string();
-            } else {
-                line = candidate;
-            }
-        }
-
-        if !line.is_empty() {
-            lines.push(line);
-        }
-    }
-
-    lines
 }
