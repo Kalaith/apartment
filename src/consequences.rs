@@ -7,6 +7,7 @@
 
 mod gentrification;
 mod regulations;
+mod relationship_dilemma;
 mod relationships;
 
 pub use gentrification::GentrificationTracker;

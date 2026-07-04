@@ -9,6 +9,11 @@ pub struct RelationshipEventsConfig {
     pub friendly: Vec<RelationshipEventTemplate>,
     #[serde(default)]
     pub romance: Vec<RelationshipEventTemplate>,
+    /// Emergent "high-rent tenant vs. unhappy neighbors" dilemmas.
+    /// Placeholders: {tenant}/{apt}/{rent}/{victim_count}/{victims} in text;
+    /// in effects, tenant_id 0 = the disruptor, 1 = each affected neighbor.
+    #[serde(default)]
+    pub dilemma: Vec<RelationshipEventTemplate>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

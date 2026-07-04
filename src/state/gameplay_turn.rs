@@ -164,6 +164,7 @@ impl GameplayState {
             &self.building,
             &self.config.relationships,
             &self.relationship_events_config,
+            self.current_tick,
         );
         self.notifications.add_relationship_changes(rel_changes);
         for mut event in rel_events {

@@ -176,7 +176,13 @@
     "hostile_strength_decay": 5,
     "hostile_transition_threshold": 20,
     "same_archetype_friendly_chance": 60,
-    "adjacent_hostile_chance": 30
+    "adjacent_hostile_chance": 30,
+    "dilemma": {
+      "min_hostile_relationships": 2,
+      "single_hostile_max_behavior": 40,
+      "rent_premium_multiplier": 1.2,
+      "cooldown_months": 6
+    }
   },
   "cohesion": {
     "archetype_group_threshold": 3,

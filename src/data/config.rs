@@ -427,6 +427,32 @@ pub struct RelationshipsConfig {
     pub hostile_transition_threshold: i32,
     pub same_archetype_friendly_chance: i32,
     pub adjacent_hostile_chance: i32,
+    #[serde(default)]
+    pub dilemma: DilemmaConfig,
+}
+
+/// Thresholds for the emergent "high-rent tenant vs. unhappy neighbors" dilemma
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct DilemmaConfig {
+    /// Hostile relationships needed to qualify as a disruptor outright
+    pub min_hostile_relationships: u32,
+    /// With only one hostile relationship, behavior below this still qualifies
+    pub single_hostile_max_behavior: i32,
+    /// Disruptor's rent must be at least this multiple of the average occupied rent
+    pub rent_premium_multiplier: f32,
+    /// Months before the same tenant can trigger another dilemma
+    pub cooldown_months: u32,
+}
+
+impl Default for DilemmaConfig {
+    fn default() -> Self {
+        Self {
+            min_hostile_relationships: 2,
+            single_hostile_max_behavior: 40,
+            rent_premium_multiplier: 1.2,
+            cooldown_months: 6,
+        }
+    }
 }
 
 impl Default for RelationshipsConfig {
@@ -446,6 +472,7 @@ impl Default for RelationshipsConfig {
             hostile_transition_threshold: 20,
             same_archetype_friendly_chance: 60,
             adjacent_hostile_chance: 30,
+            dilemma: DilemmaConfig::default(),
         }
     }
 }

@@ -117,6 +117,10 @@ pub struct TenantNetwork {
 
     // Phase 4C: Social Tension
     pub tensions: Vec<SocialTension>,
+
+    /// Month each tenant last starred in a dilemma event (cooldown tracking)
+    #[serde(default)]
+    pub dilemma_history: std::collections::HashMap<u32, u32>,
 }
 
 /// Record of a long-term tenant's history
@@ -138,6 +142,7 @@ impl TenantNetwork {
             relationships: Vec::new(),
             long_term_tenants: Vec::new(),
             tensions: Vec::new(),
+            dilemma_history: std::collections::HashMap::new(),
         }
     }
 
@@ -239,6 +244,7 @@ impl TenantNetwork {
         building: &crate::building::Building,
         config: &RelationshipsConfig,
         events_config: &RelationshipEventsConfig,
+        current_month: u32,
     ) -> (Vec<RelationshipChange>, Vec<NarrativeEvent>) {
         let mut changes = Vec::new();
         let mut events = Vec::new(); // Phase 4
@@ -325,6 +331,18 @@ impl TenantNetwork {
                     events.push(event);
                 }
             }
+        }
+
+        // Emergent dilemma: a premium-rent tenant whose hostile relationships
+        // are draining the building forces a keep-or-evict choice.
+        if let Some(event) = self.maybe_generate_dilemma(
+            tenants,
+            building,
+            &config.dilemma,
+            events_config,
+            current_month,
+        ) {
+            events.push(event);
         }
 
         (changes, events)

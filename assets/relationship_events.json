@@ -183,5 +183,111 @@
                 }
             ]
         }
+    ],
+    "dilemma": [
+        {
+            "id": "golden_goose",
+            "probability": 40,
+            "headline": "The {tenant} Problem",
+            "description": "{tenant} in {apt} pays ${rent}/month - some of your best rent. But {victim_count} neighbor(s) are miserable living nearby, and {victims} have all complained to you. Something has to give.",
+            "choices": [
+                {
+                    "label": "Side with {tenant}",
+                    "description": "The rent is too good to risk. The neighbors will have to cope.",
+                    "effect": {
+                        "type": "Multiple",
+                        "effects": [
+                            { "type": "OpinionChange", "tenant_id": 0, "amount": 15 },
+                            { "type": "TenantHappiness", "tenant_id": 1, "change": -10 },
+                            { "type": "RelationshipStrength", "tenant_a_id": 0, "tenant_b_id": 1, "change": -10 }
+                        ]
+                    },
+                    "reputation_change": -5
+                },
+                {
+                    "label": "Mediate",
+                    "description": "Hire a mediator to cool things down. Costs $300.",
+                    "effect": {
+                        "type": "Multiple",
+                        "effects": [
+                            { "type": "Money", "amount": -300 },
+                            { "type": "RelationshipStrength", "tenant_a_id": 0, "tenant_b_id": 1, "change": 20 },
+                            { "type": "TenantHappiness", "tenant_id": 0, "change": 5 },
+                            { "type": "TenantHappiness", "tenant_id": 1, "change": 5 }
+                        ]
+                    },
+                    "reputation_change": 5
+                },
+                {
+                    "label": "Evict {tenant}",
+                    "description": "Lose the premium rent, restore the peace.",
+                    "effect": {
+                        "type": "Multiple",
+                        "effects": [
+                            { "type": "MoveOut", "tenant_id": 0 },
+                            { "type": "OpinionChange", "tenant_id": 0, "amount": -100 },
+                            { "type": "TenantHappiness", "tenant_id": 1, "change": 20 }
+                        ]
+                    },
+                    "reputation_change": 5
+                }
+            ],
+            "default_effect": {
+                "type": "TenantHappiness",
+                "tenant_id": 1,
+                "change": -10
+            }
+        },
+        {
+            "id": "renewal_dilemma",
+            "probability": 25,
+            "headline": "Renewal Time for {tenant}",
+            "description": "{tenant}'s lease in {apt} is up for review. The ${rent}/month is hard to replace, but {victim_count} neighbor(s) - {victims} - quietly hope you won't renew.",
+            "choices": [
+                {
+                    "label": "Renew, no questions",
+                    "description": "Money talks. Keep the arrangement as-is.",
+                    "effect": {
+                        "type": "Multiple",
+                        "effects": [
+                            { "type": "OpinionChange", "tenant_id": 0, "amount": 20 },
+                            { "type": "TenantHappiness", "tenant_id": 1, "change": -10 }
+                        ]
+                    },
+                    "reputation_change": -5
+                },
+                {
+                    "label": "Renew with conditions",
+                    "description": "They stay, but must make amends with the neighbors.",
+                    "effect": {
+                        "type": "Multiple",
+                        "effects": [
+                            { "type": "TenantHappiness", "tenant_id": 0, "change": -10 },
+                            { "type": "RelationshipStrength", "tenant_a_id": 0, "tenant_b_id": 1, "change": 15 },
+                            { "type": "TenantHappiness", "tenant_id": 1, "change": 10 }
+                        ]
+                    },
+                    "reputation_change": 5
+                },
+                {
+                    "label": "Don't renew",
+                    "description": "Let them go and take the income hit.",
+                    "effect": {
+                        "type": "Multiple",
+                        "effects": [
+                            { "type": "MoveOut", "tenant_id": 0 },
+                            { "type": "OpinionChange", "tenant_id": 0, "amount": -100 },
+                            { "type": "TenantHappiness", "tenant_id": 1, "change": 15 }
+                        ]
+                    },
+                    "reputation_change": 0
+                }
+            ],
+            "default_effect": {
+                "type": "OpinionChange",
+                "tenant_id": 0,
+                "amount": 5
+            }
+        }
     ]
 }
