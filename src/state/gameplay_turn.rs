@@ -39,6 +39,7 @@ impl GameplayState {
         self.apply_active_world_events();
         self.apply_active_tax_breaks();
         self.update_city_systems();
+        self.collect_portfolio_passive_income();
         self.generate_monthly_narrative(&result);
         self.generate_tenant_life_events();
         self.auto_approve_manager_requests();
@@ -287,6 +288,60 @@ impl GameplayState {
             ));
             self.compliance.unpaid_fines = 0;
         }
+    }
+
+    /// Portfolio-lite: buildings you own but aren't actively managing run
+    /// themselves at a simplified steady state and contribute passive net income
+    /// each month. The active building is fully simulated by `advance_tick` and
+    /// excluded here.
+    pub(super) fn collect_portfolio_passive_income(&mut self) {
+        let active = self.city.active_building_index;
+        let cfg = &self.config.portfolio;
+        let mut net = 0i32;
+        let mut earning = 0u32;
+        for (i, building) in self.city.buildings.iter().enumerate() {
+            if i == active || building.apartments.is_empty() {
+                continue;
+            }
+            let potential: i32 = building.apartments.iter().map(|a| a.rent_price).sum();
+            let income = (potential as f32 * cfg.passive_occupancy) as i32;
+            let cost = building.apartments.len() as i32 * cfg.passive_cost_per_unit;
+            net += income - cost;
+            earning += 1;
+        }
+
+        if earning == 0 || net == 0 {
+            return;
+        }
+
+        if net > 0 {
+            self.funds.add_income(Transaction::income(
+                TransactionType::RentIncome,
+                net,
+                "Portfolio passive income",
+                self.current_tick,
+            ));
+        } else {
+            self.funds.apply_required_expense(Transaction::expense(
+                TransactionType::Mortgage,
+                net.abs(),
+                "Portfolio upkeep",
+                self.current_tick,
+            ));
+        }
+
+        self.event_log.log(
+            GameEvent::Notification {
+                message: format!(
+                    "Your other {} propert{} netted {:+} this month.",
+                    earning,
+                    if earning == 1 { "y" } else { "ies" },
+                    net
+                ),
+                level: crate::simulation::NotificationLevel::Info,
+            },
+            self.current_tick,
+        );
     }
 
     /// Nudge the visible reputation of the neighborhood the active building sits

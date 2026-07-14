@@ -268,6 +268,27 @@ mod tests {
     }
 
     #[test]
+    fn non_active_buildings_contribute_passive_income() {
+        use crate::building::Building;
+
+        let mut state = GameplayState::new();
+        // Add a second building (index 1, non-active) with known rents.
+        let mut passive = Building::new("Passive Block", 2, 2); // 4 units
+        for apt in &mut passive.apartments {
+            apt.rent_price = 1000;
+        }
+        let _ = state.city.add_building(passive, 0);
+
+        let before = state.funds.balance;
+        state.collect_portfolio_passive_income();
+        // 4 units × $1000 × 0.8 − 4 × $190 = 3200 − 760 = 2440 (positive).
+        assert!(
+            state.funds.balance > before,
+            "an owned non-active building should earn passive income"
+        );
+    }
+
+    #[test]
     fn historic_building_carries_extra_preservation_regulation() {
         use crate::data::config::load_config;
         use crate::data::templates::load_templates;

@@ -236,6 +236,10 @@
     "structural_repair_cost": 2500,
     "aging_cost_per_year": 350
   },
+  "portfolio": {
+    "passive_occupancy": 0.8,
+    "passive_cost_per_unit": 190
+  },
   "difficulty": {
     "Easy": {
       "starting_funds": 7000,

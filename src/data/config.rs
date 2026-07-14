@@ -39,6 +39,8 @@ pub struct GameConfig {
     pub life_events: LifeEventsConfig,
     #[serde(default)]
     pub critical_failures: CriticalFailureConfig,
+    #[serde(default)]
+    pub portfolio: PortfolioConfig,
     /// Per-difficulty rule modifiers, keyed by the building template's
     /// `difficulty` ("Easy"/"Medium"/"Hard"). Empty map → no adjustment.
     #[serde(default)]
@@ -659,6 +661,27 @@ impl Default for CriticalFailureConfig {
             boiler_repair_cost: 1500,
             structural_repair_cost: 2500,
             aging_cost_per_year: 350,
+        }
+    }
+}
+
+/// Portfolio-lite tuning: buildings you own but aren't actively managing run
+/// themselves at a simplified steady state and contribute passive net income,
+/// so a growing portfolio feels alive without fully simulating every building.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct PortfolioConfig {
+    /// Assumed stabilized occupancy of a hands-off (non-active) building.
+    pub passive_occupancy: f32,
+    /// Monthly overhead per unit charged against a non-active building (higher
+    /// than the active building's — you're not there to run it tightly).
+    pub passive_cost_per_unit: i32,
+}
+
+impl Default for PortfolioConfig {
+    fn default() -> Self {
+        Self {
+            passive_occupancy: 0.8,
+            passive_cost_per_unit: 190,
         }
     }
 }
