@@ -207,7 +207,8 @@
     "council_formation_threshold": 0.4,
     "council_min_tenants": 4,
     "council_rent_rollback": 0.1,
-    "council_solidarity_happiness": 5
+    "council_solidarity_happiness": 5,
+    "condo_sale_boom_bonus": 0.5
   },
   "regulations": {
     "pass_condition_threshold": 45,

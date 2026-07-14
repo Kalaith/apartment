@@ -160,7 +160,9 @@ impl GameplayState {
                 }
             }
             Selection::Ownership => {
-                if let Some(action) = draw_ownership_panel(&self.building) {
+                if let Some(action) =
+                    draw_ownership_panel(&self.building, self.condo_sale_market_multiplier())
+                {
                     self.pending_actions.push(action);
                 }
             }

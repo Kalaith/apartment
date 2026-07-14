@@ -555,6 +555,12 @@ pub struct GentrificationConfig {
     /// Happiness the tenants gain from the solidarity of organizing.
     #[serde(default = "default_council_solidarity_happiness")]
     pub council_solidarity_happiness: i32,
+    /// Max fractional bonus to a condo's sale price when the neighborhood is
+    /// fully gentrified (scales with gentrification 0→100). Combined with the
+    /// city's economy health, this makes *selling into a boom* a real timing
+    /// decision rather than a flat, purposeless payout.
+    #[serde(default = "default_condo_sale_boom_bonus")]
+    pub condo_sale_boom_bonus: f32,
 }
 
 fn default_council_rent_rollback() -> f32 {
@@ -563,6 +569,10 @@ fn default_council_rent_rollback() -> f32 {
 
 fn default_council_solidarity_happiness() -> i32 {
     5
+}
+
+fn default_condo_sale_boom_bonus() -> f32 {
+    0.5
 }
 
 impl Default for GentrificationConfig {
@@ -576,6 +586,7 @@ impl Default for GentrificationConfig {
             council_min_tenants: 4,
             council_rent_rollback: default_council_rent_rollback(),
             council_solidarity_happiness: default_council_solidarity_happiness(),
+            condo_sale_boom_bonus: default_condo_sale_boom_bonus(),
         }
     }
 }

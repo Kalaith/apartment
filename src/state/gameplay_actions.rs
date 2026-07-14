@@ -420,11 +420,13 @@ impl GameplayState {
                 ));
             }
             UiAction::SellUnitAsCondo { apartment_id } => {
-                let sale_price = self
+                let market_multiplier = self.condo_sale_market_multiplier();
+                let base_value = self
                     .building
                     .get_apartment(apartment_id)
                     .map(|apt| apt.market_value())
                     .unwrap_or(10_000);
+                let sale_price = (base_value as f32 * market_multiplier) as i32;
 
                 if let Some(apt) = self.building.get_apartment(apartment_id) {
                     if let Some(tenant_id) = apt.tenant_id {

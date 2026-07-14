@@ -4,7 +4,7 @@ use crate::ui::{colors, UiAction};
 use macroquad::prelude::*;
 use macroquad_toolkit::ui::draw_ui_text_ex;
 
-pub fn draw_ownership_panel(building: &Building) -> Option<UiAction> {
+pub fn draw_ownership_panel(building: &Building, market_multiplier: f32) -> Option<UiAction> {
     let panel_x = screen_width() * 0.5 + 10.0;
     let panel_y = 80.0;
     let panel_width = screen_width() * 0.5 - 30.0;
@@ -139,7 +139,7 @@ pub fn draw_ownership_panel(building: &Building) -> Option<UiAction> {
                 );
 
                 // Sell Button - use calculated market value
-                let sale_price = apt.market_value();
+                let sale_price = (apt.market_value() as f32 * market_multiplier) as i32;
 
                 if crate::ui::widgets::button_at(
                     Rect::new(panel_x + panel_width - 160.0, y + 4.0, 148.0, 24.0),
@@ -249,7 +249,7 @@ pub fn draw_ownership_panel(building: &Building) -> Option<UiAction> {
                     );
 
                     // Sell Button
-                    let sale_price = apt.market_value();
+                    let sale_price = (apt.market_value() as f32 * market_multiplier) as i32;
 
                     if crate::ui::widgets::button_at(
                         Rect::new(panel_x + panel_width - 140.0, y + 4.0, 128.0, 24.0),

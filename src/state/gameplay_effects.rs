@@ -242,6 +242,21 @@ mod tests {
     }
 
     #[test]
+    fn condo_sale_multiplier_tracks_the_market() {
+        let mut state = GameplayState::new();
+        state.city.economy_health = 1.5; // boom
+        let boom = state.condo_sale_market_multiplier();
+        state.city.economy_health = 0.5; // recession
+        let bust = state.condo_sale_market_multiplier();
+        assert!(
+            boom > 1.0,
+            "a booming economy should lift condo sale prices"
+        );
+        assert!(bust < 1.0, "a recession should depress condo sale prices");
+        assert!(boom > bust);
+    }
+
+    #[test]
     fn application_multiplier_scales_with_reputation() {
         let mut state = GameplayState::new();
         state.adjust_active_neighborhood_reputation(-50); // drive toward 0

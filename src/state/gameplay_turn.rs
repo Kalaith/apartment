@@ -303,6 +303,29 @@ impl GameplayState {
         }
     }
 
+    /// Gentrification pressure (0–100) of the neighborhood the active building
+    /// sits in, defaulting to 0 when the building isn't placed yet.
+    pub(super) fn active_neighborhood_gentrification(&self) -> i32 {
+        let building_id = self.city.active_building_index as u32;
+        self.city
+            .neighborhoods
+            .iter()
+            .find(|n| n.building_ids.contains(&building_id))
+            .map(|n| n.stats.gentrification)
+            .unwrap_or(0)
+    }
+
+    /// Market multiplier applied to a condo's base value at sale time. A booming
+    /// economy and a gentrifying neighborhood raise it well above 1.0; a
+    /// recession drags it below — so timing a sale to a hot market is worth real
+    /// money, giving selling a purpose beyond emergency liquidity.
+    pub(super) fn condo_sale_market_multiplier(&self) -> f32 {
+        let economy = self.city.economy_health; // 0.5..1.5
+        let gentrification = self.active_neighborhood_gentrification() as f32 / 100.0;
+        let boom_bonus = self.config.gentrification.condo_sale_boom_bonus;
+        (economy * (1.0 + gentrification * boom_bonus)).clamp(0.4, 2.5)
+    }
+
     /// Reputation of the neighborhood the active building sits in (0–100),
     /// defaulting to the neutral 50 when the building isn't placed yet.
     pub(super) fn active_neighborhood_reputation(&self) -> i32 {
