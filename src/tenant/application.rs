@@ -1,8 +1,40 @@
 use super::{matching::MatchResult, Tenant, TenantArchetype};
 use crate::building::Building;
-use crate::data::config::GameConfig;
+use crate::data::config::{GameConfig, TenantRiskConfig};
 use macroquad_toolkit::rng;
 use serde::{Deserialize, Serialize};
+
+/// Shape a fresh applicant's risk: a data-driven minority are forced into the
+/// "problem tenant" range (so screening has something to catch), and any risky
+/// applicant then gets a rent-tolerance premium (so a bad tenant is *tempting*).
+/// Together these are the reward/risk structure that makes tenant selection a
+/// real decision rather than a rubber stamp.
+pub fn apply_applicant_risk_profile(tenant: &mut Tenant, config: &TenantRiskConfig) {
+    // A minority of applicants are problem tenants regardless of archetype.
+    if rng::gen_range(0, 100) < config.problem_applicant_chance_percent {
+        let reliability_floor = rng::gen_range(20, config.unreliable_threshold.max(21));
+        let behavior_floor = rng::gen_range(20, config.low_behavior_threshold.max(21));
+        tenant.rent_reliability = tenant.rent_reliability.min(reliability_floor);
+        tenant.behavior_score = tenant.behavior_score.min(behavior_floor);
+    }
+    apply_risk_rent_premium(tenant, config);
+}
+
+/// Give risky applicants (unreliable or poorly-behaved) a rent-tolerance
+/// premium: they're more desperate, so they'll accept and pay higher rent. The
+/// premium scales from full (at the worst applicants) to zero as an applicant
+/// reaches the unreliable threshold.
+pub fn apply_risk_rent_premium(tenant: &mut Tenant, config: &TenantRiskConfig) {
+    let safety = tenant.rent_reliability.min(tenant.behavior_score);
+    let threshold = config.unreliable_threshold.max(1);
+    if safety >= threshold {
+        return;
+    }
+    let risk_fraction = (threshold - safety) as f32 / threshold as f32;
+    let premium = (tenant.rent_tolerance as f32 * config.risky_rent_premium_percent as f32 / 100.0
+        * risk_fraction) as i32;
+    tenant.rent_tolerance += premium;
+}
 
 /// A tenant application for a specific apartment
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -92,7 +124,8 @@ pub fn generate_applications(
             );
 
             // Generate tenant
-            let tenant = Tenant::generate(*next_tenant_id, archetype);
+            let mut tenant = Tenant::generate(*next_tenant_id, archetype);
+            apply_applicant_risk_profile(&mut tenant, &config.tenant_risk);
             *next_tenant_id += 1;
 
             // Check match
@@ -222,4 +255,35 @@ pub fn process_departures(
 
     tenants.retain(|t| !departing_ids.contains(&t.id));
     notifications
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::config::TenantRiskConfig;
+
+    #[test]
+    fn risky_applicant_gets_a_rent_premium() {
+        let cfg = TenantRiskConfig::default();
+        let mut tenant = Tenant::new(1, "Risky", TenantArchetype::Student);
+        tenant.rent_reliability = 20;
+        tenant.behavior_score = 20;
+        let base = tenant.rent_tolerance;
+        apply_risk_rent_premium(&mut tenant, &cfg);
+        assert!(
+            tenant.rent_tolerance > base,
+            "a risky applicant should tolerate higher rent (tempting to accept)"
+        );
+    }
+
+    #[test]
+    fn safe_applicant_gets_no_premium() {
+        let cfg = TenantRiskConfig::default();
+        let mut tenant = Tenant::new(1, "Safe", TenantArchetype::Professional);
+        tenant.rent_reliability = 90;
+        tenant.behavior_score = 90;
+        let base = tenant.rent_tolerance;
+        apply_risk_rent_premium(&mut tenant, &cfg);
+        assert_eq!(tenant.rent_tolerance, base);
+    }
 }

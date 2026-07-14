@@ -40,11 +40,13 @@
   },
   "tenant_risk": {
     "unreliable_threshold": 50,
-    "skip_rent_chance_percent": 20,
+    "skip_rent_chance_percent": 25,
     "low_behavior_threshold": 50,
     "damage_chance_percent": 25,
     "damage_amount": 6,
-    "hallway_disturbance_amount": 3
+    "hallway_disturbance_amount": 3,
+    "risky_rent_premium_percent": 30,
+    "problem_applicant_chance_percent": 18
   },
   "happiness": {
     "base": 50,

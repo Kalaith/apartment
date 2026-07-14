@@ -359,6 +359,27 @@ pub struct TenantRiskConfig {
     pub damage_amount: i32,
     /// Hallway condition points removed when a disruptive tenant acts up.
     pub hallway_disturbance_amount: i32,
+    /// Max rent-tolerance premium (percent) a maximally-risky applicant carries.
+    /// Risky applicants are more desperate: they tolerate (and will pay) higher
+    /// rent, which makes accepting them tempting despite the skipped-rent and
+    /// property-damage risk. Scales to zero as an applicant approaches the
+    /// unreliable threshold.
+    #[serde(default = "default_risky_rent_premium_percent")]
+    pub risky_rent_premium_percent: i32,
+    /// Percent of applicants who are "problem tenants" regardless of archetype —
+    /// their hidden reliability/behavior are forced into the risky range. Without
+    /// this the applicant pool is almost all reliable archetypes, so screening
+    /// has nothing to catch and tenant selection doesn't matter.
+    #[serde(default = "default_problem_applicant_chance_percent")]
+    pub problem_applicant_chance_percent: i32,
+}
+
+fn default_risky_rent_premium_percent() -> i32 {
+    30
+}
+
+fn default_problem_applicant_chance_percent() -> i32 {
+    18
 }
 
 impl Default for TenantRiskConfig {
@@ -370,6 +391,8 @@ impl Default for TenantRiskConfig {
             damage_chance_percent: 25,
             damage_amount: 6,
             hallway_disturbance_amount: 3,
+            risky_rent_premium_percent: default_risky_rent_premium_percent(),
+            problem_applicant_chance_percent: default_problem_applicant_chance_percent(),
         }
     }
 }
