@@ -1,11 +1,36 @@
 use super::GameplayState;
 use crate::narrative::{ActiveTaxBreak, MissionGoal, MissionReward, MissionStatus};
+use crate::simulation::GameEvent;
 use crate::ui::{colors, FloatingText};
 use macroquad::prelude::*;
 
 /// System for handling mission updates and rewards
 pub fn update_missions(state: &mut GameplayState) {
     let current_month = state.current_tick;
+
+    // Snapshot this month's building-wide signals up front so per-mission
+    // evaluation can read them without borrowing conflicts.
+    let avg_happiness = if state.tenants.is_empty() {
+        0.0
+    } else {
+        state
+            .tenants
+            .iter()
+            .map(|t| t.happiness as f32)
+            .sum::<f32>()
+            / state.tenants.len() as f32
+    };
+    // "Perfect collection" = at least one tenant and no missed-rent event this
+    // month.
+    let perfect_collection = !state.tenants.is_empty()
+        && state.last_tick_result.as_ref().is_some_and(|r| {
+            !r.events
+                .iter()
+                .any(|e| matches!(e, GameEvent::RentMissed { .. }))
+        });
+    let building_fully_repaired = !state.building.apartments.is_empty()
+        && state.building.apartments.iter().all(|a| a.condition >= 90)
+        && state.building.hallway_condition >= 90;
 
     // Check for expirations (expired missions are marked as such)
     state.missions.check_expirations(current_month);
@@ -47,7 +72,7 @@ pub fn update_missions(state: &mut GameplayState) {
             .iter_mut()
             .find(|m| m.id == mission_id)
         {
-            match &mission.goal {
+            match &mut mission.goal {
                 MissionGoal::HouseTenants { count, archetype } => {
                     let current_count = state
                         .tenants
@@ -69,12 +94,46 @@ pub fn update_missions(state: &mut GameplayState) {
                         completed = true;
                     }
                 }
-                MissionGoal::AcquireBuilding if state.city.buildings.len() > 1 => {
-                    // Started with 1
-                    completed = true;
+                MissionGoal::AcquireBuilding => {
+                    if state.city.buildings.len() > 1 {
+                        // Started with 1.
+                        completed = true;
+                    }
                 }
-                // Implement other goals...
-                _ => {}
+                MissionGoal::MaintainHappiness {
+                    threshold,
+                    months,
+                    current_months,
+                } => {
+                    // Accrue consecutive months at/above the happiness threshold;
+                    // a bad month resets the streak.
+                    if !state.tenants.is_empty() && avg_happiness >= *threshold {
+                        *current_months += 1;
+                    } else {
+                        *current_months = 0;
+                    }
+                    if *current_months >= *months {
+                        completed = true;
+                    }
+                }
+                MissionGoal::PerfectCollection {
+                    months,
+                    current_months,
+                } => {
+                    if perfect_collection {
+                        *current_months += 1;
+                    } else {
+                        *current_months = 0;
+                    }
+                    if *current_months >= *months {
+                        completed = true;
+                    }
+                }
+                MissionGoal::FullRepair { building_id: _ } => {
+                    if building_fully_repaired {
+                        completed = true;
+                    }
+                }
             }
 
             if completed {
@@ -112,8 +171,14 @@ pub fn update_missions(state: &mut GameplayState) {
                         colors::POSITIVE,
                     ));
                 }
-                MissionReward::UnlockBuilding(_) => {
-                    // Logic to unlock building (handled by city/economy generally)
+                MissionReward::UnlockBuilding(unlock_order) => {
+                    state.unlock_building_by_order(unlock_order);
+                    state.floating_texts.push(FloatingText::new(
+                        "New property unlocked!",
+                        screen_width() / 2.0,
+                        screen_height() / 2.0 + 30.0,
+                        colors::ACCENT,
+                    ));
                 }
                 MissionReward::Reputation(amount) => {
                     // Reward reputation in the active building's neighborhood.
@@ -136,5 +201,76 @@ pub fn update_missions(state: &mut GameplayState) {
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::narrative::missions::Mission;
+    use crate::state::GameplayState;
+
+    #[test]
+    fn maintain_happiness_goal_accrues_a_month() {
+        let mut state = GameplayState::new();
+        if state.tenants.is_empty() {
+            return;
+        }
+        for tenant in &mut state.tenants {
+            tenant.happiness = 90;
+        }
+        let id = state.missions.add_mission(Mission::new(
+            0,
+            "Steady Ship",
+            "Keep tenants content.",
+            0,
+            MissionGoal::MaintainHappiness {
+                threshold: 50.0,
+                months: 3,
+                current_months: 0,
+            },
+            MissionReward::Money(100),
+            None,
+        ));
+        state.missions.accept_mission(id, 1);
+
+        update_missions(&mut state);
+
+        let mission = state.missions.missions.iter().find(|m| m.id == id).unwrap();
+        assert!(matches!(
+            mission.goal,
+            MissionGoal::MaintainHappiness {
+                current_months: 1,
+                ..
+            }
+        ));
+        // One month of three: still in progress, no reward granted yet.
+        assert_eq!(mission.status, MissionStatus::Active);
+    }
+
+    #[test]
+    fn full_repair_goal_stays_incomplete_for_a_neglected_building() {
+        let mut state = GameplayState::new();
+        // Drive the building below the repair bar so completion (and its UI
+        // feedback, which needs a GL context) can't fire in the test.
+        for apt in &mut state.building.apartments {
+            apt.condition = 40;
+        }
+        state.building.hallway_condition = 40;
+        let id = state.missions.add_mission(Mission::new(
+            0,
+            "Fix It Up",
+            "Restore the building.",
+            0,
+            MissionGoal::FullRepair { building_id: 0 },
+            MissionReward::Money(100),
+            None,
+        ));
+        state.missions.accept_mission(id, 1);
+
+        update_missions(&mut state);
+
+        let mission = state.missions.missions.iter().find(|m| m.id == id).unwrap();
+        assert_eq!(mission.status, MissionStatus::Active);
     }
 }

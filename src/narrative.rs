@@ -11,7 +11,7 @@
 pub mod dialogue; // Make public so DialogueEffect is accessible
 pub mod events;
 mod mail;
-mod missions;
+pub(crate) mod missions;
 pub mod notifications;
 mod stories;
 mod tutorial;

@@ -363,6 +363,25 @@ impl GameplayState {
         }
     }
 
+    /// Unlock a specific building (by its template `unlock_order`) in the
+    /// persistent player progress — used by `MissionReward::UnlockBuilding`.
+    pub(super) fn unlock_building_by_order(&self, unlock_order: u32) {
+        use crate::data::templates::load_templates;
+        use crate::save::{load_player_progress, save_player_progress};
+
+        let mut progress = load_player_progress();
+        if let Some(templates) = load_templates() {
+            if let Some(template) = templates
+                .templates
+                .iter()
+                .find(|t| t.unlock_order == unlock_order)
+            {
+                progress.unlock_building(&template.id);
+            }
+        }
+        let _ = save_player_progress(&progress);
+    }
+
     /// Unlock the next building after completing the current one
     pub fn unlock_next_building(&self) {
         use crate::data::templates::load_templates;

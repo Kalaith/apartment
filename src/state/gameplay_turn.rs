@@ -54,8 +54,10 @@ impl GameplayState {
         self.log_monthly_status();
         self.update_context_hints();
         self.check_game_completion();
-        self.update_missions();
+        // Record the tick result before evaluating missions so goals like
+        // PerfectCollection can inspect this month's rent outcome.
         self.last_tick_result = Some(result);
+        self.update_missions();
         self.autosave_current_game();
     }
 
