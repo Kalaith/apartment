@@ -73,96 +73,100 @@
             }
         },
         {
-            "id": "downtown_tower",
-            "name": "The Meridian",
+            "id": "riverside_court",
+            "name": "Riverside Court",
             "unlock_order": 1,
-            "difficulty": "Medium",
+            "difficulty": "Easy",
             "neighborhood_id": 0,
-            "description": "An 8-unit downtown high-rise. Higher rents but demanding tenants.",
+            "description": "An 8-unit courtyard block with good bones and a reputation for neighbor drama.",
             "floors": 4,
             "units_per_floor": 2,
-            "hallway_condition": 45,
+            "hallway_condition": 65,
             "apartments": [
                 {
                     "unit_number": "1A",
                     "floor": 1,
                     "size": "medium",
                     "base_noise": "high",
-                    "initial_condition": 35,
-                    "initial_design": "bare",
-                    "initial_rent": 1100
+                    "initial_condition": 62,
+                    "initial_design": "practical",
+                    "initial_rent": 1050
                 },
                 {
                     "unit_number": "1B",
                     "floor": 1,
-                    "size": "medium",
-                    "base_noise": "high",
-                    "initial_condition": 40,
+                    "size": "small",
+                    "base_noise": "low",
+                    "initial_condition": 58,
                     "initial_design": "bare",
-                    "initial_rent": 1100
+                    "initial_rent": 780
                 },
                 {
                     "unit_number": "2A",
                     "floor": 2,
                     "size": "medium",
                     "base_noise": "low",
-                    "initial_condition": 30,
-                    "initial_design": "bare",
+                    "initial_condition": 70,
+                    "initial_design": "cozy",
                     "initial_rent": 1200
                 },
                 {
                     "unit_number": "2B",
                     "floor": 2,
-                    "size": "large",
-                    "base_noise": "low",
-                    "initial_condition": 35,
+                    "size": "small",
+                    "base_noise": "high",
+                    "initial_condition": 55,
                     "initial_design": "bare",
-                    "initial_rent": 1500
+                    "initial_rent": 760
                 },
                 {
                     "unit_number": "3A",
                     "floor": 3,
                     "size": "medium",
                     "base_noise": "low",
-                    "initial_condition": 25,
-                    "initial_design": "bare",
-                    "initial_rent": 1300
+                    "initial_condition": 66,
+                    "initial_design": "practical",
+                    "initial_rent": 1150
                 },
                 {
                     "unit_number": "3B",
                     "floor": 3,
-                    "size": "large",
+                    "size": "small",
                     "base_noise": "low",
-                    "initial_condition": 30,
-                    "initial_design": "bare",
-                    "initial_rent": 1600
+                    "initial_condition": 60,
+                    "initial_design": "practical",
+                    "initial_rent": 820
                 },
                 {
                     "unit_number": "4A",
                     "floor": 4,
                     "size": "large",
                     "base_noise": "low",
-                    "initial_condition": 40,
-                    "initial_design": "practical",
-                    "initial_rent": 1800
+                    "initial_condition": 72,
+                    "initial_design": "cozy",
+                    "initial_rent": 1600
                 },
                 {
                     "unit_number": "4B",
                     "floor": 4,
-                    "size": "penthouse",
-                    "base_noise": "low",
-                    "initial_condition": 45,
-                    "initial_design": "practical",
-                    "initial_rent": 2800
+                    "size": "medium",
+                    "base_noise": "high",
+                    "initial_condition": 57,
+                    "initial_design": "bare",
+                    "initial_rent": 1000
                 }
             ],
-            "initial_tenant": null
+            "initial_tenant": {
+                "apartment_unit": "2A",
+                "archetype": "artist",
+                "name": "River K."
+            }
         },
         {
             "id": "heritage_manor",
             "name": "Blackwood Manor",
             "unlock_order": 2,
-            "difficulty": "Hard",
+            "difficulty": "Medium",
             "neighborhood_id": 3,
             "description": "A historic pyramid-style estate. Poor condition but premium potential. Very picky tenants.",
             "floors": 4,
@@ -261,6 +265,290 @@
                 }
             ],
             "initial_tenant": null
+        },
+        {
+            "id": "foundry_lofts",
+            "name": "The Foundry Lofts",
+            "unlock_order": 3,
+            "difficulty": "Medium",
+            "neighborhood_id": 2,
+            "description": "A converted warehouse of raw industrial lofts in a gentrifying district. Values are climbing.",
+            "floors": 4,
+            "units_per_floor": 2,
+            "hallway_condition": 45,
+            "apartments": [
+                {
+                    "unit_number": "L1",
+                    "floor": 1,
+                    "size": "large",
+                    "base_noise": "high",
+                    "initial_condition": 42,
+                    "initial_design": "bare",
+                    "initial_rent": 1300
+                },
+                {
+                    "unit_number": "L2",
+                    "floor": 1,
+                    "size": "large",
+                    "base_noise": "high",
+                    "initial_condition": 38,
+                    "initial_design": "bare",
+                    "initial_rent": 1250
+                },
+                {
+                    "unit_number": "L3",
+                    "floor": 2,
+                    "size": "large",
+                    "base_noise": "low",
+                    "initial_condition": 48,
+                    "initial_design": "practical",
+                    "initial_rent": 1500
+                },
+                {
+                    "unit_number": "L4",
+                    "floor": 2,
+                    "size": "medium",
+                    "base_noise": "high",
+                    "initial_condition": 40,
+                    "initial_design": "bare",
+                    "initial_rent": 1100
+                },
+                {
+                    "unit_number": "L5",
+                    "floor": 3,
+                    "size": "large",
+                    "base_noise": "low",
+                    "initial_condition": 50,
+                    "initial_design": "practical",
+                    "initial_rent": 1550
+                },
+                {
+                    "unit_number": "L6",
+                    "floor": 3,
+                    "size": "large",
+                    "base_noise": "high",
+                    "initial_condition": 44,
+                    "initial_design": "bare",
+                    "initial_rent": 1350
+                },
+                {
+                    "unit_number": "L7",
+                    "floor": 4,
+                    "size": "penthouse",
+                    "base_noise": "low",
+                    "initial_condition": 55,
+                    "initial_design": "cozy",
+                    "initial_rent": 2400
+                },
+                {
+                    "unit_number": "L8",
+                    "floor": 4,
+                    "size": "large",
+                    "base_noise": "low",
+                    "initial_condition": 46,
+                    "initial_design": "practical",
+                    "initial_rent": 1600
+                }
+            ],
+            "initial_tenant": {
+                "apartment_unit": "L4",
+                "archetype": "student",
+                "name": "Kai T."
+            }
+        },
+        {
+            "id": "downtown_tower",
+            "name": "The Meridian",
+            "unlock_order": 4,
+            "difficulty": "Hard",
+            "neighborhood_id": 0,
+            "description": "An 8-unit downtown high-rise. Higher rents but demanding tenants.",
+            "floors": 4,
+            "units_per_floor": 2,
+            "hallway_condition": 45,
+            "apartments": [
+                {
+                    "unit_number": "1A",
+                    "floor": 1,
+                    "size": "medium",
+                    "base_noise": "high",
+                    "initial_condition": 35,
+                    "initial_design": "bare",
+                    "initial_rent": 1100
+                },
+                {
+                    "unit_number": "1B",
+                    "floor": 1,
+                    "size": "medium",
+                    "base_noise": "high",
+                    "initial_condition": 40,
+                    "initial_design": "bare",
+                    "initial_rent": 1100
+                },
+                {
+                    "unit_number": "2A",
+                    "floor": 2,
+                    "size": "medium",
+                    "base_noise": "low",
+                    "initial_condition": 30,
+                    "initial_design": "bare",
+                    "initial_rent": 1200
+                },
+                {
+                    "unit_number": "2B",
+                    "floor": 2,
+                    "size": "large",
+                    "base_noise": "low",
+                    "initial_condition": 35,
+                    "initial_design": "bare",
+                    "initial_rent": 1500
+                },
+                {
+                    "unit_number": "3A",
+                    "floor": 3,
+                    "size": "medium",
+                    "base_noise": "low",
+                    "initial_condition": 25,
+                    "initial_design": "bare",
+                    "initial_rent": 1300
+                },
+                {
+                    "unit_number": "3B",
+                    "floor": 3,
+                    "size": "large",
+                    "base_noise": "low",
+                    "initial_condition": 30,
+                    "initial_design": "bare",
+                    "initial_rent": 1600
+                },
+                {
+                    "unit_number": "4A",
+                    "floor": 4,
+                    "size": "large",
+                    "base_noise": "low",
+                    "initial_condition": 40,
+                    "initial_design": "practical",
+                    "initial_rent": 1800
+                },
+                {
+                    "unit_number": "4B",
+                    "floor": 4,
+                    "size": "penthouse",
+                    "base_noise": "low",
+                    "initial_condition": 45,
+                    "initial_design": "practical",
+                    "initial_rent": 2800
+                }
+            ],
+            "initial_tenant": null
+        },
+        {
+            "id": "the_commons",
+            "name": "The Commons",
+            "unlock_order": 5,
+            "difficulty": "Hard",
+            "neighborhood_id": 1,
+            "description": "A 10-unit community block that has seen better days. Balance profit against the people who call it home.",
+            "floors": 5,
+            "units_per_floor": 2,
+            "hallway_condition": 38,
+            "apartments": [
+                {
+                    "unit_number": "1A",
+                    "floor": 1,
+                    "size": "small",
+                    "base_noise": "high",
+                    "initial_condition": 35,
+                    "initial_design": "bare",
+                    "initial_rent": 700
+                },
+                {
+                    "unit_number": "1B",
+                    "floor": 1,
+                    "size": "medium",
+                    "base_noise": "low",
+                    "initial_condition": 42,
+                    "initial_design": "bare",
+                    "initial_rent": 950
+                },
+                {
+                    "unit_number": "2A",
+                    "floor": 2,
+                    "size": "medium",
+                    "base_noise": "low",
+                    "initial_condition": 40,
+                    "initial_design": "bare",
+                    "initial_rent": 980
+                },
+                {
+                    "unit_number": "2B",
+                    "floor": 2,
+                    "size": "small",
+                    "base_noise": "high",
+                    "initial_condition": 33,
+                    "initial_design": "bare",
+                    "initial_rent": 680
+                },
+                {
+                    "unit_number": "3A",
+                    "floor": 3,
+                    "size": "large",
+                    "base_noise": "low",
+                    "initial_condition": 48,
+                    "initial_design": "practical",
+                    "initial_rent": 1400
+                },
+                {
+                    "unit_number": "3B",
+                    "floor": 3,
+                    "size": "medium",
+                    "base_noise": "low",
+                    "initial_condition": 45,
+                    "initial_design": "practical",
+                    "initial_rent": 1050
+                },
+                {
+                    "unit_number": "4A",
+                    "floor": 4,
+                    "size": "medium",
+                    "base_noise": "high",
+                    "initial_condition": 38,
+                    "initial_design": "bare",
+                    "initial_rent": 920
+                },
+                {
+                    "unit_number": "4B",
+                    "floor": 4,
+                    "size": "small",
+                    "base_noise": "low",
+                    "initial_condition": 50,
+                    "initial_design": "practical",
+                    "initial_rent": 760
+                },
+                {
+                    "unit_number": "5A",
+                    "floor": 5,
+                    "size": "large",
+                    "base_noise": "low",
+                    "initial_condition": 52,
+                    "initial_design": "cozy",
+                    "initial_rent": 1550
+                },
+                {
+                    "unit_number": "5B",
+                    "floor": 5,
+                    "size": "medium",
+                    "base_noise": "low",
+                    "initial_condition": 44,
+                    "initial_design": "practical",
+                    "initial_rent": 1080
+                }
+            ],
+            "initial_tenant": {
+                "apartment_unit": "1B",
+                "archetype": "elderly",
+                "name": "Mabel W."
+            }
         }
     ]
 }
