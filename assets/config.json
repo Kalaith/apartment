@@ -21,9 +21,9 @@
       "medium": 900
     },
     "staff_costs": {
-      "janitor": 200,
-      "security": 400,
-      "manager": 600,
+      "janitor": 150,
+      "security": 320,
+      "manager": 480,
       "receptionist": 300
     }
   },

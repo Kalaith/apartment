@@ -84,9 +84,9 @@ fn default_base_rent() -> HashMap<String, i32> {
 
 fn default_staff_costs() -> HashMap<String, i32> {
     let mut costs = HashMap::new();
-    costs.insert("janitor".to_string(), 200);
-    costs.insert("security".to_string(), 400);
-    costs.insert("manager".to_string(), 600);
+    costs.insert("janitor".to_string(), 150);
+    costs.insert("security".to_string(), 320);
+    costs.insert("manager".to_string(), 480);
     costs
 }
 

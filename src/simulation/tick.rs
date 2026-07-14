@@ -73,7 +73,7 @@ impl GameTick {
         result.events.extend(decay_events);
 
         // 4b. Staff maintenance offsets decay; disruptive tenants add damage.
-        Self::process_janitor_maintenance(building, config);
+        Self::process_janitor_maintenance(building, &mut result, config);
         Self::process_tenant_risk(building, tenants, config, &mut result);
 
         // 5. Tenant Happiness & Updates
@@ -283,6 +283,7 @@ impl GameTick {
     /// the units the janitor can't cover.
     fn process_janitor_maintenance(
         building: &mut Building,
+        result: &mut TickResult,
         config: &crate::data::config::GameConfig,
     ) {
         if !building.flags.contains("staff_janitor") {
@@ -292,15 +293,35 @@ impl GameTick {
         let apt_decay = config.decay.apartment_per_tick;
         let hallway_decay = config.decay.hallway_per_tick;
         let units_maintained = config.staff_effects.janitor_units_maintained;
+        let apt_cost = config.economy.repair_cost_per_point;
+        let hallway_cost = config.economy.hallway_repair_cost_per_point;
 
-        // Repair the lowest-condition units first (most in need of upkeep).
+        // Repair the lowest-condition units first (most in need of upkeep), and
+        // tally the repair cost the janitor's upkeep spared us.
         let mut indices: Vec<usize> = (0..building.apartments.len()).collect();
         indices.sort_by_key(|&i| building.apartments[i].condition);
+        let mut value_saved = 0;
         for &i in indices.iter().take(units_maintained) {
+            let before = building.apartments[i].condition;
             building.apartments[i].repair(apt_decay);
+            value_saved += (building.apartments[i].condition - before) * apt_cost;
         }
 
+        let hall_before = building.hallway_condition;
         building.repair_hallway(hallway_decay);
+        value_saved += (building.hallway_condition - hall_before) * hallway_cost;
+
+        // Make the janitor's contribution legible — this is upkeep the landlord
+        // would otherwise have to pay for (or lose to decay-driven fines).
+        if value_saved > 0 {
+            result.events.push(GameEvent::Notification {
+                message: format!(
+                    "Janitor upkeep offset ~${} of wear this month.",
+                    value_saved
+                ),
+                level: crate::simulation::NotificationLevel::Info,
+            });
+        }
     }
 
     fn process_critical_failures(
@@ -521,7 +542,8 @@ mod tests {
         building.flags.insert("staff_janitor".to_string());
 
         building.apply_monthly_decay(3, 1); // every unit -> 47
-        GameTick::process_janitor_maintenance(&mut building, &config);
+        let mut result = empty_result();
+        GameTick::process_janitor_maintenance(&mut building, &mut result, &config);
 
         // 5 of 6 units are restored to their pre-decay condition; one is not.
         let restored = building
