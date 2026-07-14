@@ -11,7 +11,8 @@ use std::collections::HashSet;
 pub enum AchievementCondition {
     TotalTenants { min: usize },
     Funds { min: i32 },
-    AvgHappiness { max: i32 }, // "below" certain value
+    AvgHappiness { max: i32 },     // average happiness at or below a value
+    HappinessAtLeast { min: i32 }, // average happiness at or above a value
     MaxReputation { min: i32 },
     FullOccupancy,
     GameComplete,
@@ -76,6 +77,15 @@ impl AchievementSystem {
                         avg <= *max
                     }
                 }
+                AchievementCondition::HappinessAtLeast { min } => {
+                    if tenants.is_empty() {
+                        false
+                    } else {
+                        let avg =
+                            tenants.iter().map(|t| t.happiness).sum::<i32>() / tenants.len() as i32;
+                        avg >= *min
+                    }
+                }
                 AchievementCondition::MaxReputation { min } => {
                     // Check all neighborhoods
                     city.neighborhoods.iter().any(|n| n.reputation >= *min)
@@ -120,4 +130,25 @@ fn load_achievements_config() -> Vec<Achievement> {
         eprintln!("Failed to parse achievements.json: {}", e);
         Vec::new()
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::AchievementSystem;
+
+    #[test]
+    fn achievements_load_from_json() {
+        let system = AchievementSystem::new();
+        // The full expanded set must deserialize (incl. HappinessAtLeast).
+        assert!(system.list.len() >= 20, "loaded {}", system.list.len());
+        // Ids are unique.
+        let mut ids: Vec<&str> = system.list.iter().map(|a| a.id.as_str()).collect();
+        ids.sort_unstable();
+        let unique = {
+            let mut u = ids.clone();
+            u.dedup();
+            u.len()
+        };
+        assert_eq!(ids.len(), unique, "duplicate achievement ids");
+    }
 }

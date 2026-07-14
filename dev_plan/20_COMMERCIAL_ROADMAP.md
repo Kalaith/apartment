@@ -89,7 +89,7 @@ Current volume vs. what a commercial run-based sim needs:
 | Missions | ~~5~~ **15** (2026-07-14) | 20–30 across a campaign |
 | Buildings / campaign | 3 | 6–10 with distinct identities |
 | Neighborhoods | 4 | 6–8 with mechanical personality |
-| Achievements | 6 | 25–40 |
+| Achievements | ~~6~~ **25** (2026-07-14) | 25–40 ✓ |
 
 - [x] **Move hardcoded content to JSON.** ~~Event templates, dialogue bodies, and missions were hardcoded Rust.~~ **DONE (2026-07-14)** — all three subsystems migrated; content can now be authored/expanded without recompiling. *(Split into three sub-items below.)*
   - [x] **Missions → JSON** (2026-07-14). The 5 missions are now authored in `assets/missions.json` (the `Mission`/`MissionGoal`/`MissionReward` types were already serde-ready). New `MissionTemplate` + `load_mission_templates` (wasm `include_str!` / native disk-with-fallback), and `generate_available_missions(current_month)` **replaces both** the hardcoded `generate_starter_missions` and `generate_late_game_missions` — a mission unlocks once its data-driven `min_month` arrives (relative `deadline_months` measured from unlock), with title-dedup so re-running each turn is idempotent. New content can now be added without recompiling. 1 test.

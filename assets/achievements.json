@@ -50,5 +50,176 @@
         "condition": {
             "type": "GameComplete"
         }
+    },
+    {
+        "id": "landlord",
+        "name": "Landlord",
+        "description": "House 5 tenants at once.",
+        "condition": {
+            "type": "TotalTenants",
+            "min": 5
+        }
+    },
+    {
+        "id": "community",
+        "name": "Building a Community",
+        "description": "House 10 tenants at once.",
+        "condition": {
+            "type": "TotalTenants",
+            "min": 10
+        }
+    },
+    {
+        "id": "housing_baron",
+        "name": "Housing Baron",
+        "description": "House 25 tenants across your career.",
+        "condition": {
+            "type": "TotalTenants",
+            "min": 25
+        }
+    },
+    {
+        "id": "comfortable",
+        "name": "Comfortable",
+        "description": "Bank over $25,000.",
+        "condition": {
+            "type": "Funds",
+            "min": 25000
+        }
+    },
+    {
+        "id": "wealthy",
+        "name": "Wealthy",
+        "description": "Bank over $50,000.",
+        "condition": {
+            "type": "Funds",
+            "min": 50000
+        }
+    },
+    {
+        "id": "tycoon",
+        "name": "Real Estate Tycoon",
+        "description": "Bank over $100,000.",
+        "condition": {
+            "type": "Funds",
+            "min": 100000
+        }
+    },
+    {
+        "id": "well_regarded",
+        "name": "Well-Regarded",
+        "description": "Reach 60 reputation in a neighborhood.",
+        "condition": {
+            "type": "MaxReputation",
+            "min": 60
+        }
+    },
+    {
+        "id": "beloved",
+        "name": "Beloved",
+        "description": "Reach 80 reputation in a neighborhood.",
+        "condition": {
+            "type": "MaxReputation",
+            "min": 80
+        }
+    },
+    {
+        "id": "happy_home",
+        "name": "A Happy Home",
+        "description": "Keep average tenant happiness at or above 70.",
+        "condition": {
+            "type": "HappinessAtLeast",
+            "min": 70
+        }
+    },
+    {
+        "id": "model_landlord",
+        "name": "Model Landlord",
+        "description": "Keep average tenant happiness at or above 85.",
+        "condition": {
+            "type": "HappinessAtLeast",
+            "min": 85
+        }
+    },
+    {
+        "id": "rock_bottom",
+        "name": "Rock Bottom",
+        "description": "Let average happiness sink below 10.",
+        "condition": {
+            "type": "AvgHappiness",
+            "max": 10
+        }
+    },
+    {
+        "id": "penny_pincher",
+        "name": "Penny Pincher",
+        "description": "Bank over $15,000.",
+        "condition": {
+            "type": "Funds",
+            "min": 15000
+        }
+    },
+    {
+        "id": "neighborhood_name",
+        "name": "A Household Name",
+        "description": "Reach 40 reputation in a neighborhood.",
+        "condition": {
+            "type": "MaxReputation",
+            "min": 40
+        }
+    },
+    {
+        "id": "small_landlord",
+        "name": "Getting Started",
+        "description": "House 3 tenants at once.",
+        "condition": {
+            "type": "TotalTenants",
+            "min": 3
+        }
+    },
+    {
+        "id": "estate",
+        "name": "The Estate",
+        "description": "House 15 tenants at once.",
+        "condition": {
+            "type": "TotalTenants",
+            "min": 15
+        }
+    },
+    {
+        "id": "content_block",
+        "name": "Content Block",
+        "description": "Keep average tenant happiness at or above 60.",
+        "condition": {
+            "type": "HappinessAtLeast",
+            "min": 60
+        }
+    },
+    {
+        "id": "first_fortune",
+        "name": "First Fortune",
+        "description": "Bank over $20,000.",
+        "condition": {
+            "type": "Funds",
+            "min": 20000
+        }
+    },
+    {
+        "id": "empire",
+        "name": "Property Empire",
+        "description": "Bank over $75,000.",
+        "condition": {
+            "type": "Funds",
+            "min": 75000
+        }
+    },
+    {
+        "id": "respected",
+        "name": "Respected",
+        "description": "Reach 70 reputation in a neighborhood.",
+        "condition": {
+            "type": "MaxReputation",
+            "min": 70
+        }
     }
 ]
