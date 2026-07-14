@@ -24,6 +24,7 @@ pub struct GameTick;
 
 impl GameTick {
     /// Process a single game tick (one month)
+    #[allow(clippy::too_many_arguments)]
     pub fn process(
         building: &mut Building,
         tenants: &mut Vec<Tenant>,
@@ -33,6 +34,7 @@ impl GameTick {
         event_log: &mut EventLog,
         current_tick: u32,
         next_tenant_id: &mut u32,
+        has_ever_had_tenant: bool,
         config: &crate::data::config::GameConfig,
     ) -> TickResult {
         let mut result = TickResult {
@@ -128,6 +130,7 @@ impl GameTick {
             tenants,
             funds,
             current_tick,
+            has_ever_had_tenant,
             &config.win_conditions,
             &config.happiness,
             &config.thresholds,
@@ -453,6 +456,7 @@ impl GameTick {
 }
 
 /// Advance time and return whether game should continue
+#[allow(clippy::too_many_arguments)]
 pub fn advance_tick(
     building: &mut Building,
     tenants: &mut Vec<Tenant>,
@@ -462,6 +466,7 @@ pub fn advance_tick(
     event_log: &mut EventLog,
     current_tick: &mut u32,
     next_tenant_id: &mut u32,
+    has_ever_had_tenant: bool,
     config: &crate::data::config::GameConfig,
 ) -> TickResult {
     *current_tick += 1;
@@ -475,6 +480,7 @@ pub fn advance_tick(
         event_log,
         *current_tick,
         next_tenant_id,
+        has_ever_had_tenant,
         config,
     )
 }

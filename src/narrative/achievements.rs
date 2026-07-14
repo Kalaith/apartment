@@ -5,7 +5,6 @@ use crate::economy::PlayerFunds;
 use crate::tenant::Tenant;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
-use std::fs;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(tag = "type")]
@@ -105,15 +104,20 @@ impl AchievementSystem {
 }
 
 fn load_achievements_config() -> Vec<Achievement> {
-    let path = "assets/achievements.json";
-    match fs::read_to_string(path) {
-        Ok(data) => serde_json::from_str(&data).unwrap_or_else(|e| {
-            println!("Failed to parse achievements.json: {}", e);
-            Vec::new()
-        }),
-        Err(e) => {
-            println!("Failed to read achievements.json: {}", e);
-            Vec::new()
-        }
-    }
+    // Match the loader pattern used by every other config (see data/config.rs):
+    // embed at compile time for wasm, read from disk with an embedded fallback for
+    // native. The previous disk-only read left achievements empty in every shipped
+    // build (wasm has no filesystem; the Windows zip ships assets.zip, not loose
+    // assets/), so the fallback is what actually loads in released builds.
+    #[cfg(target_arch = "wasm32")]
+    let json = include_str!("../../assets/achievements.json").to_string();
+
+    #[cfg(not(target_arch = "wasm32"))]
+    let json = std::fs::read_to_string("assets/achievements.json")
+        .unwrap_or_else(|_| include_str!("../../assets/achievements.json").to_string());
+
+    serde_json::from_str(&json).unwrap_or_else(|e| {
+        eprintln!("Failed to parse achievements.json: {}", e);
+        Vec::new()
+    })
 }

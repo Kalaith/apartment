@@ -26,15 +26,30 @@ impl PlayerProgress {
     }
 
     pub fn unlock_building(&mut self, building_id: &str) {
+        if building_id.is_empty() {
+            return;
+        }
         if !self.unlocked_buildings.contains(&building_id.to_string()) {
             self.unlocked_buildings.push(building_id.to_string());
         }
     }
 
     pub fn mark_completed(&mut self, building_id: &str) {
+        // Guard against an empty id (a pre-backfill save could leave
+        // current_building_id blank), which previously polluted progress with an
+        // empty "" entry that renders as a phantom completed building.
+        if building_id.is_empty() {
+            return;
+        }
         if !self.completed_buildings.contains(&building_id.to_string()) {
             self.completed_buildings.push(building_id.to_string());
         }
+    }
+
+    /// Drop any empty/blank ids that older saves may have accumulated.
+    fn sanitize(&mut self) {
+        self.unlocked_buildings.retain(|id| !id.is_empty());
+        self.completed_buildings.retain(|id| !id.is_empty());
     }
 }
 
@@ -61,7 +76,10 @@ pub fn has_save_game() -> bool {
 
 /// Load player progress (persistent unlock state)
 pub fn load_player_progress() -> PlayerProgress {
-    load_json_key(GAME_NAME, PROGRESS_FILE_NAME).unwrap_or_else(|_| PlayerProgress::new())
+    let mut progress: PlayerProgress =
+        load_json_key(GAME_NAME, PROGRESS_FILE_NAME).unwrap_or_else(|_| PlayerProgress::new());
+    progress.sanitize();
+    progress
 }
 
 /// Save player progress (persistent unlock state)

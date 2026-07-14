@@ -319,11 +319,14 @@ impl Sim {
         let mut total_rent = 0i64;
         let mut total_expenses = 0i64;
         let mut outcome = None;
+        let mut has_ever_had_tenant = false;
 
         for _ in 0..duration {
             self.list_vacancies();
             self.handle_applications(strat);
             self.maintain(strat);
+
+            has_ever_had_tenant |= !self.tenants.is_empty();
 
             let result = advance_tick(
                 &mut self.building,
@@ -334,6 +337,7 @@ impl Sim {
                 &mut self.event_log,
                 &mut self.current_tick,
                 &mut self.next_tenant_id,
+                has_ever_had_tenant,
                 &self.config,
             );
 

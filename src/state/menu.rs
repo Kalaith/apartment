@@ -72,19 +72,23 @@ impl MenuState {
             }
         }
 
-        // Quit button
-        let quit_btn_w = 150.0;
-        let quit_btn_h = 40.0;
-        let quit_btn_x = screen_width() / 2.0 - quit_btn_w / 2.0;
-        let quit_btn_y = screen_height() - 80.0;
-
-        if clicked
-            && mx >= quit_btn_x
-            && mx <= quit_btn_x + quit_btn_w
-            && my >= quit_btn_y
-            && my <= quit_btn_y + quit_btn_h
+        // Quit button (native only — a browser tab has nothing to exit, and
+        // std::process::exit is a no-op/unsupported on wasm).
+        #[cfg(not(target_arch = "wasm32"))]
         {
-            std::process::exit(0);
+            let quit_btn_w = 150.0;
+            let quit_btn_h = 40.0;
+            let quit_btn_x = screen_width() / 2.0 - quit_btn_w / 2.0;
+            let quit_btn_y = screen_height() - 80.0;
+
+            if clicked
+                && mx >= quit_btn_x
+                && mx <= quit_btn_x + quit_btn_w
+                && my >= quit_btn_y
+                && my <= quit_btn_y + quit_btn_h
+            {
+                std::process::exit(0);
+            }
         }
 
         None
@@ -278,40 +282,43 @@ impl MenuState {
             );
         }
 
-        // Quit button
-        let quit_btn_w = 150.0;
-        let quit_btn_h = 40.0;
-        let quit_btn_x = screen_width() / 2.0 - quit_btn_w / 2.0;
-        let quit_btn_y = screen_height() - 80.0;
+        // Quit button — native only (see update()).
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            let quit_btn_w = 150.0;
+            let quit_btn_h = 40.0;
+            let quit_btn_x = screen_width() / 2.0 - quit_btn_w / 2.0;
+            let quit_btn_y = screen_height() - 80.0;
 
-        let quit_hovered = mx >= quit_btn_x
-            && mx <= quit_btn_x + quit_btn_w
-            && my >= quit_btn_y
-            && my <= quit_btn_y + quit_btn_h;
-        let quit_bg = if quit_hovered {
-            Color::from_rgba(100, 60, 60, 255)
-        } else {
-            Color::from_rgba(70, 45, 45, 255)
-        };
+            let quit_hovered = mx >= quit_btn_x
+                && mx <= quit_btn_x + quit_btn_w
+                && my >= quit_btn_y
+                && my <= quit_btn_y + quit_btn_h;
+            let quit_bg = if quit_hovered {
+                Color::from_rgba(100, 60, 60, 255)
+            } else {
+                Color::from_rgba(70, 45, 45, 255)
+            };
 
-        draw_rectangle(quit_btn_x, quit_btn_y, quit_btn_w, quit_btn_h, quit_bg);
-        draw_rectangle_lines(
-            quit_btn_x,
-            quit_btn_y,
-            quit_btn_w,
-            quit_btn_h,
-            2.0,
-            Color::from_rgba(140, 80, 80, 255),
-        );
+            draw_rectangle(quit_btn_x, quit_btn_y, quit_btn_w, quit_btn_h, quit_bg);
+            draw_rectangle_lines(
+                quit_btn_x,
+                quit_btn_y,
+                quit_btn_w,
+                quit_btn_h,
+                2.0,
+                Color::from_rgba(140, 80, 80, 255),
+            );
 
-        let label = "Quit";
-        let label_width = measure_ui_text(label, None, 18, 1.0).width;
-        draw_ui_text(
-            label,
-            quit_btn_x + (quit_btn_w - label_width) / 2.0,
-            quit_btn_y + 26.0,
-            18.0,
-            WHITE,
-        );
+            let label = "Quit";
+            let label_width = measure_ui_text(label, None, 18, 1.0).width;
+            draw_ui_text(
+                label,
+                quit_btn_x + (quit_btn_w - label_width) / 2.0,
+                quit_btn_y + 26.0,
+                18.0,
+                WHITE,
+            );
+        }
     }
 }

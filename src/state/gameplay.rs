@@ -112,6 +112,12 @@ pub struct GameplayState {
     /// Current building template ID (for unlock tracking)
     #[serde(default)]
     pub current_building_id: String,
+
+    /// Latches true once the building has ever housed a tenant. The "all tenants
+    /// left" loss condition keys off this so it can't fire on a building that was
+    /// simply never occupied yet.
+    #[serde(default)]
+    pub has_ever_had_tenant: bool,
 }
 
 impl GameplayState {
@@ -192,6 +198,7 @@ impl GameplayState {
             is_fullscreen: false,
             pending_quit_to_menu: false,
             current_building_id: building_id,
+            has_ever_had_tenant: false,
         };
 
         // Handle initial tenant if present in template

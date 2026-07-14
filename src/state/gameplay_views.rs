@@ -370,11 +370,15 @@ impl GameplayState {
         if self.menu_button(btn_x, btn_y, btn_w, btn_h, "Quit to Menu") {
             self.pending_quit_to_menu = true;
         }
-        btn_y += 50.0;
 
-        // Quit Game button (exits completely)
-        if self.menu_button(btn_x, btn_y, btn_w, btn_h, "Quit Game") {
-            std::process::exit(0);
+        // Quit Game button (exits completely) — native only; a browser tab has
+        // nothing to exit and std::process::exit is unsupported on wasm.
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            btn_y += 50.0;
+            if self.menu_button(btn_x, btn_y, btn_w, btn_h, "Quit Game") {
+                std::process::exit(0);
+            }
         }
 
         // ESC hint

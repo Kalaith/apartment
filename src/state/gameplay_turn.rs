@@ -13,6 +13,10 @@ use super::gameplay::{GameplayState, ViewMode};
 impl GameplayState {
     /// End the current turn and advance time.
     pub fn end_turn(&mut self) {
+        // Latch once the building has ever been occupied, so the "all tenants left"
+        // loss can distinguish real mass-departure from a not-yet-filled building.
+        self.has_ever_had_tenant |= !self.tenants.is_empty();
+
         let result = advance_tick(
             &mut self.building,
             &mut self.tenants,
@@ -22,6 +26,7 @@ impl GameplayState {
             &mut self.event_log,
             &mut self.current_tick,
             &mut self.next_tenant_id,
+            self.has_ever_had_tenant,
             &self.config,
         );
 

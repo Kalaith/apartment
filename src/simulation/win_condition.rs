@@ -24,6 +24,7 @@ pub fn check_win_condition(
     tenants: &[Tenant],
     funds: &PlayerFunds,
     current_tick: u32,
+    has_ever_had_tenant: bool,
     win_conditions: &WinConditions,
     _happiness_config: &HappinessConfig,
     thresholds: &ThresholdsConfig,
@@ -35,13 +36,10 @@ pub fn check_win_condition(
         });
     }
 
-    // Check if all tenants left (after having some)
-    if tenants.is_empty() && current_tick > thresholds.all_left_check_tick {
-        // Check if we ever had tenants (building was lived in)
-        let was_occupied = building.apartments.iter().any(|a| a.tenant_id.is_some());
-        if !was_occupied {
-            return Some(GameOutcome::AllTenantsLeft);
-        }
+    // Check if all tenants left (only after the building was actually occupied at
+    // some point — otherwise a brand-new empty building would instantly "lose").
+    if has_ever_had_tenant && tenants.is_empty() && current_tick > thresholds.all_left_check_tick {
+        return Some(GameOutcome::AllTenantsLeft);
     }
 
     // Check for game end (3 years = 36 months)
@@ -74,4 +72,47 @@ pub fn check_win_condition(
     }
 
     None
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::building::Building;
+    use crate::data::config::GameConfig;
+
+    fn check(tenants: &[Tenant], tick: u32, ever_occupied: bool) -> Option<GameOutcome> {
+        let building = Building::new("Test", 3, 2);
+        let funds = PlayerFunds::default(); // 5000, solvent
+        let cfg = GameConfig::default(); // all_left_check_tick = 3, duration = 36
+        check_win_condition(
+            &building,
+            tenants,
+            &funds,
+            tick,
+            ever_occupied,
+            &cfg.win_conditions,
+            &cfg.happiness,
+            &cfg.thresholds,
+        )
+    }
+
+    #[test]
+    fn never_occupied_building_does_not_trigger_all_tenants_left() {
+        // Empty and past the check tick, but no tenant ever moved in: not a loss.
+        assert!(check(&[], 5, false).is_none());
+    }
+
+    #[test]
+    fn previously_occupied_then_empty_triggers_all_tenants_left() {
+        assert!(matches!(
+            check(&[], 5, true),
+            Some(GameOutcome::AllTenantsLeft)
+        ));
+    }
+
+    #[test]
+    fn empty_before_check_tick_is_not_yet_a_loss() {
+        // tick 2 <= all_left_check_tick (3): a temporary early vacancy is tolerated.
+        assert!(check(&[], 2, true).is_none());
+    }
 }
