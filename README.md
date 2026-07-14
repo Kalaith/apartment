@@ -1,6 +1,6 @@
-# Apartment Manager
+# Second Story
 
-Apartment Manager is a cozy building-management game about caring for a neglected apartment block and the people who live there.
+Second Story (formerly Apartment Manager) is a cozy building-management game about caring for a neglected apartment block and the people who live there.
 
 You are not a property tycoon. You are the custodian of a tired building with flickering lights, worn carpets, difficult choices, and tenants who need the place to work.
 

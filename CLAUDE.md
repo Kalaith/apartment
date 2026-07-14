@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-Apartment Manager — a cozy building-management game built in Rust with `macroquad` and the shared, path-local `macroquad-toolkit` crate (`../macroquad-toolkit`, a sibling directory that must be present). You manage a neglected apartment block over 36 months: repairs, upgrades, tenants, rent, missions, and reputation, unlocking harder properties as you go.
+**Second Story** (formerly Apartment Manager; the crate name, deploy slug, and save id remain `apartment`/`apartment_manager`) — a cozy building-management game built in Rust with `macroquad` and the shared, path-local `macroquad-toolkit` crate (`../macroquad-toolkit`, a sibling directory that must be present). You manage a neglected apartment block over 36 months: repairs, upgrades, tenants, rent, missions, and reputation, unlocking harder properties as you go.
 
 ## Commands
 

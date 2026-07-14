@@ -33,7 +33,7 @@ mod util;
 use game::Game;
 
 fn window_conf() -> Conf {
-    capture::capture_window_conf("APARTMENT", "Apartment", 1280, 720)
+    capture::capture_window_conf("APARTMENT", "Second Story", 1280, 720)
 }
 
 #[macroquad::main(window_conf)]
