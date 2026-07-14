@@ -5,8 +5,18 @@
     "giver_npc_id": 2,
     "min_month": 0,
     "deadline_months": 12,
-    "goal": { "HouseTenants": { "count": 3, "archetype": "Student" } },
-    "reward": { "TaxBreak": { "months": 6, "percentage": 0.15 } }
+    "goal": {
+      "HouseTenants": {
+        "count": 3,
+        "archetype": "Student"
+      }
+    },
+    "reward": {
+      "TaxBreak": {
+        "months": 6,
+        "percentage": 0.15
+      }
+    }
   },
   {
     "title": "Full House",
@@ -14,8 +24,14 @@
     "giver_npc_id": 2,
     "min_month": 0,
     "deadline_months": null,
-    "goal": { "ReachOccupancy": { "percentage": 1.0 } },
-    "reward": { "Money": 5000 }
+    "goal": {
+      "ReachOccupancy": {
+        "percentage": 1.0
+      }
+    },
+    "reward": {
+      "Money": 5000
+    }
   },
   {
     "title": "Senior Care Housing",
@@ -23,8 +39,15 @@
     "giver_npc_id": 2,
     "min_month": 0,
     "deadline_months": 18,
-    "goal": { "HouseTenants": { "count": 2, "archetype": "Elderly" } },
-    "reward": { "Reputation": 25 }
+    "goal": {
+      "HouseTenants": {
+        "count": 2,
+        "archetype": "Elderly"
+      }
+    },
+    "reward": {
+      "Reputation": 25
+    }
   },
   {
     "title": "Expansion Race",
@@ -33,7 +56,9 @@
     "min_month": 6,
     "deadline_months": 24,
     "goal": "AcquireBuilding",
-    "reward": { "Money": 10000 }
+    "reward": {
+      "Money": 10000
+    }
   },
   {
     "title": "Family Friendly",
@@ -41,7 +66,175 @@
     "giver_npc_id": 2,
     "min_month": 12,
     "deadline_months": 18,
-    "goal": { "HouseTenants": { "count": 3, "archetype": "Family" } },
-    "reward": { "TaxBreak": { "months": 12, "percentage": 0.1 } }
+    "goal": {
+      "HouseTenants": {
+        "count": 3,
+        "archetype": "Family"
+      }
+    },
+    "reward": {
+      "TaxBreak": {
+        "months": 12,
+        "percentage": 0.1
+      }
+    }
+  },
+  {
+    "title": "Steady Hands",
+    "description": "Keep your tenants happy — average happiness at or above 70 for four straight months.",
+    "giver_npc_id": 2,
+    "min_month": 2,
+    "deadline_months": null,
+    "goal": {
+      "MaintainHappiness": {
+        "threshold": 70.0,
+        "months": 4,
+        "current_months": 0
+      }
+    },
+    "reward": {
+      "Money": 3000
+    }
+  },
+  {
+    "title": "A Full Ledger",
+    "description": "Collect every tenant's rent without a single miss for three months running.",
+    "giver_npc_id": 2,
+    "min_month": 3,
+    "deadline_months": null,
+    "goal": {
+      "PerfectCollection": {
+        "months": 3,
+        "current_months": 0
+      }
+    },
+    "reward": {
+      "Money": 4000
+    }
+  },
+  {
+    "title": "Pride of the Block",
+    "description": "Restore every unit and the hallway to top condition.",
+    "giver_npc_id": 2,
+    "min_month": 4,
+    "deadline_months": null,
+    "goal": {
+      "FullRepair": {
+        "building_id": 0
+      }
+    },
+    "reward": {
+      "Reputation": 20
+    }
+  },
+  {
+    "title": "Artists Welcome",
+    "description": "Give the creative community a home — house 2 artist tenants.",
+    "giver_npc_id": 2,
+    "min_month": 2,
+    "deadline_months": 14,
+    "goal": {
+      "HouseTenants": {
+        "count": 2,
+        "archetype": "Artist"
+      }
+    },
+    "reward": {
+      "TaxBreak": {
+        "months": 6,
+        "percentage": 0.12
+      }
+    }
+  },
+  {
+    "title": "Professional Standards",
+    "description": "Attract 3 professional tenants to your building.",
+    "giver_npc_id": 2,
+    "min_month": 6,
+    "deadline_months": 20,
+    "goal": {
+      "HouseTenants": {
+        "count": 3,
+        "archetype": "Professional"
+      }
+    },
+    "reward": {
+      "Money": 6000
+    }
+  },
+  {
+    "title": "The Long Game",
+    "description": "Sustain average happiness at or above 75 for six months — a truly well-run building.",
+    "giver_npc_id": 2,
+    "min_month": 8,
+    "deadline_months": null,
+    "goal": {
+      "MaintainHappiness": {
+        "threshold": 75.0,
+        "months": 6,
+        "current_months": 0
+      }
+    },
+    "reward": {
+      "Reputation": 30
+    }
+  },
+  {
+    "title": "Spotless Record",
+    "description": "Half a year of perfect rent collection. No excuses.",
+    "giver_npc_id": 2,
+    "min_month": 6,
+    "deadline_months": null,
+    "goal": {
+      "PerfectCollection": {
+        "months": 6,
+        "current_months": 0
+      }
+    },
+    "reward": {
+      "Money": 8000
+    }
+  },
+  {
+    "title": "Neighborhood Pillar",
+    "description": "Fill your building — house 6 tenants of any kind.",
+    "giver_npc_id": 2,
+    "min_month": 10,
+    "deadline_months": 24,
+    "goal": {
+      "HouseTenants": {
+        "count": 6,
+        "archetype": null
+      }
+    },
+    "reward": {
+      "Reputation": 25
+    }
+  },
+  {
+    "title": "Grand Reopening",
+    "description": "Bring the whole building back to pristine condition.",
+    "giver_npc_id": 2,
+    "min_month": 12,
+    "deadline_months": null,
+    "goal": {
+      "FullRepair": {
+        "building_id": 0
+      }
+    },
+    "reward": {
+      "Money": 5000
+    }
+  },
+  {
+    "title": "Portfolio Ambitions",
+    "description": "Prove you can grow — acquire another property.",
+    "giver_npc_id": 1,
+    "min_month": 18,
+    "deadline_months": 24,
+    "goal": "AcquireBuilding",
+    "reward": {
+      "UnlockBuilding": 3
+    }
   }
 ]
