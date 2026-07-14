@@ -13,8 +13,9 @@
 //! The report is written to `balance_report.md` at the repo root.
 
 use crate::building::{Building, DesignType, UpgradeAction};
+use crate::consequences::{ComplianceSystem, InspectionTrigger};
 use crate::data::config::GameConfig;
-use crate::economy::{process_upgrade, FinancialLedger, PlayerFunds};
+use crate::economy::{process_upgrade, FinancialLedger, PlayerFunds, Transaction, TransactionType};
 use crate::simulation::{advance_tick, EventLog, GameOutcome};
 use crate::tenant::matching::{evaluate_lease_offer, LeaseOffer};
 use crate::tenant::{Tenant, TenantApplication, TenantArchetype};
@@ -71,6 +72,7 @@ struct Sim {
     funds: PlayerFunds,
     ledger: FinancialLedger,
     event_log: EventLog,
+    compliance: ComplianceSystem,
     current_tick: u32,
     next_tenant_id: u32,
     config: GameConfig,
@@ -116,6 +118,9 @@ impl Sim {
             }
         }
 
+        let mut compliance = ComplianceSystem::new();
+        compliance.init_building_regulations(0, false);
+
         Sim {
             building,
             tenants,
@@ -123,10 +128,46 @@ impl Sim {
             funds: PlayerFunds::default(),
             ledger: FinancialLedger::default(),
             event_log: EventLog::new(),
+            compliance,
             current_tick: 0,
             next_tenant_id,
             config,
             upgrades_bought: 0,
+        }
+    }
+
+    /// Mirror the real game's monthly inspection + fine billing so the harness
+    /// measures the regulatory teeth that punish neglect (the game runs these in
+    /// `end_turn`, outside `advance_tick`).
+    fn run_inspections_and_fines(&mut self) {
+        self.compliance.tick(self.current_tick);
+
+        let score = self
+            .building
+            .average_condition()
+            .min(self.building.hallway_condition);
+        let cfg = self.config.regulations.clone();
+        let due = self.compliance.has_due_inspection(0);
+        let random_check = rng::gen_range(0, 100) < cfg.random_inspection_chance_percent;
+        if due || random_check {
+            let trigger = if due {
+                InspectionTrigger::Scheduled
+            } else {
+                InspectionTrigger::Random
+            };
+            self.compliance
+                .run_inspection(0, score, self.current_tick, trigger, &cfg);
+        }
+
+        if self.compliance.unpaid_fines > 0 {
+            let amount = self.compliance.unpaid_fines;
+            self.funds.apply_required_expense(Transaction::expense(
+                TransactionType::InspectionFine,
+                amount,
+                "Regulatory fines",
+                self.current_tick,
+            ));
+            self.compliance.unpaid_fines = 0;
         }
     }
 
@@ -341,6 +382,10 @@ impl Sim {
                 1.0, // neutral reputation multiplier: the harness has no city layer
                 &self.config,
             );
+
+            // Apply the regulatory teeth that live outside advance_tick so the
+            // report reflects the real cost of neglect.
+            self.run_inspections_and_fines();
 
             let expenses = self.tick_expenses();
             let occupancy = self.occupancy();
