@@ -101,7 +101,7 @@ Current volume vs. what a commercial run-based sim needs:
   - [ ] **Phase C — UI/endgame.** Portfolio overview + per-building switching (extend city view); scored portfolio finale (this is the endgame mode).
   - [ ] **Phase D — content/polish.** Per-building intro narrative (Uncle Artie mail / unlock missions); extend the sim harness to multi-building for balance.
   - *Scoping fallback if A3 proves too heavy: "portfolio-lite" — non-active buildings generate simplified passive income; only the active building runs the full sim. Delivers the feel at a fraction of the cost.*
-- [ ] **Name pools** (~10 first names per archetype) will visibly repeat — expand, and add portrait variety (5 tenant portraits currently).
+- [~] **Name pools & portraits.** **Names DONE (2026-07-14):** expanded every archetype's `first_names` pool in `assets/tenant_archetypes.json` from 10 → **28** (flavor-matched: unisex/modern for students, diverse professional names, evocative for artists, varied surnames for families, older-generation for elderly), taking unique first+initial combinations from ~180 to **504** per archetype (28 for families, who use surnames). Players will no longer see the same handful of first names within a run. *(The Rust fallback list in `generate_random_name` is left at 10 — it's a genuine registry-miss safety net, not the live path.)* **Portraits still TODO:** only 5 tenant portrait textures exist; add variety (needs art, tracked with the §6 art pass).
 
 ---
 
