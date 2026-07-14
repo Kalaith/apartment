@@ -113,6 +113,10 @@ impl GameplayState {
             self.pending_actions.push(action);
         }
 
+        // Slide the detail panel in from the right as the selection tween eases
+        // to 1.0 (0 offset = settled in place).
+        let panel_offset = (1.0 - self.panel_tween.current) * 60.0;
+
         match self.selection {
             Selection::Apartment(id) => {
                 if let Some(apt) = self.building.get_apartment(id) {
@@ -121,7 +125,7 @@ impl GameplayState {
                         &self.building,
                         &self.tenants,
                         self.funds.balance,
-                        0.0,
+                        panel_offset,
                         self.panel_scroll_offset,
                         assets,
                         &self.config,
@@ -138,7 +142,7 @@ impl GameplayState {
                 let (action, new_scroll) = draw_hallway_panel(
                     &self.building,
                     self.funds.balance,
-                    0.0,
+                    panel_offset,
                     self.panel_scroll_offset,
                     assets,
                     &self.config,

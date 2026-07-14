@@ -122,6 +122,8 @@ fn default_design_style_modifiers() -> HashMap<String, i32> {
     modifiers.insert("Bare".to_string(), -5);
     modifiers.insert("Practical".to_string(), 5);
     modifiers.insert("Cozy".to_string(), 10);
+    modifiers.insert("Luxury".to_string(), 15);
+    modifiers.insert("Opulent".to_string(), 20);
     modifiers
 }
 

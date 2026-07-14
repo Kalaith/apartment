@@ -422,6 +422,25 @@ impl NarrativeEventSystem {
         // Increased offer multiplier to 2.5x - 4.0x base value to be "worth it"
         let offer = (base_value as f32 * rng::gen_range(2.5, 4.0)) as i32;
 
+        // Countering is a gamble decided now: usually the developer sweetens the
+        // deal ~25%, but sometimes they walk and the sale is off (you keep the
+        // building). Baked at generation since a choice resolves to one effect.
+        let counter_succeeds = rng::gen_range(0.0, 1.0) < 0.6;
+        let counter_amount = (offer as f32 * 1.25) as i32;
+        let counter_effect = if counter_succeeds {
+            NarrativeEffect::Multiple {
+                effects: vec![
+                    NarrativeEffect::Money {
+                        amount: counter_amount,
+                    },
+                    NarrativeEffect::SellBuilding { building_id },
+                ],
+            }
+        } else {
+            // Developer walks away — no sale this round.
+            NarrativeEffect::None
+        };
+
         NarrativeEvent::with_choices(
             0,
             NarrativeEventType::ExternalOffer,
@@ -445,8 +464,8 @@ impl NarrativeEventSystem {
                 },
                 NarrativeChoice {
                     label: "Counter Offer".to_string(),
-                    description: "Negotiate for a better price".to_string(),
-                    effect: NarrativeEffect::None, // Would trigger follow-up event
+                    description: "Hold out for ~25% more (they may walk away)".to_string(),
+                    effect: counter_effect,
                     reputation_change: 0,
                 },
                 NarrativeChoice {

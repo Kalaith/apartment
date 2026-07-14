@@ -69,7 +69,9 @@
     "design_style_modifiers": {
       "Bare": -5,
       "Practical": 5,
-      "Cozy": 10
+      "Cozy": 10,
+      "Luxury": 15,
+      "Opulent": 20
     },
     "hallway_condition_base": 50,
     "hallway_condition_multiplier": 0.2
@@ -201,7 +203,9 @@
     "rent_increase_score_divisor": 5,
     "max_gentrification_score": 100,
     "council_formation_threshold": 0.4,
-    "council_min_tenants": 4
+    "council_min_tenants": 4,
+    "council_rent_rollback": 0.1,
+    "council_solidarity_happiness": 5
   },
   "regulations": {
     "pass_condition_threshold": 45,

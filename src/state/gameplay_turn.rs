@@ -628,18 +628,53 @@ impl GameplayState {
             self.tenants.len() as u32,
         );
 
-        if self.tenant_network.should_form_council(
+        let forming = self.tenant_network.should_form_council(
             &self.tenants,
             &self.config.gentrification,
             self.config.happiness.unhappy_threshold,
-        ) {
-            self.spawn_center_text("Tenants forming a council!", 0.0, 30.0, colors::ACCENT);
-            self.missions.record_legacy_event(
-                self.current_tick,
-                "Tenant Council Formed",
-                "Tenants organized to form a tenant council.",
-            );
+        );
+
+        if forming && !self.council_formed {
+            self.council_formed = true;
+            self.apply_council_collective_action();
+        } else if !forming {
+            // Conditions improved; the council disbands and could re-form later.
+            self.council_formed = false;
         }
+    }
+
+    /// A newly-formed tenant council's one-time collective action: it bargains
+    /// the building's rent multiplier down and the solidarity of organizing
+    /// lifts tenant morale. This is the mechanical consequence of pushing rent
+    /// too hard on an unhappy building — previously the council was cosmetic.
+    fn apply_council_collective_action(&mut self) {
+        let rollback = self.config.gentrification.council_rent_rollback;
+        self.building.rent_multiplier =
+            (self.building.rent_multiplier * (1.0 - rollback)).clamp(0.5, 2.0);
+
+        let bump = self.config.gentrification.council_solidarity_happiness;
+        for tenant in &mut self.tenants {
+            tenant.happiness = (tenant.happiness + bump).clamp(0, 100);
+        }
+
+        self.spawn_center_text(
+            "Tenants formed a council — rent rolled back!",
+            0.0,
+            30.0,
+            colors::ACCENT,
+        );
+        self.event_log.log(
+            GameEvent::Notification {
+                message: "A tenant council organized and bargained rent down.".to_string(),
+                level: crate::simulation::NotificationLevel::Warning,
+            },
+            self.current_tick,
+        );
+        self.missions.record_legacy_event(
+            self.current_tick,
+            "Tenant Council Formed",
+            "Tenants organized a council and won a rent rollback.",
+        );
     }
 }
 

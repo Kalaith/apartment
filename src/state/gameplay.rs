@@ -118,6 +118,12 @@ pub struct GameplayState {
     /// simply never occupied yet.
     #[serde(default)]
     pub has_ever_had_tenant: bool,
+
+    /// True while a tenant council is organized. Latches when one forms (so its
+    /// collective action applies once) and clears when conditions improve, so a
+    /// council can re-form if the landlord backslides.
+    #[serde(default)]
+    pub council_formed: bool,
 }
 
 impl GameplayState {
@@ -199,6 +205,7 @@ impl GameplayState {
             pending_quit_to_menu: false,
             current_building_id: building_id,
             has_ever_had_tenant: false,
+            council_formed: false,
         };
 
         // Handle initial tenant if present in template

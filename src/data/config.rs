@@ -525,6 +525,21 @@ pub struct GentrificationConfig {
     pub max_gentrification_score: i32,
     pub council_formation_threshold: f32,
     pub council_min_tenants: usize,
+    /// Fraction the building's rent multiplier is rolled back when a tenant
+    /// council forms (collective bargaining pushes back on rent hikes).
+    #[serde(default = "default_council_rent_rollback")]
+    pub council_rent_rollback: f32,
+    /// Happiness the tenants gain from the solidarity of organizing.
+    #[serde(default = "default_council_solidarity_happiness")]
+    pub council_solidarity_happiness: i32,
+}
+
+fn default_council_rent_rollback() -> f32 {
+    0.1
+}
+
+fn default_council_solidarity_happiness() -> i32 {
+    5
 }
 
 impl Default for GentrificationConfig {
@@ -536,6 +551,8 @@ impl Default for GentrificationConfig {
             max_gentrification_score: 100,
             council_formation_threshold: 0.4,
             council_min_tenants: 4,
+            council_rent_rollback: default_council_rent_rollback(),
+            council_solidarity_happiness: default_council_solidarity_happiness(),
         }
     }
 }
