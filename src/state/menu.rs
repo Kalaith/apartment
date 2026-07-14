@@ -5,6 +5,45 @@ use crate::save::{has_save_game, load_game, load_player_progress, PlayerProgress
 use macroquad::prelude::*;
 use macroquad_toolkit::ui::{draw_ui_text, measure_ui_text};
 
+const CARD_W: f32 = 280.0;
+const CARD_H: f32 = 120.0;
+const CARD_SPACING: f32 = 20.0;
+const GRID_EDGE_MARGIN: f32 = 40.0;
+
+fn grid_top() -> f32 {
+    screen_height() * 0.35
+}
+
+fn grid_columns(count: usize) -> usize {
+    let fit = ((screen_width() - GRID_EDGE_MARGIN * 2.0 + CARD_SPACING) / (CARD_W + CARD_SPACING))
+        .floor() as usize;
+    fit.clamp(1, count.max(1))
+}
+
+/// Rect for building card `i`; rows wrap to fit the screen width and each row
+/// is centered. Shared by hit-testing and rendering so they can't drift apart.
+fn card_rect(i: usize, count: usize) -> Rect {
+    let columns = grid_columns(count);
+    let row = i / columns;
+    let col = i % columns;
+    let cards_in_row = (count - row * columns).min(columns);
+    let row_width = cards_in_row as f32 * (CARD_W + CARD_SPACING) - CARD_SPACING;
+    Rect::new(
+        (screen_width() - row_width) / 2.0 + col as f32 * (CARD_W + CARD_SPACING),
+        grid_top() + row as f32 * (CARD_H + CARD_SPACING),
+        CARD_W,
+        CARD_H,
+    )
+}
+
+fn grid_bottom(count: usize) -> f32 {
+    if count == 0 {
+        return grid_top();
+    }
+    let rows = count.div_ceil(grid_columns(count));
+    grid_top() + rows as f32 * (CARD_H + CARD_SPACING) - CARD_SPACING
+}
+
 pub struct MenuState {
     has_save: bool,
     progress: PlayerProgress,
@@ -30,26 +69,13 @@ impl MenuState {
         let (mx, my) = mouse_position();
         let clicked = is_mouse_button_pressed(MouseButton::Left);
 
-        // Layout constants
-        let card_w = 280.0;
-        let card_h = 120.0;
-        let card_spacing = 20.0;
-        let start_y = screen_height() * 0.45;
-
-        // Calculate total width to center cards
-        let total_width =
-            self.templates.len() as f32 * card_w + (self.templates.len() - 1) as f32 * card_spacing;
-        let start_x = (screen_width() - total_width) / 2.0;
-
         // Building cards
+        let count = self.templates.len();
         for (i, template) in self.templates.iter().enumerate() {
-            let x = start_x + i as f32 * (card_w + card_spacing);
-            let y = start_y;
-
+            let rect = card_rect(i, count);
             let is_unlocked = self.progress.is_unlocked(&template.id);
 
-            if is_unlocked && clicked && mx >= x && mx <= x + card_w && my >= y && my <= y + card_h
-            {
+            if is_unlocked && clicked && rect.contains(vec2(mx, my)) {
                 // Start game with this building template
                 let state = GameplayState::new_with_template(config.clone(), template.clone());
                 return Some(StateTransition::ToGameplay(state));
@@ -61,7 +87,7 @@ impl MenuState {
             let btn_w = 200.0;
             let btn_h = 45.0;
             let btn_x = screen_width() / 2.0 - btn_w / 2.0;
-            let btn_y = start_y + card_h + 40.0;
+            let btn_y = grid_bottom(count) + 40.0;
 
             if clicked && mx >= btn_x && mx <= btn_x + btn_w && my >= btn_y && my <= btn_y + btn_h {
                 if let Ok(state) = load_game() {
@@ -143,31 +169,23 @@ impl MenuState {
         draw_ui_text(
             section_title,
             screen_width() / 2.0 - section_width / 2.0,
-            screen_height() * 0.40,
+            grid_top() - 8.0,
             section_size,
             Color::from_rgba(200, 200, 200, 255),
         );
 
-        // Layout constants
-        let card_w = 280.0;
-        let card_h = 120.0;
-        let card_spacing = 20.0;
-        let start_y = screen_height() * 0.45;
-
-        let total_width =
-            self.templates.len() as f32 * card_w + (self.templates.len() - 1) as f32 * card_spacing;
-        let start_x = (screen_width() - total_width) / 2.0;
-
         let (mx, my) = mouse_position();
 
         // Draw building cards
+        let count = self.templates.len();
         for (i, template) in self.templates.iter().enumerate() {
-            let x = start_x + i as f32 * (card_w + card_spacing);
-            let y = start_y;
+            let rect = card_rect(i, count);
+            let (x, y) = (rect.x, rect.y);
+            let (card_w, card_h) = (rect.w, rect.h);
 
             let is_unlocked = self.progress.is_unlocked(&template.id);
             let is_completed = self.progress.completed_buildings.contains(&template.id);
-            let is_hovered = mx >= x && mx <= x + card_w && my >= y && my <= y + card_h;
+            let is_hovered = rect.contains(vec2(mx, my));
 
             // Card background
             let bg_color = if !is_unlocked {
@@ -201,9 +219,11 @@ impl MenuState {
             let diff_color = border_color;
             draw_ui_text(&template.difficulty, x + 15.0, y + 52.0, 14.0, diff_color);
 
-            // Description (truncated)
-            let desc = if template.description.len() > 40 {
-                format!("{}...", &template.description[..37])
+            // Description (truncated on a char boundary — byte slicing panics on
+            // multi-byte characters)
+            let desc = if template.description.chars().count() > 40 {
+                let truncated: String = template.description.chars().take(37).collect();
+                format!("{}...", truncated)
             } else {
                 template.description.clone()
             };
@@ -227,7 +247,7 @@ impl MenuState {
             // Locked overlay
             if !is_unlocked {
                 draw_ui_text(
-                    "🔒 LOCKED",
+                    "LOCKED",
                     x + card_w - 90.0,
                     y + 30.0,
                     16.0,
@@ -252,7 +272,7 @@ impl MenuState {
             let btn_w = 200.0;
             let btn_h = 45.0;
             let btn_x = screen_width() / 2.0 - btn_w / 2.0;
-            let btn_y = start_y + card_h + 40.0;
+            let btn_y = grid_bottom(count) + 40.0;
 
             let hovered = mx >= btn_x && mx <= btn_x + btn_w && my >= btn_y && my <= btn_y + btn_h;
             let bg = if hovered {
