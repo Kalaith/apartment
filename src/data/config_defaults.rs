@@ -21,6 +21,7 @@ impl Default for GameConfig {
                 expire_after_ticks: 3,
                 base_per_vacancy: 0.5,
                 appeal_bonus_divisor: 50,
+                reputation_influence: 0.5,
             },
             ui: UiConfig {
                 upgrade_labels: default_upgrade_labels(),

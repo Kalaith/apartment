@@ -338,6 +338,7 @@ impl Sim {
                 &mut self.current_tick,
                 &mut self.next_tenant_id,
                 has_ever_had_tenant,
+                1.0, // neutral reputation multiplier: the harness has no city layer
                 &self.config,
             );
 

@@ -17,6 +17,8 @@ impl GameplayState {
         // loss can distinguish real mass-departure from a not-yet-filled building.
         self.has_ever_had_tenant |= !self.tenants.is_empty();
 
+        let reputation_multiplier = self.application_reputation_multiplier();
+
         let result = advance_tick(
             &mut self.building,
             &mut self.tenants,
@@ -27,6 +29,7 @@ impl GameplayState {
             &mut self.current_tick,
             &mut self.next_tenant_id,
             self.has_ever_had_tenant,
+            reputation_multiplier,
             &self.config,
         );
 
@@ -295,6 +298,59 @@ impl GameplayState {
         {
             neighborhood.reputation = (neighborhood.reputation + delta).clamp(0, 100);
         }
+    }
+
+    /// Reputation of the neighborhood the active building sits in (0–100),
+    /// defaulting to the neutral 50 when the building isn't placed yet.
+    pub(super) fn active_neighborhood_reputation(&self) -> i32 {
+        let building_id = self.city.active_building_index as u32;
+        self.city
+            .neighborhoods
+            .iter()
+            .find(|n| n.building_ids.contains(&building_id))
+            .map(|n| n.reputation)
+            .unwrap_or(50)
+    }
+
+    /// Applicant-volume multiplier derived from the active neighborhood's
+    /// reputation. Neutral reputation (50) yields 1.0; a strong reputation draws
+    /// proportionally more applicants and a poor one drives them away — the
+    /// consequence that makes reputation worth cultivating.
+    pub(super) fn application_reputation_multiplier(&self) -> f32 {
+        let reputation = self.active_neighborhood_reputation();
+        let influence = self.config.applications.reputation_influence;
+        (1.0 + (reputation - 50) as f32 / 50.0 * influence).clamp(0.25, 2.0)
+    }
+
+    /// Apply a reputation change to a specific neighborhood (or the active
+    /// building's neighborhood when `neighborhood_id` is `None`) with feedback.
+    /// This is the write path that makes reputation a currency the player moves
+    /// through event choices and mission rewards.
+    pub(super) fn apply_reputation_change(&mut self, delta: i32, neighborhood_id: Option<u32>) {
+        if delta == 0 {
+            return;
+        }
+        match neighborhood_id {
+            Some(id) => {
+                if let Some(neighborhood) = self.city.neighborhoods.iter_mut().find(|n| n.id == id)
+                {
+                    neighborhood.reputation = (neighborhood.reputation + delta).clamp(0, 100);
+                }
+            }
+            None => self.adjust_active_neighborhood_reputation(delta),
+        }
+
+        let color = if delta >= 0 {
+            colors::POSITIVE
+        } else {
+            colors::NEGATIVE
+        };
+        self.floating_texts.push(FloatingText::new(
+            &format!("Rep {:+}", delta),
+            screen_width() / 2.0,
+            screen_height() / 2.0 + 60.0,
+            color,
+        ));
     }
 
     fn generate_monthly_narrative(&mut self, result: &TickResult) {

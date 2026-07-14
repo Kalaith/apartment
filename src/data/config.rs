@@ -171,6 +171,15 @@ pub struct ApplicationConfig {
     pub expire_after_ticks: u32,
     pub base_per_vacancy: f32,
     pub appeal_bonus_divisor: i32,
+    /// How strongly neighborhood reputation swings applicant volume. At the
+    /// neutral reputation (50) the multiplier is 1.0; at reputation 0 it is
+    /// `1 - influence`, and at 100 it is `1 + influence`.
+    #[serde(default = "default_reputation_influence")]
+    pub reputation_influence: f32,
+}
+
+fn default_reputation_influence() -> f32 {
+    0.5
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

@@ -116,13 +116,8 @@ pub fn update_missions(state: &mut GameplayState) {
                     // Logic to unlock building (handled by city/economy generally)
                 }
                 MissionReward::Reputation(amount) => {
-                    // Logic for reputation
-                    state.floating_texts.push(FloatingText::new(
-                        &format!("+{} Rep", amount),
-                        screen_width() / 2.0,
-                        screen_height() / 2.0 + 30.0,
-                        colors::ACCENT,
-                    ));
+                    // Reward reputation in the active building's neighborhood.
+                    state.apply_reputation_change(amount, None);
                 }
                 MissionReward::TaxBreak { months, percentage } => {
                     state

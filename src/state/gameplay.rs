@@ -232,12 +232,13 @@ impl GameplayState {
             }
         }
 
-        // Generate initial applications
+        // Generate initial applications (neutral reputation at game start).
         state.applications = crate::tenant::generate_applications(
             &state.building,
             &[],
             0,
             &mut state.next_tenant_id,
+            1.0,
             &state.config,
         );
 

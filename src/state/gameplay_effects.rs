@@ -227,4 +227,28 @@ mod tests {
         });
         assert!(state.tenants.iter().all(|t| t.happiness == 45));
     }
+
+    #[test]
+    fn reputation_change_moves_active_neighborhood() {
+        // Use the non-UI mutation helper: apply_reputation_change also pushes
+        // floating text, which needs a macroquad GL context unit tests lack.
+        let mut state = GameplayState::new();
+        let before = state.active_neighborhood_reputation();
+        state.adjust_active_neighborhood_reputation(10);
+        assert_eq!(
+            state.active_neighborhood_reputation(),
+            (before + 10).clamp(0, 100)
+        );
+    }
+
+    #[test]
+    fn application_multiplier_scales_with_reputation() {
+        let mut state = GameplayState::new();
+        state.adjust_active_neighborhood_reputation(-50); // drive toward 0
+        let low = state.application_reputation_multiplier();
+        state.adjust_active_neighborhood_reputation(100); // drive toward 100
+        let high = state.application_reputation_multiplier();
+        assert!(low < 1.0, "poor reputation should suppress applicants");
+        assert!(high > 1.0, "strong reputation should draw applicants");
+    }
 }

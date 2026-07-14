@@ -54,6 +54,15 @@ pub struct NarrativeChoice {
     pub reputation_change: i32,
 }
 
+/// The full outcome of resolving an event choice: the gameplay effect plus the
+/// reputation change and which neighborhood it applies to.
+#[derive(Clone, Debug)]
+pub struct ChoiceOutcome {
+    pub effect: NarrativeEffect,
+    pub reputation_change: i32,
+    pub neighborhood_id: Option<u32>,
+}
+
 /// Effects of narrative events/choices
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(tag = "type")]
@@ -181,23 +190,25 @@ impl NarrativeEventSystem {
     }
 
     /// Process a choice for an event
-    pub fn process_choice(
-        &mut self,
-        event_id: u32,
-        choice_index: usize,
-    ) -> Option<NarrativeEffect> {
+    pub fn process_choice(&mut self, event_id: u32, choice_index: usize) -> Option<ChoiceOutcome> {
         let event = self.events.iter_mut().find(|e| e.id == event_id)?;
-        let effect = if event.choices.is_empty() {
-            event.default_effect.clone()
+        let neighborhood_id = event.related_neighborhood_id;
+        let (effect, reputation_change) = if event.choices.is_empty() {
+            (event.default_effect.clone(), 0)
         } else {
-            event.choices.get(choice_index).map(|c| c.effect.clone())?
+            let choice = event.choices.get(choice_index)?;
+            (choice.effect.clone(), choice.reputation_change)
         };
 
         event.read = true;
         self.pending_events.retain(|&id| id != event_id);
         self.processed_events.push(event_id);
 
-        Some(effect)
+        Some(ChoiceOutcome {
+            effect,
+            reputation_change,
+            neighborhood_id,
+        })
     }
 
     /// Expire an event and return the default consequence for no response.
@@ -512,10 +523,10 @@ mod tests {
         event.default_effect = NarrativeEffect::Money { amount: 750 };
         let event_id = system.add_event(event);
 
-        let effect = system.process_choice(event_id, 0);
+        let outcome = system.process_choice(event_id, 0);
 
         assert!(matches!(
-            effect,
+            outcome.map(|o| o.effect),
             Some(NarrativeEffect::Money { amount: 750 })
         ));
         assert!(system.processed_events.contains(&event_id));

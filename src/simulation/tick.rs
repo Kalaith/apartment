@@ -35,6 +35,7 @@ impl GameTick {
         current_tick: u32,
         next_tenant_id: &mut u32,
         has_ever_had_tenant: bool,
+        reputation_multiplier: f32,
         config: &crate::data::config::GameConfig,
     ) -> TickResult {
         let mut result = TickResult {
@@ -97,8 +98,14 @@ impl GameTick {
         applications.retain(|app| {
             !app.is_expired_after(current_tick, config.applications.expire_after_ticks)
         });
-        let new_apps =
-            generate_applications(building, applications, current_tick, next_tenant_id, config);
+        let new_apps = generate_applications(
+            building,
+            applications,
+            current_tick,
+            next_tenant_id,
+            reputation_multiplier,
+            config,
+        );
         result.new_applications = new_apps.len();
 
         for app in &new_apps {
@@ -467,6 +474,7 @@ pub fn advance_tick(
     current_tick: &mut u32,
     next_tenant_id: &mut u32,
     has_ever_had_tenant: bool,
+    reputation_multiplier: f32,
     config: &crate::data::config::GameConfig,
 ) -> TickResult {
     *current_tick += 1;
@@ -481,6 +489,7 @@ pub fn advance_tick(
         *current_tick,
         next_tenant_id,
         has_ever_had_tenant,
+        reputation_multiplier,
         config,
     )
 }

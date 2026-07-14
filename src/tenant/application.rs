@@ -40,6 +40,7 @@ pub fn generate_applications(
     existing_applications: &[TenantApplication],
     current_tick: u32,
     next_tenant_id: &mut u32,
+    reputation_multiplier: f32,
     config: &GameConfig,
 ) -> Vec<TenantApplication> {
     let mut new_applications = Vec::new();
@@ -79,7 +80,8 @@ pub fn generate_applications(
         let chance = config.applications.base_per_vacancy
             * appeal_factor
             * marketing_multiplier
-            * open_house_multiplier;
+            * open_house_multiplier
+            * reputation_multiplier;
 
         // Random check to see if we generate an applicant this tick
         if rng::gen_range(0.0, 1.0) < chance {

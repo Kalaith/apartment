@@ -508,8 +508,13 @@ impl GameplayState {
                 event_id,
                 choice_index,
             } => {
-                if let Some(effect) = self.narrative_events.process_choice(event_id, choice_index) {
-                    self.apply_narrative_effect(&effect);
+                if let Some(outcome) = self.narrative_events.process_choice(event_id, choice_index)
+                {
+                    self.apply_narrative_effect(&outcome.effect);
+                    self.apply_reputation_change(
+                        outcome.reputation_change,
+                        outcome.neighborhood_id,
+                    );
                 }
             }
         }
