@@ -122,6 +122,358 @@
                     "reputation_change": 10
                 }
             ]
+        },
+        {
+            "id": "parking_dispute",
+            "trigger_strength_max": 30,
+            "probability": 12,
+            "headline": "Parking Feud",
+            "description": "{tenant_a} in {apt_a} says {tenant_b} keeps taking their parking spot. Tempers are flaring in the lot.",
+            "choices": [
+                {
+                    "label": "Assign fixed spots",
+                    "description": "Draw up a parking map so everyone has a spot.",
+                    "effect": {
+                        "type": "Multiple",
+                        "effects": [
+                            {
+                                "type": "TenantHappiness",
+                                "tenant_id": 0,
+                                "change": 8
+                            },
+                            {
+                                "type": "TenantHappiness",
+                                "tenant_id": 1,
+                                "change": -2
+                            },
+                            {
+                                "type": "RelationshipStrength",
+                                "tenant_a_id": 0,
+                                "tenant_b_id": 0,
+                                "change": 5
+                            }
+                        ]
+                    },
+                    "reputation_change": 5
+                },
+                {
+                    "label": "Let them work it out",
+                    "description": "Not your problem.",
+                    "effect": {
+                        "type": "TenantHappiness",
+                        "tenant_id": 0,
+                        "change": -10
+                    },
+                    "reputation_change": -5
+                }
+            ]
+        },
+        {
+            "id": "odor_complaint",
+            "trigger_strength_max": 30,
+            "probability": 12,
+            "headline": "Cooking Odor Complaint",
+            "description": "{tenant_a} can't stand the strong cooking smells drifting from {tenant_b}'s unit in {apt_b}.",
+            "choices": [
+                {
+                    "label": "Install a better vent ($150)",
+                    "description": "Fix it at the source.",
+                    "effect": {
+                        "type": "Multiple",
+                        "effects": [
+                            {
+                                "type": "Money",
+                                "amount": -150
+                            },
+                            {
+                                "type": "TenantHappiness",
+                                "tenant_id": 0,
+                                "change": 12
+                            },
+                            {
+                                "type": "TenantHappiness",
+                                "tenant_id": 1,
+                                "change": 5
+                            }
+                        ]
+                    },
+                    "reputation_change": 8
+                },
+                {
+                    "label": "Ask {tenant_b} to cook less",
+                    "description": "Have a quiet word.",
+                    "effect": {
+                        "type": "Multiple",
+                        "effects": [
+                            {
+                                "type": "TenantHappiness",
+                                "tenant_id": 0,
+                                "change": 5
+                            },
+                            {
+                                "type": "TenantHappiness",
+                                "tenant_id": 1,
+                                "change": -8
+                            },
+                            {
+                                "type": "RelationshipStrength",
+                                "tenant_a_id": 0,
+                                "tenant_b_id": 0,
+                                "change": -5
+                            }
+                        ]
+                    },
+                    "reputation_change": 0
+                },
+                {
+                    "label": "Dismiss the complaint",
+                    "description": "People cook. Deal with it.",
+                    "effect": {
+                        "type": "TenantHappiness",
+                        "tenant_id": 0,
+                        "change": -8
+                    },
+                    "reputation_change": -3
+                }
+            ]
+        },
+        {
+            "id": "laundry_theft",
+            "trigger_strength_max": 25,
+            "probability": 10,
+            "headline": "Laundry Room Trouble",
+            "description": "{tenant_a} accuses {tenant_b} of moving — and losing — their laundry.",
+            "choices": [
+                {
+                    "label": "Add machines/lockers ($200)",
+                    "description": "Reduce the friction.",
+                    "effect": {
+                        "type": "Multiple",
+                        "effects": [
+                            {
+                                "type": "Money",
+                                "amount": -200
+                            },
+                            {
+                                "type": "TenantHappiness",
+                                "tenant_id": 0,
+                                "change": 10
+                            },
+                            {
+                                "type": "TenantHappiness",
+                                "tenant_id": 1,
+                                "change": 10
+                            },
+                            {
+                                "type": "RelationshipStrength",
+                                "tenant_a_id": 0,
+                                "tenant_b_id": 0,
+                                "change": 8
+                            }
+                        ]
+                    },
+                    "reputation_change": 6
+                },
+                {
+                    "label": "Post a sign-up schedule",
+                    "description": "A cheap compromise.",
+                    "effect": {
+                        "type": "Multiple",
+                        "effects": [
+                            {
+                                "type": "TenantHappiness",
+                                "tenant_id": 0,
+                                "change": 4
+                            },
+                            {
+                                "type": "RelationshipStrength",
+                                "tenant_a_id": 0,
+                                "tenant_b_id": 0,
+                                "change": 3
+                            }
+                        ]
+                    },
+                    "reputation_change": 3
+                },
+                {
+                    "label": "Stay out of it",
+                    "description": "Let them sort it.",
+                    "effect": {
+                        "type": "TenantHappiness",
+                        "tenant_id": 0,
+                        "change": -8
+                    },
+                    "reputation_change": -3
+                }
+            ]
+        },
+        {
+            "id": "thermostat_war",
+            "trigger_strength_max": 30,
+            "probability": 10,
+            "headline": "Thermostat War",
+            "description": "{tenant_a} and {tenant_b} share a heating zone and can't agree on the temperature.",
+            "choices": [
+                {
+                    "label": "Split the zone ($250)",
+                    "description": "Give each unit its own control.",
+                    "effect": {
+                        "type": "Multiple",
+                        "effects": [
+                            {
+                                "type": "Money",
+                                "amount": -250
+                            },
+                            {
+                                "type": "TenantHappiness",
+                                "tenant_id": 0,
+                                "change": 10
+                            },
+                            {
+                                "type": "TenantHappiness",
+                                "tenant_id": 1,
+                                "change": 10
+                            },
+                            {
+                                "type": "RelationshipStrength",
+                                "tenant_a_id": 0,
+                                "tenant_b_id": 0,
+                                "change": 10
+                            }
+                        ]
+                    },
+                    "reputation_change": 7
+                },
+                {
+                    "label": "Set a fixed schedule",
+                    "description": "Compromise hours.",
+                    "effect": {
+                        "type": "Multiple",
+                        "effects": [
+                            {
+                                "type": "TenantHappiness",
+                                "tenant_id": 0,
+                                "change": 3
+                            },
+                            {
+                                "type": "TenantHappiness",
+                                "tenant_id": 1,
+                                "change": 3
+                            }
+                        ]
+                    },
+                    "reputation_change": 2
+                }
+            ]
+        },
+        {
+            "id": "guest_overstay",
+            "trigger_strength_max": 25,
+            "probability": 9,
+            "headline": "The Endless Houseguest",
+            "description": "{tenant_a} says {tenant_b}'s 'weekend guest' has been around for a month, hogging the shared spaces.",
+            "choices": [
+                {
+                    "label": "Remind {tenant_b} of guest limits",
+                    "description": "Enforce the lease politely.",
+                    "effect": {
+                        "type": "Multiple",
+                        "effects": [
+                            {
+                                "type": "TenantHappiness",
+                                "tenant_id": 0,
+                                "change": 8
+                            },
+                            {
+                                "type": "TenantHappiness",
+                                "tenant_id": 1,
+                                "change": -6
+                            },
+                            {
+                                "type": "OpinionChange",
+                                "tenant_id": 1,
+                                "amount": -5
+                            }
+                        ]
+                    },
+                    "reputation_change": 3
+                },
+                {
+                    "label": "Let it slide",
+                    "description": "It's not hurting anyone.",
+                    "effect": {
+                        "type": "TenantHappiness",
+                        "tenant_id": 0,
+                        "change": -8
+                    },
+                    "reputation_change": -4
+                }
+            ]
+        },
+        {
+            "id": "passive_notes",
+            "trigger_strength_max": 30,
+            "probability": 10,
+            "headline": "War of the Sticky Notes",
+            "description": "{tenant_a} and {tenant_b} have started leaving each other increasingly hostile notes in the hallway.",
+            "choices": [
+                {
+                    "label": "Sit them down together",
+                    "description": "Force an honest conversation.",
+                    "effect": {
+                        "type": "Multiple",
+                        "effects": [
+                            {
+                                "type": "RelationshipStrength",
+                                "tenant_a_id": 0,
+                                "tenant_b_id": 0,
+                                "change": 15
+                            },
+                            {
+                                "type": "TenantHappiness",
+                                "tenant_id": 0,
+                                "change": 3
+                            },
+                            {
+                                "type": "TenantHappiness",
+                                "tenant_id": 1,
+                                "change": 3
+                            }
+                        ]
+                    },
+                    "reputation_change": 6
+                },
+                {
+                    "label": "Take down the notes",
+                    "description": "Quietly defuse it.",
+                    "effect": {
+                        "type": "TenantHappiness",
+                        "tenant_id": 0,
+                        "change": 2
+                    },
+                    "reputation_change": 1
+                },
+                {
+                    "label": "Ignore the drama",
+                    "description": "They'll tire themselves out.",
+                    "effect": {
+                        "type": "Multiple",
+                        "effects": [
+                            {
+                                "type": "TenantHappiness",
+                                "tenant_id": 0,
+                                "change": -6
+                            },
+                            {
+                                "type": "TenantHappiness",
+                                "tenant_id": 1,
+                                "change": -6
+                            }
+                        ]
+                    },
+                    "reputation_change": -3
+                }
+            ]
         }
     ],
     "friendly": [
@@ -151,6 +503,76 @@
                 "tenant_a_id": 0,
                 "tenant_b_id": 0,
                 "change": 3
+            }
+        },
+        {
+            "id": "carpool",
+            "trigger_strength_min": 55,
+            "probability": 15,
+            "headline": "New Carpool",
+            "description": "{tenant_a} and {tenant_b} have started carpooling to work together.",
+            "choices": [],
+            "default_effect": {
+                "type": "RelationshipStrength",
+                "tenant_a_id": 0,
+                "tenant_b_id": 0,
+                "change": 4
+            }
+        },
+        {
+            "id": "shared_garden",
+            "trigger_strength_min": 55,
+            "probability": 12,
+            "headline": "Shared Garden",
+            "description": "{tenant_a} and {tenant_b} teamed up to plant a little garden by the entrance.",
+            "choices": [],
+            "default_effect": {
+                "type": "RelationshipStrength",
+                "tenant_a_id": 0,
+                "tenant_b_id": 0,
+                "change": 5
+            }
+        },
+        {
+            "id": "pet_sitting",
+            "trigger_strength_min": 50,
+            "probability": 15,
+            "headline": "Pet-Sitting Favor",
+            "description": "{tenant_a} watched {tenant_b}'s cat over the weekend. A real bond is forming.",
+            "choices": [],
+            "default_effect": {
+                "type": "RelationshipStrength",
+                "tenant_a_id": 0,
+                "tenant_b_id": 0,
+                "change": 3
+            }
+        },
+        {
+            "id": "job_referral",
+            "trigger_strength_min": 60,
+            "probability": 10,
+            "headline": "A Good Word",
+            "description": "{tenant_a} referred {tenant_b} for a job opening. Gratitude all around.",
+            "choices": [],
+            "default_effect": {
+                "type": "RelationshipStrength",
+                "tenant_a_id": 0,
+                "tenant_b_id": 0,
+                "change": 6
+            }
+        },
+        {
+            "id": "holiday_potluck",
+            "trigger_strength_min": 50,
+            "probability": 12,
+            "headline": "Hallway Potluck",
+            "description": "{tenant_a} and {tenant_b} organized a floor potluck that half the building showed up to.",
+            "choices": [],
+            "default_effect": {
+                "type": "RelationshipStrength",
+                "tenant_a_id": 0,
+                "tenant_b_id": 0,
+                "change": 5
             }
         }
     ],
@@ -182,6 +604,73 @@
                     "reputation_change": -5
                 }
             ]
+        },
+        {
+            "id": "budding_romance",
+            "trigger_strength_min": 75,
+            "probability": 8,
+            "headline": "Something in the Air",
+            "description": "{tenant_a} and {tenant_b} have started spending a lot of time together. The whole floor has noticed.",
+            "choices": [],
+            "default_effect": {
+                "type": "RelationshipStrength",
+                "tenant_a_id": 0,
+                "tenant_b_id": 0,
+                "change": 5
+            }
+        },
+        {
+            "id": "anniversary",
+            "trigger_strength_min": 95,
+            "probability": 6,
+            "headline": "An Anniversary",
+            "description": "{tenant_a} and {tenant_b} are celebrating a year together — in your building, no less.",
+            "choices": [
+                {
+                    "label": "Send a small gift",
+                    "description": "A bottle of wine on the house ($30).",
+                    "effect": {
+                        "type": "Multiple",
+                        "effects": [
+                            {
+                                "type": "Money",
+                                "amount": -30
+                            },
+                            {
+                                "type": "TenantHappiness",
+                                "tenant_id": 0,
+                                "change": 8
+                            },
+                            {
+                                "type": "TenantHappiness",
+                                "tenant_id": 1,
+                                "change": 8
+                            }
+                        ]
+                    },
+                    "reputation_change": 6
+                },
+                {
+                    "label": "Just congratulate them",
+                    "description": "A warm word costs nothing.",
+                    "effect": {
+                        "type": "Multiple",
+                        "effects": [
+                            {
+                                "type": "TenantHappiness",
+                                "tenant_id": 0,
+                                "change": 3
+                            },
+                            {
+                                "type": "TenantHappiness",
+                                "tenant_id": 1,
+                                "change": 3
+                            }
+                        ]
+                    },
+                    "reputation_change": 2
+                }
+            ]
         }
     ],
     "dilemma": [
@@ -197,9 +686,22 @@
                     "effect": {
                         "type": "Multiple",
                         "effects": [
-                            { "type": "OpinionChange", "tenant_id": 0, "amount": 15 },
-                            { "type": "TenantHappiness", "tenant_id": 1, "change": -10 },
-                            { "type": "RelationshipStrength", "tenant_a_id": 0, "tenant_b_id": 1, "change": -10 }
+                            {
+                                "type": "OpinionChange",
+                                "tenant_id": 0,
+                                "amount": 15
+                            },
+                            {
+                                "type": "TenantHappiness",
+                                "tenant_id": 1,
+                                "change": -10
+                            },
+                            {
+                                "type": "RelationshipStrength",
+                                "tenant_a_id": 0,
+                                "tenant_b_id": 1,
+                                "change": -10
+                            }
                         ]
                     },
                     "reputation_change": -5
@@ -210,10 +712,26 @@
                     "effect": {
                         "type": "Multiple",
                         "effects": [
-                            { "type": "Money", "amount": -300 },
-                            { "type": "RelationshipStrength", "tenant_a_id": 0, "tenant_b_id": 1, "change": 20 },
-                            { "type": "TenantHappiness", "tenant_id": 0, "change": 5 },
-                            { "type": "TenantHappiness", "tenant_id": 1, "change": 5 }
+                            {
+                                "type": "Money",
+                                "amount": -300
+                            },
+                            {
+                                "type": "RelationshipStrength",
+                                "tenant_a_id": 0,
+                                "tenant_b_id": 1,
+                                "change": 20
+                            },
+                            {
+                                "type": "TenantHappiness",
+                                "tenant_id": 0,
+                                "change": 5
+                            },
+                            {
+                                "type": "TenantHappiness",
+                                "tenant_id": 1,
+                                "change": 5
+                            }
                         ]
                     },
                     "reputation_change": 5
@@ -224,9 +742,20 @@
                     "effect": {
                         "type": "Multiple",
                         "effects": [
-                            { "type": "MoveOut", "tenant_id": 0 },
-                            { "type": "OpinionChange", "tenant_id": 0, "amount": -100 },
-                            { "type": "TenantHappiness", "tenant_id": 1, "change": 20 }
+                            {
+                                "type": "MoveOut",
+                                "tenant_id": 0
+                            },
+                            {
+                                "type": "OpinionChange",
+                                "tenant_id": 0,
+                                "amount": -100
+                            },
+                            {
+                                "type": "TenantHappiness",
+                                "tenant_id": 1,
+                                "change": 20
+                            }
                         ]
                     },
                     "reputation_change": 5
@@ -250,8 +779,16 @@
                     "effect": {
                         "type": "Multiple",
                         "effects": [
-                            { "type": "OpinionChange", "tenant_id": 0, "amount": 20 },
-                            { "type": "TenantHappiness", "tenant_id": 1, "change": -10 }
+                            {
+                                "type": "OpinionChange",
+                                "tenant_id": 0,
+                                "amount": 20
+                            },
+                            {
+                                "type": "TenantHappiness",
+                                "tenant_id": 1,
+                                "change": -10
+                            }
                         ]
                     },
                     "reputation_change": -5
@@ -262,9 +799,22 @@
                     "effect": {
                         "type": "Multiple",
                         "effects": [
-                            { "type": "TenantHappiness", "tenant_id": 0, "change": -10 },
-                            { "type": "RelationshipStrength", "tenant_a_id": 0, "tenant_b_id": 1, "change": 15 },
-                            { "type": "TenantHappiness", "tenant_id": 1, "change": 10 }
+                            {
+                                "type": "TenantHappiness",
+                                "tenant_id": 0,
+                                "change": -10
+                            },
+                            {
+                                "type": "RelationshipStrength",
+                                "tenant_a_id": 0,
+                                "tenant_b_id": 1,
+                                "change": 15
+                            },
+                            {
+                                "type": "TenantHappiness",
+                                "tenant_id": 1,
+                                "change": 10
+                            }
                         ]
                     },
                     "reputation_change": 5
@@ -275,9 +825,20 @@
                     "effect": {
                         "type": "Multiple",
                         "effects": [
-                            { "type": "MoveOut", "tenant_id": 0 },
-                            { "type": "OpinionChange", "tenant_id": 0, "amount": -100 },
-                            { "type": "TenantHappiness", "tenant_id": 1, "change": 15 }
+                            {
+                                "type": "MoveOut",
+                                "tenant_id": 0
+                            },
+                            {
+                                "type": "OpinionChange",
+                                "tenant_id": 0,
+                                "amount": -100
+                            },
+                            {
+                                "type": "TenantHappiness",
+                                "tenant_id": 1,
+                                "change": 15
+                            }
                         ]
                     },
                     "reputation_change": 0
@@ -287,6 +848,95 @@
                 "type": "OpinionChange",
                 "tenant_id": 0,
                 "amount": 5
+            }
+        },
+        {
+            "id": "party_host_dilemma",
+            "probability": 25,
+            "headline": "{tenant}'s Open-Door Policy",
+            "description": "{tenant} in {apt} pays ${rent}/month and never misses rent — but throws near-weekly parties. {victim_count} neighbor(s), including {victims}, are at their wits' end.",
+            "choices": [
+                {
+                    "label": "Look the other way",
+                    "description": "The rent is worth a little noise.",
+                    "effect": {
+                        "type": "Multiple",
+                        "effects": [
+                            {
+                                "type": "OpinionChange",
+                                "tenant_id": 0,
+                                "amount": 15
+                            },
+                            {
+                                "type": "TenantHappiness",
+                                "tenant_id": 1,
+                                "change": -12
+                            },
+                            {
+                                "type": "RelationshipStrength",
+                                "tenant_a_id": 0,
+                                "tenant_b_id": 1,
+                                "change": -10
+                            }
+                        ]
+                    },
+                    "reputation_change": -6
+                },
+                {
+                    "label": "Set quiet hours",
+                    "description": "Compromise: parties end by 11pm.",
+                    "effect": {
+                        "type": "Multiple",
+                        "effects": [
+                            {
+                                "type": "TenantHappiness",
+                                "tenant_id": 0,
+                                "change": -6
+                            },
+                            {
+                                "type": "TenantHappiness",
+                                "tenant_id": 1,
+                                "change": 8
+                            },
+                            {
+                                "type": "RelationshipStrength",
+                                "tenant_a_id": 0,
+                                "tenant_b_id": 1,
+                                "change": 12
+                            }
+                        ]
+                    },
+                    "reputation_change": 5
+                },
+                {
+                    "label": "Evict {tenant}",
+                    "description": "Peace over premium rent.",
+                    "effect": {
+                        "type": "Multiple",
+                        "effects": [
+                            {
+                                "type": "MoveOut",
+                                "tenant_id": 0
+                            },
+                            {
+                                "type": "OpinionChange",
+                                "tenant_id": 0,
+                                "amount": -100
+                            },
+                            {
+                                "type": "TenantHappiness",
+                                "tenant_id": 1,
+                                "change": 18
+                            }
+                        ]
+                    },
+                    "reputation_change": 4
+                }
+            ],
+            "default_effect": {
+                "type": "TenantHappiness",
+                "tenant_id": 1,
+                "change": -8
             }
         }
     ]

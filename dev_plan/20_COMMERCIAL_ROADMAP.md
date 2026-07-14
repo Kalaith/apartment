@@ -82,7 +82,7 @@ Current volume vs. what a commercial run-based sim needs:
 | Content | Now | 1.0 target (rough) |
 |---|---|---|
 | Tenant archetypes | 5 | 12–15, with per-archetype arcs |
-| Relationship events | 7 | 30–40 |
+| Relationship events | ~~7~~ **21** (2026-07-14) | 30–40 |
 | Tenant request types | ~6 | 15–20 |
 | Narrative/news events | ~13 (hardcoded, mostly flavor) | 50+, data-driven, all with real effects |
 | Dialogue bodies | 2 | 30+ across all 3 dialogue types |
