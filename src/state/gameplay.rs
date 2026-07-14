@@ -140,10 +140,15 @@ impl GameplayState {
 
     /// Create a new game with a specific building template
     pub fn new_with_template(
-        config: GameConfig,
+        mut config: GameConfig,
         template: crate::data::templates::BuildingTemplate,
     ) -> Self {
         use crate::building::Building;
+
+        // Apply the tier's rule modifiers (fines, inspections, problem tenants,
+        // overhead) and derive its starting funds — this is what makes the three
+        // property tiers genuinely different games, not just different sizes.
+        let starting_funds = config.apply_difficulty(&template.difficulty);
 
         // Create building from template
         let building = Building::from_template(&template);
@@ -170,7 +175,7 @@ impl GameplayState {
             tenants: Vec::new(),
             applications: Vec::new(),
             next_tenant_id: 1,
-            funds: PlayerFunds::default(),
+            funds: PlayerFunds::new(starting_funds),
             ledger: FinancialLedger::default(),
             event_log: EventLog::new(),
             current_tick: 0,

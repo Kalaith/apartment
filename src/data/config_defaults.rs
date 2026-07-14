@@ -39,6 +39,7 @@ impl Default for GameConfig {
             gentrification: GentrificationConfig::default(),
             regulations: RegulationsConfig::default(),
             life_events: LifeEventsConfig::default(),
+            difficulty: default_difficulty_modifiers(),
             theme: ThemeConfig::default(),
             layout: LayoutConfig::default(),
             ui_thresholds: UiThresholdsConfig::default(),
@@ -80,6 +81,41 @@ fn default_base_rent() -> HashMap<String, i32> {
     rents.insert("small".to_string(), 600);
     rents.insert("medium".to_string(), 900);
     rents
+}
+
+fn default_difficulty_modifiers() -> HashMap<String, DifficultyModifiers> {
+    let mut tiers = HashMap::new();
+    tiers.insert(
+        "Easy".to_string(),
+        DifficultyModifiers {
+            starting_funds: 7000,
+            inspection_fine_multiplier: 0.75,
+            random_inspection_chance_percent: 5,
+            problem_applicant_chance_percent: 10,
+            operating_cost_multiplier: 0.85,
+        },
+    );
+    tiers.insert(
+        "Medium".to_string(),
+        DifficultyModifiers {
+            starting_funds: 5000,
+            inspection_fine_multiplier: 1.0,
+            random_inspection_chance_percent: 8,
+            problem_applicant_chance_percent: 18,
+            operating_cost_multiplier: 1.0,
+        },
+    );
+    tiers.insert(
+        "Hard".to_string(),
+        DifficultyModifiers {
+            starting_funds: 3500,
+            inspection_fine_multiplier: 1.5,
+            random_inspection_chance_percent: 12,
+            problem_applicant_chance_percent: 28,
+            operating_cost_multiplier: 1.15,
+        },
+    );
+    tiers
 }
 
 fn default_staff_costs() -> HashMap<String, i32> {

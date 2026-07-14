@@ -229,6 +229,29 @@
     "major_move_out_risk": 40,
     "minor_move_out_risk": 15
   },
+  "difficulty": {
+    "Easy": {
+      "starting_funds": 7000,
+      "inspection_fine_multiplier": 0.75,
+      "random_inspection_chance_percent": 5,
+      "problem_applicant_chance_percent": 10,
+      "operating_cost_multiplier": 0.85
+    },
+    "Medium": {
+      "starting_funds": 5000,
+      "inspection_fine_multiplier": 1.0,
+      "random_inspection_chance_percent": 8,
+      "problem_applicant_chance_percent": 18,
+      "operating_cost_multiplier": 1.0
+    },
+    "Hard": {
+      "starting_funds": 3500,
+      "inspection_fine_multiplier": 1.5,
+      "random_inspection_chance_percent": 12,
+      "problem_applicant_chance_percent": 28,
+      "operating_cost_multiplier": 1.15
+    }
+  },
   "theme": {
     "background": [
       0.12,
