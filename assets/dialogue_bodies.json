@@ -1,37 +1,113 @@
 {
   "face_to_face": {
-    "Student": {
-      "headline": "Party Permission",
-      "description": "I'm planning a small... study group. Might get a bit loud. Is that cool?",
-      "choices": [
-        {
-          "text": "Sure, just keep it down after 10pm",
-          "effects": [ { "kind": "happiness", "target": "initiator", "amount": 5 } ]
-        },
-        {
-          "text": "Absolutely not",
-          "effects": [ { "kind": "happiness", "target": "initiator", "amount": -5 } ]
-        }
-      ]
-    },
-    "default": {
-      "headline": "Minor Repair Request",
-      "description": "My faucet is dripping and it's driving me crazy. Can you fix it?",
-      "choices": [
-        {
-          "text": "I'll send someone right away (${cost})",
-          "effects": [
-            { "kind": "repair_money" },
-            { "kind": "happiness", "target": "initiator", "amount": 10 },
-            { "kind": "opinion", "target": "initiator", "amount": 5 }
-          ]
-        },
-        {
-          "text": "It's on the list, give me a week",
-          "effects": [ { "kind": "happiness", "target": "initiator", "amount": -2 } ]
-        }
-      ]
-    }
+    "Student": [
+      {
+        "headline": "Party Permission",
+        "description": "I'm planning a small... study group. Might get a bit loud. Is that cool?",
+        "choices": [
+          { "text": "Sure, just keep it down after 10pm", "effects": [ { "kind": "happiness", "target": "initiator", "amount": 5 } ] },
+          { "text": "Absolutely not", "effects": [ { "kind": "happiness", "target": "initiator", "amount": -5 } ] }
+        ]
+      },
+      {
+        "headline": "Bike Storage",
+        "description": "There's nowhere safe to keep my bike. Can we sort something out?",
+        "choices": [
+          { "text": "I'll clear a bike rack ($60)", "effects": [ { "kind": "money", "amount": -60 }, { "kind": "happiness", "target": "initiator", "amount": 8 }, { "kind": "opinion", "target": "initiator", "amount": 5 } ] },
+          { "text": "Just keep it in your unit", "effects": [ { "kind": "happiness", "target": "initiator", "amount": -3 } ] }
+        ]
+      },
+      {
+        "headline": "Roommate Question",
+        "description": "A friend needs a place — can they move in and split my rent?",
+        "choices": [
+          { "text": "Sure, just register them", "effects": [ { "kind": "happiness", "target": "initiator", "amount": 6 } ] },
+          { "text": "Sorry, one lease per unit", "effects": [ { "kind": "happiness", "target": "initiator", "amount": -6 } ] }
+        ]
+      }
+    ],
+    "Professional": [
+      {
+        "headline": "Package Theft",
+        "description": "My deliveries keep going missing from the lobby. It's becoming a real problem.",
+        "choices": [
+          { "text": "I'll install a parcel locker ($120)", "effects": [ { "kind": "money", "amount": -120 }, { "kind": "happiness", "target": "initiator", "amount": 10 }, { "kind": "opinion", "target": "initiator", "amount": 6 } ] },
+          { "text": "That's really not my responsibility", "effects": [ { "kind": "happiness", "target": "initiator", "amount": -8 }, { "kind": "opinion", "target": "initiator", "amount": -4 } ] }
+        ]
+      },
+      {
+        "headline": "Quiet for Calls",
+        "description": "I work from home and the daytime noise is killing my video calls.",
+        "choices": [
+          { "text": "I'll post quiet hours", "effects": [ { "kind": "happiness", "target": "initiator", "amount": 6 } ] },
+          { "text": "I can't control the neighbors", "effects": [ { "kind": "happiness", "target": "initiator", "amount": -4 } ] }
+        ]
+      }
+    ],
+    "Artist": [
+      {
+        "headline": "Wall Modifications",
+        "description": "I'd love to hang some large pieces — maybe even paint an accent wall. That okay?",
+        "choices": [
+          { "text": "Go ahead, it adds character", "effects": [ { "kind": "happiness", "target": "initiator", "amount": 10 }, { "kind": "opinion", "target": "initiator", "amount": 5 } ] },
+          { "text": "Please keep the walls as they are", "effects": [ { "kind": "happiness", "target": "initiator", "amount": -6 } ] }
+        ]
+      },
+      {
+        "headline": "Noise Tolerance",
+        "description": "I make music — nothing crazy, but there'll be sound. Are we good?",
+        "choices": [
+          { "text": "Daytime's fine, just be mindful at night", "effects": [ { "kind": "happiness", "target": "initiator", "amount": 8 } ] },
+          { "text": "I need you to keep it down", "effects": [ { "kind": "happiness", "target": "initiator", "amount": -5 } ] }
+        ]
+      }
+    ],
+    "Family": [
+      {
+        "headline": "Safe Play Space",
+        "description": "The kids have nowhere safe to play. Could the courtyard be made kid-friendly?",
+        "choices": [
+          { "text": "I'll fence and tidy the courtyard ($200)", "effects": [ { "kind": "money", "amount": -200 }, { "kind": "happiness", "target": "initiator", "amount": 12 }, { "kind": "opinion", "target": "initiator", "amount": 8 } ] },
+          { "text": "There's really no space for that", "effects": [ { "kind": "happiness", "target": "initiator", "amount": -6 } ] }
+        ]
+      },
+      {
+        "headline": "Something Broke",
+        "description": "The kids' bathroom faucet gave out and it's chaos over here. Any chance of a quick fix?",
+        "choices": [
+          { "text": "I'll send someone right away (${cost})", "effects": [ { "kind": "repair_money" }, { "kind": "happiness", "target": "initiator", "amount": 10 }, { "kind": "opinion", "target": "initiator", "amount": 5 } ] },
+          { "text": "It's on the list, give me a week", "effects": [ { "kind": "happiness", "target": "initiator", "amount": -3 } ] }
+        ]
+      }
+    ],
+    "Elderly": [
+      {
+        "headline": "Accessibility",
+        "description": "The stairs and the tub are getting hard for me. Could we add a few grab bars?",
+        "choices": [
+          { "text": "Of course — I'll install grab bars ($150)", "effects": [ { "kind": "money", "amount": -150 }, { "kind": "happiness", "target": "initiator", "amount": 12 }, { "kind": "opinion", "target": "initiator", "amount": 8 } ] },
+          { "text": "That's not in the budget right now", "effects": [ { "kind": "happiness", "target": "initiator", "amount": -8 }, { "kind": "opinion", "target": "initiator", "amount": -5 } ] }
+        ]
+      },
+      {
+        "headline": "Heating Trouble",
+        "description": "My radiator's barely warm and these old bones feel every draft. Can you take a look?",
+        "choices": [
+          { "text": "On it right away (${cost})", "effects": [ { "kind": "repair_money" }, { "kind": "happiness", "target": "initiator", "amount": 10 }, { "kind": "opinion", "target": "initiator", "amount": 5 } ] },
+          { "text": "Bundle up for now, I'll get to it", "effects": [ { "kind": "happiness", "target": "initiator", "amount": -6 } ] }
+        ]
+      }
+    ],
+    "default": [
+      {
+        "headline": "Minor Repair Request",
+        "description": "My faucet is dripping and it's driving me crazy. Can you fix it?",
+        "choices": [
+          { "text": "I'll send someone right away (${cost})", "effects": [ { "kind": "repair_money" }, { "kind": "happiness", "target": "initiator", "amount": 10 }, { "kind": "opinion", "target": "initiator", "amount": 5 } ] },
+          { "text": "It's on the list, give me a week", "effects": [ { "kind": "happiness", "target": "initiator", "amount": -2 } ] }
+        ]
+      }
+    ]
   },
   "conflict_mediation": {
     "headline": "Neighbor Dispute",

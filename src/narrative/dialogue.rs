@@ -143,13 +143,15 @@ impl DialogueSystem {
 
             if tenant.happiness < 40 && rng::gen_range(0, 100) < (complaint_chance + months_factor)
             {
-                // Pick the archetype-specific request body, else the default.
+                // Pick a random request body from the archetype's list, falling
+                // back to the "default" list.
                 let key = tenant.archetype.name();
-                let Some(template) = bodies
+                let list = bodies
                     .face_to_face
                     .get(key)
-                    .or_else(|| bodies.face_to_face.get("default"))
-                else {
+                    .filter(|v| !v.is_empty())
+                    .or_else(|| bodies.face_to_face.get("default"));
+                let Some(template) = list.and_then(|v| rng::choose(v)) else {
                     continue;
                 };
 
@@ -343,9 +345,10 @@ struct DialogueBodyTemplate {
 /// All authored dialogue bodies (`assets/dialogue_bodies.json`).
 #[derive(Clone, Debug, Deserialize, Default)]
 struct DialogueBodies {
-    /// Face-to-face requests keyed by archetype name, with a `"default"` entry.
+    /// Face-to-face requests keyed by archetype name (each a list of possible
+    /// bodies, picked at random), with a `"default"` fallback list.
     #[serde(default)]
-    face_to_face: std::collections::HashMap<String, DialogueBodyTemplate>,
+    face_to_face: std::collections::HashMap<String, Vec<DialogueBodyTemplate>>,
     #[serde(default)]
     conflict_mediation: Option<DialogueBodyTemplate>,
     #[serde(default)]
@@ -480,7 +483,26 @@ mod tests {
     #[test]
     fn dialogue_bodies_load_from_json() {
         let bodies = load_dialogue_bodies();
-        assert!(bodies.face_to_face.contains_key("default"));
+        // Every archetype has at least one face-to-face body, plus a default.
+        for key in [
+            "Student",
+            "Professional",
+            "Artist",
+            "Family",
+            "Elderly",
+            "default",
+        ] {
+            let list = bodies
+                .face_to_face
+                .get(key)
+                .unwrap_or_else(|| panic!("no face_to_face bodies for {}", key));
+            assert!(!list.is_empty(), "{} has an empty body list", key);
+        }
+        // At least one archetype offers multiple request variants.
+        assert!(
+            bodies.face_to_face.values().any(|v| v.len() >= 2),
+            "expected some archetypes to have multiple request bodies"
+        );
         assert!(bodies.conflict_mediation.is_some());
         assert!(bodies.rent_negotiation.is_some());
     }

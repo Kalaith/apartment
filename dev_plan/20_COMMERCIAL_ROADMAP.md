@@ -85,7 +85,7 @@ Current volume vs. what a commercial run-based sim needs:
 | Relationship events | ~~7~~ **21** (2026-07-14) | 30–40 |
 | Tenant request situations | ~~~6~~ **~19** (2026-07-14) | 15–20 ✓ |
 | Narrative/news events | ~~~13~~ **36** (2026-07-14; data-driven, real effects) | 50+ |
-| Dialogue bodies | 2 | 30+ across all 3 dialogue types |
+| Dialogue bodies | ~~2~~ **14** (2026-07-14) | 30+ across all 3 dialogue types |
 | Missions | ~~5~~ **15** (2026-07-14) | 20–30 across a campaign |
 | Buildings / campaign | 3 | 6–10 with distinct identities |
 | Neighborhoods | 4 | 6–8 with mechanical personality |
