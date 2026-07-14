@@ -123,7 +123,11 @@ impl DialogueSystem {
         tenants: &[crate::tenant::Tenant],
         building: &crate::building::Building,
         funds: &crate::economy::PlayerFunds,
+        network: &crate::consequences::TenantNetwork,
     ) {
+        self.generate_conflict_mediation(tenants, network);
+        self.generate_rent_negotiations(building, tenants);
+
         // Low funds can trigger rent negotiation dialogues
         let is_low_on_funds = funds.balance < 500;
         let building_quality = building.building_appeal();
@@ -214,6 +218,176 @@ impl DialogueSystem {
         }
     }
 
+    /// Tenant A complaining about Tenant B — sourced from a real hostile
+    /// relationship in the tenant network. Generates one conflict at a time.
+    fn generate_conflict_mediation(
+        &mut self,
+        tenants: &[crate::tenant::Tenant],
+        network: &crate::consequences::TenantNetwork,
+    ) {
+        use crate::consequences::RelationshipType;
+
+        let housed = |id: u32| tenants.iter().any(|t| t.id == id);
+        let name_of = |id: u32| {
+            tenants
+                .iter()
+                .find(|t| t.id == id)
+                .map(|t| t.name.clone())
+                .unwrap_or_else(|| "a neighbor".to_string())
+        };
+
+        let pair = network.relationships.iter().find(|r| {
+            matches!(r.relationship_type, RelationshipType::Hostile)
+                && housed(r.tenant_a_id)
+                && housed(r.tenant_b_id)
+                && !self
+                    .active_dialogues
+                    .iter()
+                    .any(|d| d.initiator_id == r.tenant_a_id)
+        });
+
+        let Some(relationship) = pair else {
+            return;
+        };
+        let (a, b) = (relationship.tenant_a_id, relationship.tenant_b_id);
+        let a_name = name_of(a);
+        let b_name = name_of(b);
+
+        let choices = vec![
+            DialogueChoice {
+                text: "Mediate between them".to_string(),
+                effects: vec![
+                    DialogueEffect::RelationshipChange {
+                        tenant_a: a,
+                        tenant_b: b,
+                        change: 15,
+                    },
+                    DialogueEffect::HappinessChange {
+                        tenant_id: a,
+                        amount: 3,
+                    },
+                    DialogueEffect::HappinessChange {
+                        tenant_id: b,
+                        amount: 3,
+                    },
+                ],
+            },
+            DialogueChoice {
+                text: format!("Take {}'s side", a_name),
+                effects: vec![
+                    DialogueEffect::HappinessChange {
+                        tenant_id: a,
+                        amount: 6,
+                    },
+                    DialogueEffect::HappinessChange {
+                        tenant_id: b,
+                        amount: -8,
+                    },
+                    DialogueEffect::RelationshipChange {
+                        tenant_a: a,
+                        tenant_b: b,
+                        change: -10,
+                    },
+                ],
+            },
+            DialogueChoice {
+                text: "Stay out of it".to_string(),
+                effects: vec![DialogueEffect::HappinessChange {
+                    tenant_id: a,
+                    amount: -3,
+                }],
+            },
+        ];
+
+        self.add_dialogue(
+            DialogueType::ConflictMediation,
+            a,
+            Some(b),
+            "Neighbor Dispute",
+            &format!(
+                "{} says {} has become impossible to live next to.",
+                a_name, b_name
+            ),
+            choices,
+            None,
+        );
+    }
+
+    /// Rent-change conversations: price-sensitive tenants push back when the
+    /// building charges above baseline rent.
+    fn generate_rent_negotiations(
+        &mut self,
+        building: &crate::building::Building,
+        tenants: &[crate::tenant::Tenant],
+    ) {
+        use crate::tenant::TenantArchetype;
+
+        if building.rent_multiplier <= 1.1 {
+            return;
+        }
+
+        for tenant in tenants {
+            let price_sensitive = matches!(
+                tenant.archetype,
+                TenantArchetype::Elderly | TenantArchetype::Family | TenantArchetype::Student
+            );
+            if !price_sensitive || tenant.happiness >= 55 {
+                continue;
+            }
+            if self
+                .active_dialogues
+                .iter()
+                .any(|d| d.initiator_id == tenant.id)
+            {
+                continue;
+            }
+            if rng::gen_range(0, 100) >= 6 {
+                continue;
+            }
+
+            let forgiven = 40;
+            let choices = vec![
+                DialogueChoice {
+                    text: format!("Give a one-time ${} break", forgiven),
+                    effects: vec![
+                        DialogueEffect::MoneyChange(-forgiven),
+                        DialogueEffect::HappinessChange {
+                            tenant_id: tenant.id,
+                            amount: 8,
+                        },
+                        DialogueEffect::OpinionChange {
+                            tenant_id: tenant.id,
+                            amount: 5,
+                        },
+                    ],
+                },
+                DialogueChoice {
+                    text: "Hold firm on the rent".to_string(),
+                    effects: vec![
+                        DialogueEffect::HappinessChange {
+                            tenant_id: tenant.id,
+                            amount: -6,
+                        },
+                        DialogueEffect::OpinionChange {
+                            tenant_id: tenant.id,
+                            amount: -4,
+                        },
+                    ],
+                },
+            ];
+
+            self.add_dialogue(
+                DialogueType::RentNegotiation,
+                tenant.id,
+                None,
+                "Rent Is Getting Tight",
+                "With the rent where it is, I'm really feeling the squeeze. Any chance of some relief?",
+                choices,
+                None,
+            );
+        }
+    }
+
     /// Handle expiring dialogues
     pub fn tick(&mut self, current_month: u32) {
         // Remove expired dialogues
@@ -257,6 +431,28 @@ mod tests {
 
         assert_eq!(system.pending_dialogues().len(), 1);
         assert_eq!(system.pending_dialogues()[0].id, id);
+    }
+
+    #[test]
+    fn conflict_mediation_generated_from_hostile_pair() {
+        use crate::consequences::TenantNetwork;
+        use crate::tenant::{Tenant, TenantArchetype};
+
+        let tenants = vec![
+            Tenant::generate(1, TenantArchetype::Professional),
+            Tenant::generate(2, TenantArchetype::Artist),
+        ];
+        let mut network = TenantNetwork::new();
+        // A strong negative change with no prior relationship creates a Hostile one.
+        network.apply_relationship_change(1, 2, -60);
+
+        let mut system = DialogueSystem::new();
+        system.generate_conflict_mediation(&tenants, &network);
+
+        assert!(system
+            .active_dialogues
+            .iter()
+            .any(|d| d.dialogue_type == DialogueType::ConflictMediation && d.target_id == Some(2)));
     }
 
     #[test]

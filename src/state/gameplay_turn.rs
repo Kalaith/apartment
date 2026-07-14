@@ -389,8 +389,13 @@ impl GameplayState {
         let tenants = self.tenants.clone();
         let building = self.building.clone();
         let funds = self.funds.clone();
-        self.dialogue_system
-            .generate_dialogues(self.current_tick, &tenants, &building, &funds);
+        self.dialogue_system.generate_dialogues(
+            self.current_tick,
+            &tenants,
+            &building,
+            &funds,
+            &self.tenant_network,
+        );
     }
 
     fn accept_available_missions(&mut self) {
