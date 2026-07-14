@@ -36,6 +36,8 @@ pub struct GameConfig {
     #[serde(default)]
     pub regulations: RegulationsConfig,
     #[serde(default)]
+    pub life_events: LifeEventsConfig,
+    #[serde(default)]
     pub theme: ThemeConfig,
     #[serde(default)]
     pub layout: LayoutConfig,
@@ -571,6 +573,37 @@ impl Default for RegulationsConfig {
             compliance_gain_on_pass: 5,
             neighborhood_reputation_penalty: 4,
             neighborhood_reputation_gain: 1,
+        }
+    }
+}
+
+/// Tuning for emergent tenant life events (new job, job loss, new baby, …). The
+/// per-type consequences are composed from these reusable magnitudes.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct LifeEventsConfig {
+    /// Per-tenant monthly chance (percent) that a life event occurs.
+    pub monthly_chance_percent: i32,
+    /// Happiness gained on a positive life change / lost on a negative one.
+    pub positive_happiness: i32,
+    pub negative_happiness: i32,
+    /// Rent-tolerance shift when a tenant's income rises / falls.
+    pub rent_tolerance_boost: i32,
+    pub rent_tolerance_drop: i32,
+    /// Move-out risk (0–100) for a major / minor life disruption.
+    pub major_move_out_risk: i32,
+    pub minor_move_out_risk: i32,
+}
+
+impl Default for LifeEventsConfig {
+    fn default() -> Self {
+        Self {
+            monthly_chance_percent: 6,
+            positive_happiness: 12,
+            negative_happiness: 12,
+            rent_tolerance_boost: 150,
+            rent_tolerance_drop: 150,
+            major_move_out_risk: 40,
+            minor_move_out_risk: 15,
         }
     }
 }

@@ -8,6 +8,7 @@
 mod gameplay;
 mod gameplay_actions; // UI action dispatch and city action handling
 mod gameplay_effects; // Narrative event effect application
+mod gameplay_life_events; // Emergent tenant life events
 mod gameplay_turn; // Monthly turn advancement
 mod gameplay_views; // Drawing functions (draw, draw_building_mode, etc.)
 mod menu;

@@ -40,6 +40,7 @@ impl GameplayState {
         self.apply_active_tax_breaks();
         self.update_city_systems();
         self.generate_monthly_narrative(&result);
+        self.generate_tenant_life_events();
         self.auto_approve_manager_requests();
         self.expire_narrative_events();
         self.sync_building();

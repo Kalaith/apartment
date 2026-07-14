@@ -524,10 +524,13 @@ impl GameplayState {
         let mut stack = vec![impact];
         while let Some(effect) = stack.pop() {
             match effect {
-                StoryImpact::None
-                | StoryImpact::Request(_)
-                | StoryImpact::Roommate
-                | StoryImpact::LifeChange(_) => {}
+                StoryImpact::None | StoryImpact::Request(_) | StoryImpact::Roommate => {}
+                StoryImpact::LifeChange(life_change) => {
+                    // Expand a life change into its concrete consequences and
+                    // process them through the same pipeline.
+                    let (impact, _description) = life_change.impact(&self.config.life_events);
+                    stack.push(impact);
+                }
                 StoryImpact::Happiness(amount) => {
                     if let Some(tenant) = self.tenants.iter_mut().find(|t| t.id == tenant_id) {
                         tenant.happiness = (tenant.happiness + amount).clamp(0, 100);

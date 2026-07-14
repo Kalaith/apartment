@@ -21,7 +21,7 @@ pub use events::{NarrativeEvent, NarrativeEventSystem};
 pub use mail::Mailbox;
 pub use missions::{ActiveTaxBreak, MissionGoal, MissionManager, MissionReward, MissionStatus};
 pub use notifications::{NotificationCategory, NotificationManager, RelationshipChange};
-pub use stories::{StoryImpact, TenantRequest, TenantStory};
+pub use stories::{LifeChangeType, StoryImpact, TenantRequest, TenantStory};
 pub use tutorial::{TutorialManager, TutorialMilestone};
 pub mod achievements;
 pub use achievements::AchievementSystem;

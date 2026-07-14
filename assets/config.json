@@ -213,6 +213,15 @@
     "neighborhood_reputation_penalty": 4,
     "neighborhood_reputation_gain": 1
   },
+  "life_events": {
+    "monthly_chance_percent": 6,
+    "positive_happiness": 12,
+    "negative_happiness": 12,
+    "rent_tolerance_boost": 150,
+    "rent_tolerance_drop": 150,
+    "major_move_out_risk": 40,
+    "minor_move_out_risk": 15
+  },
   "theme": {
     "background": [
       0.12,

@@ -1,3 +1,4 @@
+use crate::data::config::LifeEventsConfig;
 use crate::narrative::events_config::{RequestTemplate, TenantEventsConfig};
 use crate::tenant::TenantArchetype;
 use macroquad_toolkit::rng;
@@ -108,6 +109,126 @@ pub enum LifeChangeType {
     StartedSchool,
     /// Graduated
     Graduated,
+}
+
+impl LifeChangeType {
+    /// The concrete gameplay consequence of this life change, plus a short
+    /// third-person description used to surface the emergent story. Magnitudes
+    /// come from `LifeEventsConfig` so balance stays data-driven.
+    pub fn impact(&self, cfg: &LifeEventsConfig) -> (StoryImpact, String) {
+        use StoryImpact::{Happiness, MoveOutRisk, Multiple, RentTolerance};
+        match self {
+            LifeChangeType::NewJob { better: true } => (
+                Multiple(vec![
+                    Happiness(cfg.positive_happiness),
+                    RentTolerance(cfg.rent_tolerance_boost),
+                ]),
+                "landed a better-paying job".to_string(),
+            ),
+            LifeChangeType::NewJob { better: false } => (
+                Happiness(cfg.positive_happiness / 2),
+                "started a new job".to_string(),
+            ),
+            LifeChangeType::JobLoss => (
+                Multiple(vec![
+                    Happiness(-cfg.negative_happiness),
+                    RentTolerance(-cfg.rent_tolerance_drop),
+                    MoveOutRisk(cfg.major_move_out_risk),
+                ]),
+                "lost their job".to_string(),
+            ),
+            LifeChangeType::Partnered => (
+                Multiple(vec![
+                    Happiness(cfg.positive_happiness),
+                    RentTolerance(cfg.rent_tolerance_boost / 2),
+                ]),
+                "moved in with a partner".to_string(),
+            ),
+            LifeChangeType::Separated => (
+                Multiple(vec![
+                    Happiness(-cfg.negative_happiness),
+                    RentTolerance(-cfg.rent_tolerance_drop / 2),
+                    MoveOutRisk(cfg.minor_move_out_risk),
+                ]),
+                "went through a separation".to_string(),
+            ),
+            LifeChangeType::NewBaby => (
+                Multiple(vec![
+                    Happiness(cfg.positive_happiness / 2),
+                    MoveOutRisk(cfg.major_move_out_risk),
+                ]),
+                "had a baby and needs more space".to_string(),
+            ),
+            LifeChangeType::ChildLeftHome => (
+                MoveOutRisk(cfg.minor_move_out_risk),
+                "became an empty-nester considering downsizing".to_string(),
+            ),
+            LifeChangeType::HealthIssue => (
+                Multiple(vec![
+                    Happiness(-cfg.negative_happiness),
+                    MoveOutRisk(cfg.minor_move_out_risk),
+                ]),
+                "is dealing with a health issue".to_string(),
+            ),
+            LifeChangeType::Retired => (
+                RentTolerance(-cfg.rent_tolerance_drop / 2),
+                "retired onto a fixed income".to_string(),
+            ),
+            LifeChangeType::StartedSchool => (
+                Happiness(cfg.positive_happiness / 2),
+                "started school".to_string(),
+            ),
+            LifeChangeType::Graduated => (
+                Multiple(vec![
+                    Happiness(cfg.positive_happiness),
+                    MoveOutRisk(cfg.major_move_out_risk),
+                ]),
+                "graduated and may move for work".to_string(),
+            ),
+        }
+    }
+
+    /// Life changes plausible for a given archetype.
+    pub fn eligible_for(archetype: &TenantArchetype) -> Vec<LifeChangeType> {
+        match archetype {
+            TenantArchetype::Student => vec![
+                LifeChangeType::Graduated,
+                LifeChangeType::StartedSchool,
+                LifeChangeType::NewJob { better: true },
+                LifeChangeType::Partnered,
+                LifeChangeType::HealthIssue,
+            ],
+            TenantArchetype::Professional => vec![
+                LifeChangeType::NewJob { better: true },
+                LifeChangeType::JobLoss,
+                LifeChangeType::Partnered,
+                LifeChangeType::Separated,
+                LifeChangeType::NewBaby,
+                LifeChangeType::HealthIssue,
+            ],
+            TenantArchetype::Artist => vec![
+                LifeChangeType::NewJob { better: false },
+                LifeChangeType::JobLoss,
+                LifeChangeType::Partnered,
+                LifeChangeType::Separated,
+                LifeChangeType::HealthIssue,
+            ],
+            TenantArchetype::Family => vec![
+                LifeChangeType::NewBaby,
+                LifeChangeType::ChildLeftHome,
+                LifeChangeType::JobLoss,
+                LifeChangeType::NewJob { better: true },
+                LifeChangeType::Separated,
+                LifeChangeType::HealthIssue,
+            ],
+            TenantArchetype::Elderly => vec![
+                LifeChangeType::Retired,
+                LifeChangeType::HealthIssue,
+                LifeChangeType::ChildLeftHome,
+                LifeChangeType::Separated,
+            ],
+        }
+    }
 }
 
 /// Complete story/background for a tenant
@@ -540,5 +661,50 @@ mod tests {
         };
         let approval = request.approval_effect();
         matches!(approval, StoryImpact::Happiness(h) if h > 0);
+    }
+
+    #[test]
+    fn job_loss_is_a_disruptive_life_change() {
+        let cfg = LifeEventsConfig::default();
+        let (impact, description) = LifeChangeType::JobLoss.impact(&cfg);
+        assert!(!description.is_empty());
+        match impact {
+            StoryImpact::Multiple(effects) => {
+                assert!(effects
+                    .iter()
+                    .any(|e| matches!(e, StoryImpact::MoveOutRisk(_))));
+                assert!(effects
+                    .iter()
+                    .any(|e| matches!(e, StoryImpact::Happiness(h) if *h < 0)));
+            }
+            other => panic!("expected multiple impacts, got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn new_job_is_a_positive_life_change() {
+        let cfg = LifeEventsConfig::default();
+        let (impact, _) = LifeChangeType::NewJob { better: true }.impact(&cfg);
+        match impact {
+            StoryImpact::Multiple(effects) => {
+                assert!(effects
+                    .iter()
+                    .any(|e| matches!(e, StoryImpact::Happiness(h) if *h > 0)));
+            }
+            other => panic!("expected multiple impacts, got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn every_archetype_has_eligible_life_changes() {
+        for archetype in [
+            TenantArchetype::Student,
+            TenantArchetype::Professional,
+            TenantArchetype::Artist,
+            TenantArchetype::Family,
+            TenantArchetype::Elderly,
+        ] {
+            assert!(!LifeChangeType::eligible_for(&archetype).is_empty());
+        }
     }
 }
