@@ -1,0 +1,68 @@
+{
+  "neighborhood": [
+    {
+      "headline": "New Business Opens",
+      "description": "A new café has opened in the neighborhood, adding to local charm.",
+      "effect": { "kind": "neighborhood_reputation", "amount": 5.0 }
+    },
+    {
+      "headline": "Street Improvements",
+      "description": "The city has announced road improvements for the area.",
+      "effect": { "kind": "rent_demand", "amount": 0.05 }
+    },
+    {
+      "headline": "Crime Report",
+      "description": "Local news reports a slight uptick in property crime.",
+      "effect": { "kind": "neighborhood_reputation", "amount": -3.0 }
+    },
+    {
+      "headline": "Community Festival",
+      "description": "The annual neighborhood festival brought residents together.",
+      "effect": { "kind": "neighborhood_reputation", "amount": 3.0 }
+    }
+  ],
+  "city": [
+    {
+      "headline": "Housing Market Heats Up",
+      "description": "Analysts report increased demand for rental properties citywide.",
+      "effect": { "kind": "economy_change", "amount": 0.05 }
+    },
+    {
+      "headline": "Economic Concerns",
+      "description": "Business leaders express worry about the local economy.",
+      "effect": { "kind": "economy_change", "amount": -0.05 }
+    },
+    {
+      "headline": "New Transit Line Announced",
+      "description": "The city will expand public transit, improving access across neighborhoods.",
+      "effect": { "kind": "none", "amount": 0.0 }
+    },
+    {
+      "headline": "Property Tax Review",
+      "description": "City council is reviewing property tax rates.",
+      "effect": { "kind": "none", "amount": 0.0 }
+    }
+  ],
+  "seasonal": [
+    {
+      "headline": "Spring Cleaning Season",
+      "description": "Tenants report increased satisfaction with well-maintained properties.",
+      "effect": { "kind": "none", "amount": 0.0 }
+    },
+    {
+      "headline": "Summer Heat Wave Warning",
+      "description": "Hot weather expected. Tenants are asking about AC.",
+      "effect": { "kind": "none", "amount": 0.0 }
+    },
+    {
+      "headline": "Back to School Rush",
+      "description": "Students are actively hunting for housing near universities.",
+      "effect": { "kind": "none", "amount": 0.0 }
+    },
+    {
+      "headline": "Winter Preparedness",
+      "description": "Cold weather approaching. Heating systems should be checked.",
+      "effect": { "kind": "none", "amount": 0.0 }
+    }
+  ]
+}

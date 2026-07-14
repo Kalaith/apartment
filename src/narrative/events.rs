@@ -245,24 +245,27 @@ impl NarrativeEventSystem {
         buildings: &[crate::building::Building],
         _tenants: &[crate::tenant::Tenant],
     ) {
+        // News event copy + effects are data-driven (assets/news_events.json).
+        let news = load_news_events();
+
         // Chance for neighborhood news
         if rng::gen_range(0, 100) < 20 {
             if let Some(neighborhood) = rng::choose(neighborhoods) {
-                let event = self.generate_neighborhood_event(month, neighborhood);
+                let event = Self::neighborhood_event(&news, month, neighborhood);
                 self.add_event(event);
             }
         }
 
         // Chance for city-wide event
         if rng::gen_range(0, 100) < 10 {
-            let event = self.generate_city_event(month);
+            let event = Self::city_event(&news, month);
             self.add_event(event);
         }
 
         // Seasonal events
         let season = (month % 12) / 3; // 0=spring, 1=summer, 2=fall, 3=winter
         if rng::gen_range(0, 100) < 15 {
-            let event = self.generate_seasonal_event(month, season);
+            let event = Self::seasonal_event(&news, month, season);
             self.add_event(event);
         }
 
@@ -296,49 +299,15 @@ impl NarrativeEventSystem {
         // Expiration effects are applied by gameplay state after generation.
     }
 
-    fn generate_neighborhood_event(
-        &self,
+    fn neighborhood_event(
+        news: &NewsEventsConfig,
         month: u32,
         neighborhood: &crate::city::Neighborhood,
     ) -> NarrativeEvent {
-        let templates: Vec<(&str, &str, NarrativeEffect)> = vec![
-            (
-                "New Business Opens",
-                "A new café has opened in the neighborhood, adding to local charm.",
-                NarrativeEffect::NeighborhoodReputation {
-                    neighborhood_id: neighborhood.id,
-                    change: 5,
-                },
-            ),
-            (
-                "Street Improvements",
-                "The city has announced road improvements for the area.",
-                NarrativeEffect::RentDemand {
-                    neighborhood_id: neighborhood.id,
-                    change: 0.05,
-                },
-            ),
-            (
-                "Crime Report",
-                "Local news reports a slight uptick in property crime.",
-                NarrativeEffect::NeighborhoodReputation {
-                    neighborhood_id: neighborhood.id,
-                    change: -3,
-                },
-            ),
-            (
-                "Community Festival",
-                "The annual neighborhood festival brought residents together.",
-                NarrativeEffect::NeighborhoodReputation {
-                    neighborhood_id: neighborhood.id,
-                    change: 3,
-                },
-            ),
-        ];
-
-        if let Some((headline, description, effect)) = rng::choose(&templates).cloned() {
-            let mut event = NarrativeEvent::news(0, month, headline, description);
-            event.default_effect = effect;
+        if let Some(template) = rng::choose(&news.neighborhood) {
+            let mut event =
+                NarrativeEvent::news(0, month, &template.headline, &template.description);
+            event.default_effect = template.effect.to_effect(neighborhood.id);
             event.related_neighborhood_id = Some(neighborhood.id);
             event
         } else {
@@ -346,68 +315,30 @@ impl NarrativeEventSystem {
         }
     }
 
-    fn generate_city_event(&self, month: u32) -> NarrativeEvent {
-        let templates: Vec<(&str, &str, NarrativeEffect)> = vec![
-            (
-                "Housing Market Heats Up",
-                "Analysts report increased demand for rental properties citywide.",
-                NarrativeEffect::EconomyChange {
-                    economy_health_change: 0.05,
-                },
-            ),
-            (
-                "Economic Concerns",
-                "Business leaders express worry about the local economy.",
-                NarrativeEffect::EconomyChange {
-                    economy_health_change: -0.05,
-                },
-            ),
-            (
-                "New Transit Line Announced",
-                "The city will expand public transit, improving access across neighborhoods.",
-                NarrativeEffect::None,
-            ),
-            (
-                "Property Tax Review",
-                "City council is reviewing property tax rates.",
-                NarrativeEffect::None,
-            ),
-        ];
-
-        if let Some((headline, description, effect)) = rng::choose(&templates).cloned() {
-            let mut event = NarrativeEvent::news(0, month, headline, description);
-            event.event_type = NarrativeEventType::CityEvent;
-            event.default_effect = effect;
+    fn city_event(news: &NewsEventsConfig, month: u32) -> NarrativeEvent {
+        let mut event = if let Some(template) = rng::choose(&news.city) {
+            let mut event =
+                NarrativeEvent::news(0, month, &template.headline, &template.description);
+            // City effects are neighborhood-independent, so the id is unused.
+            event.default_effect = template.effect.to_effect(0);
             event
         } else {
-            let mut event =
-                NarrativeEvent::news(0, month, "City Update", "No major city news this month.");
-            event.event_type = NarrativeEventType::CityEvent;
-            event
-        }
+            NarrativeEvent::news(0, month, "City Update", "No major city news this month.")
+        };
+        event.event_type = NarrativeEventType::CityEvent;
+        event
     }
 
-    fn generate_seasonal_event(&self, month: u32, season: u32) -> NarrativeEvent {
-        let (headline, description) = match season {
-            0 => (
-                "Spring Cleaning Season",
-                "Tenants report increased satisfaction with well-maintained properties.",
-            ),
-            1 => (
-                "Summer Heat Wave Warning",
-                "Hot weather expected. Tenants are asking about AC.",
-            ),
-            2 => (
-                "Back to School Rush",
-                "Students are actively hunting for housing near universities.",
-            ),
-            _ => (
-                "Winter Preparedness",
-                "Cold weather approaching. Heating systems should be checked.",
-            ),
+    fn seasonal_event(news: &NewsEventsConfig, month: u32, season: u32) -> NarrativeEvent {
+        let mut event = match news.seasonal.get(season as usize) {
+            Some(template) => {
+                let mut event =
+                    NarrativeEvent::news(0, month, &template.headline, &template.description);
+                event.default_effect = template.effect.to_effect(0);
+                event
+            }
+            None => NarrativeEvent::news(0, month, "Seasonal Update", "The seasons turn."),
         };
-
-        let mut event = NarrativeEvent::news(0, month, headline, description);
         event.event_type = NarrativeEventType::SeasonalEvent;
         event
     }
@@ -485,6 +416,69 @@ impl Default for NarrativeEventSystem {
     }
 }
 
+/// A single news-event template as authored in `assets/news_events.json`.
+#[derive(Clone, Debug, Deserialize)]
+struct NewsTemplate {
+    headline: String,
+    description: String,
+    effect: NewsEffectSpec,
+}
+
+/// A data-driven effect spec. The concrete `NarrativeEffect` is built at
+/// generation time so runtime ids (e.g. the neighborhood the news is about) can
+/// be injected — they can't be baked into static content.
+#[derive(Clone, Debug, Deserialize)]
+struct NewsEffectSpec {
+    kind: String,
+    #[serde(default)]
+    amount: f32,
+}
+
+impl NewsEffectSpec {
+    fn to_effect(&self, neighborhood_id: u32) -> NarrativeEffect {
+        match self.kind.as_str() {
+            "neighborhood_reputation" => NarrativeEffect::NeighborhoodReputation {
+                neighborhood_id,
+                change: self.amount as i32,
+            },
+            "rent_demand" => NarrativeEffect::RentDemand {
+                neighborhood_id,
+                change: self.amount,
+            },
+            "economy_change" => NarrativeEffect::EconomyChange {
+                economy_health_change: self.amount,
+            },
+            _ => NarrativeEffect::None,
+        }
+    }
+}
+
+/// The full set of news-event template banks.
+#[derive(Clone, Debug, Deserialize, Default)]
+struct NewsEventsConfig {
+    #[serde(default)]
+    neighborhood: Vec<NewsTemplate>,
+    #[serde(default)]
+    city: Vec<NewsTemplate>,
+    /// Indexed by season (0=spring, 1=summer, 2=fall, 3=winter).
+    #[serde(default)]
+    seasonal: Vec<NewsTemplate>,
+}
+
+fn load_news_events() -> NewsEventsConfig {
+    #[cfg(target_arch = "wasm32")]
+    let json = include_str!("../../assets/news_events.json").to_string();
+
+    #[cfg(not(target_arch = "wasm32"))]
+    let json = std::fs::read_to_string("assets/news_events.json")
+        .unwrap_or_else(|_| include_str!("../../assets/news_events.json").to_string());
+
+    serde_json::from_str(&json).unwrap_or_else(|e| {
+        eprintln!("Failed to parse news_events.json: {}", e);
+        NewsEventsConfig::default()
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -501,6 +495,42 @@ mod tests {
         let mut system = NarrativeEventSystem::new();
         let _id = system.add_event(NarrativeEvent::news(0, 1, "Test", "Desc"));
         assert_eq!(system.events.len(), 1);
+    }
+
+    #[test]
+    fn news_events_load_from_json() {
+        let news = load_news_events();
+        assert!(!news.neighborhood.is_empty());
+        assert!(!news.city.is_empty());
+        assert_eq!(news.seasonal.len(), 4, "one seasonal template per season");
+    }
+
+    #[test]
+    fn news_effect_spec_injects_runtime_neighborhood_id() {
+        let spec = NewsEffectSpec {
+            kind: "neighborhood_reputation".to_string(),
+            amount: 5.0,
+        };
+        match spec.to_effect(3) {
+            NarrativeEffect::NeighborhoodReputation {
+                neighborhood_id,
+                change,
+            } => {
+                assert_eq!(neighborhood_id, 3);
+                assert_eq!(change, 5);
+            }
+            other => panic!("expected NeighborhoodReputation, got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn generated_neighborhood_event_targets_its_neighborhood() {
+        use crate::city::{Neighborhood, NeighborhoodType};
+        let news = load_news_events();
+        let neighborhood = Neighborhood::new(7, NeighborhoodType::Downtown, "Test");
+        let event = NarrativeEventSystem::neighborhood_event(&news, 1, &neighborhood);
+        assert!(!event.headline.is_empty());
+        assert_eq!(event.related_neighborhood_id, Some(7));
     }
 
     #[test]
