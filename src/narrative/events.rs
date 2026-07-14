@@ -330,7 +330,14 @@ impl NarrativeEventSystem {
     }
 
     fn seasonal_event(news: &NewsEventsConfig, month: u32, season: u32) -> NarrativeEvent {
-        let mut event = match news.seasonal.get(season as usize) {
+        // Pick at random among the templates tagged for the current season, so
+        // the same seasonal beat doesn't recur every single year.
+        let candidates: Vec<&NewsTemplate> = news
+            .seasonal
+            .iter()
+            .filter(|t| t.season == season)
+            .collect();
+        let mut event = match rng::choose(&candidates) {
             Some(template) => {
                 let mut event =
                     NarrativeEvent::news(0, month, &template.headline, &template.description);
@@ -422,6 +429,10 @@ struct NewsTemplate {
     headline: String,
     description: String,
     effect: NewsEffectSpec,
+    /// Only meaningful for seasonal templates: which season (0=spring, 1=summer,
+    /// 2=fall, 3=winter) this belongs to. Ignored for neighborhood/city banks.
+    #[serde(default)]
+    season: u32,
 }
 
 /// A data-driven effect spec. The concrete `NarrativeEffect` is built at
@@ -500,9 +511,16 @@ mod tests {
     #[test]
     fn news_events_load_from_json() {
         let news = load_news_events();
-        assert!(!news.neighborhood.is_empty());
-        assert!(!news.city.is_empty());
-        assert_eq!(news.seasonal.len(), 4, "one seasonal template per season");
+        assert!(news.neighborhood.len() >= 8);
+        assert!(news.city.len() >= 8);
+        // Every season (0..=3) must have at least one seasonal template.
+        for season in 0..4 {
+            assert!(
+                news.seasonal.iter().any(|t| t.season == season),
+                "no seasonal template for season {}",
+                season
+            );
+        }
     }
 
     #[test]

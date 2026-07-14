@@ -1,68 +1,44 @@
 {
   "neighborhood": [
-    {
-      "headline": "New Business Opens",
-      "description": "A new café has opened in the neighborhood, adding to local charm.",
-      "effect": { "kind": "neighborhood_reputation", "amount": 5.0 }
-    },
-    {
-      "headline": "Street Improvements",
-      "description": "The city has announced road improvements for the area.",
-      "effect": { "kind": "rent_demand", "amount": 0.05 }
-    },
-    {
-      "headline": "Crime Report",
-      "description": "Local news reports a slight uptick in property crime.",
-      "effect": { "kind": "neighborhood_reputation", "amount": -3.0 }
-    },
-    {
-      "headline": "Community Festival",
-      "description": "The annual neighborhood festival brought residents together.",
-      "effect": { "kind": "neighborhood_reputation", "amount": 3.0 }
-    }
+    { "headline": "New Business Opens", "description": "A new café has opened in the neighborhood, adding to local charm.", "effect": { "kind": "neighborhood_reputation", "amount": 5.0 } },
+    { "headline": "Street Improvements", "description": "The city has announced road improvements for the area.", "effect": { "kind": "rent_demand", "amount": 0.05 } },
+    { "headline": "Crime Report", "description": "Local news reports a slight uptick in property crime.", "effect": { "kind": "neighborhood_reputation", "amount": -3.0 } },
+    { "headline": "Community Festival", "description": "The annual neighborhood festival brought residents together.", "effect": { "kind": "neighborhood_reputation", "amount": 3.0 } },
+    { "headline": "Park Renovation", "description": "The local park reopened with new playgrounds and lighting.", "effect": { "kind": "neighborhood_reputation", "amount": 4.0 } },
+    { "headline": "School Rating Climbs", "description": "The nearby school district posted its best rating in years.", "effect": { "kind": "neighborhood_reputation", "amount": 4.0 } },
+    { "headline": "Graffiti Wave", "description": "A rash of graffiti has residents grumbling about upkeep.", "effect": { "kind": "neighborhood_reputation", "amount": -3.0 } },
+    { "headline": "Farmers Market Launches", "description": "A weekly farmers market is drawing crowds to the area.", "effect": { "kind": "rent_demand", "amount": 0.04 } },
+    { "headline": "Pothole Complaints", "description": "Residents are fed up with the state of the roads.", "effect": { "kind": "neighborhood_reputation", "amount": -2.0 } },
+    { "headline": "New Bike Lanes", "description": "Protected bike lanes have made the neighborhood more appealing.", "effect": { "kind": "rent_demand", "amount": 0.03 } },
+    { "headline": "Neighborhood Watch Formed", "description": "Residents organized a watch group; people feel safer.", "effect": { "kind": "neighborhood_reputation", "amount": 3.0 } },
+    { "headline": "Nearby Construction Noise", "description": "A new development next door has everyone reaching for earplugs.", "effect": { "kind": "neighborhood_reputation", "amount": -2.0 } }
   ],
   "city": [
-    {
-      "headline": "Housing Market Heats Up",
-      "description": "Analysts report increased demand for rental properties citywide.",
-      "effect": { "kind": "economy_change", "amount": 0.05 }
-    },
-    {
-      "headline": "Economic Concerns",
-      "description": "Business leaders express worry about the local economy.",
-      "effect": { "kind": "economy_change", "amount": -0.05 }
-    },
-    {
-      "headline": "New Transit Line Announced",
-      "description": "The city will expand public transit, improving access across neighborhoods.",
-      "effect": { "kind": "none", "amount": 0.0 }
-    },
-    {
-      "headline": "Property Tax Review",
-      "description": "City council is reviewing property tax rates.",
-      "effect": { "kind": "none", "amount": 0.0 }
-    }
+    { "headline": "Housing Market Heats Up", "description": "Analysts report increased demand for rental properties citywide.", "effect": { "kind": "economy_change", "amount": 0.05 } },
+    { "headline": "Economic Concerns", "description": "Business leaders express worry about the local economy.", "effect": { "kind": "economy_change", "amount": -0.05 } },
+    { "headline": "New Transit Line Announced", "description": "The city will expand public transit, improving access across neighborhoods.", "effect": { "kind": "none", "amount": 0.0 } },
+    { "headline": "Property Tax Review", "description": "City council is reviewing property tax rates.", "effect": { "kind": "none", "amount": 0.0 } },
+    { "headline": "Tech Employer Relocates Downtown", "description": "A major employer is moving thousands of jobs into the city core.", "effect": { "kind": "economy_change", "amount": 0.06 } },
+    { "headline": "Factory Closure Announced", "description": "A longtime manufacturer is shutting its doors, shedding jobs.", "effect": { "kind": "economy_change", "amount": -0.06 } },
+    { "headline": "Tourism Board Campaign", "description": "A splashy ad campaign is putting the city on the map.", "effect": { "kind": "economy_change", "amount": 0.03 } },
+    { "headline": "Interest Rate Hike", "description": "Borrowing just got more expensive across the board.", "effect": { "kind": "economy_change", "amount": -0.04 } },
+    { "headline": "City Budget Surplus", "description": "A rare surplus has the council talking about investment.", "effect": { "kind": "economy_change", "amount": 0.03 } },
+    { "headline": "Rent Control Debate", "description": "The council is weighing new rent-control rules. Landlords are watching closely.", "effect": { "kind": "none", "amount": 0.0 } },
+    { "headline": "Convention Center Approved", "description": "A new convention center promises a wave of visitors and business.", "effect": { "kind": "economy_change", "amount": 0.04 } },
+    { "headline": "Utility Rate Increase", "description": "The utility board approved higher rates starting next quarter.", "effect": { "kind": "economy_change", "amount": -0.03 } }
   ],
   "seasonal": [
-    {
-      "headline": "Spring Cleaning Season",
-      "description": "Tenants report increased satisfaction with well-maintained properties.",
-      "effect": { "kind": "none", "amount": 0.0 }
-    },
-    {
-      "headline": "Summer Heat Wave Warning",
-      "description": "Hot weather expected. Tenants are asking about AC.",
-      "effect": { "kind": "none", "amount": 0.0 }
-    },
-    {
-      "headline": "Back to School Rush",
-      "description": "Students are actively hunting for housing near universities.",
-      "effect": { "kind": "none", "amount": 0.0 }
-    },
-    {
-      "headline": "Winter Preparedness",
-      "description": "Cold weather approaching. Heating systems should be checked.",
-      "effect": { "kind": "none", "amount": 0.0 }
-    }
+    { "season": 0, "headline": "Spring Cleaning Season", "description": "Tenants report increased satisfaction with well-maintained properties.", "effect": { "kind": "none", "amount": 0.0 } },
+    { "season": 0, "headline": "Allergy Season Arrives", "description": "Pollen counts are up; tenants are asking about air filters.", "effect": { "kind": "none", "amount": 0.0 } },
+    { "season": 0, "headline": "Lease-Hunting Season", "description": "Spring is prime time for apartment hunters on the move.", "effect": { "kind": "rent_demand", "amount": 0.03 } },
+    { "season": 1, "headline": "Summer Heat Wave Warning", "description": "Hot weather expected. Tenants are asking about AC.", "effect": { "kind": "none", "amount": 0.0 } },
+    { "season": 1, "headline": "Block Party Weekend", "description": "A neighborhood block party has everyone in good spirits.", "effect": { "kind": "neighborhood_reputation", "amount": 2.0 } },
+    { "season": 1, "headline": "AC Repair Rush", "description": "Everyone's cooling systems are working overtime this month.", "effect": { "kind": "none", "amount": 0.0 } },
+    { "season": 2, "headline": "Back to School Rush", "description": "Students are actively hunting for housing near universities.", "effect": { "kind": "rent_demand", "amount": 0.03 } },
+    { "season": 2, "headline": "Gutter Season", "description": "Falling leaves mean it's time to think about the gutters.", "effect": { "kind": "none", "amount": 0.0 } },
+    { "season": 2, "headline": "Cozy-Up Renovations", "description": "Cooler weather has tenants nesting and noticing every draft.", "effect": { "kind": "none", "amount": 0.0 } },
+    { "season": 3, "headline": "Winter Preparedness", "description": "Cold weather approaching. Heating systems should be checked.", "effect": { "kind": "none", "amount": 0.0 } },
+    { "season": 3, "headline": "Holiday Decorations", "description": "The building is aglow with tenants' holiday decorations.", "effect": { "kind": "neighborhood_reputation", "amount": 2.0 } },
+    { "season": 3, "headline": "Heating Bill Shock", "description": "The first big cold snap has everyone eyeing their thermostats.", "effect": { "kind": "none", "amount": 0.0 } }
   ]
 }
