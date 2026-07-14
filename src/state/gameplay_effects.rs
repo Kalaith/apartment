@@ -242,6 +242,32 @@ mod tests {
     }
 
     #[test]
+    fn same_seed_reproduces_initial_state() {
+        use crate::data::config::load_config;
+        use crate::data::templates::load_templates;
+
+        let Some(template) = load_templates().and_then(|t| t.templates.into_iter().next()) else {
+            return;
+        };
+        let a = GameplayState::new_with_template_seed(load_config(), template.clone(), 777);
+        let b = GameplayState::new_with_template_seed(load_config(), template, 777);
+
+        assert_eq!(a.seed, 777);
+        assert_eq!(a.next_tenant_id, b.next_tenant_id);
+        let archetypes = |s: &GameplayState| {
+            s.applications
+                .iter()
+                .map(|app| format!("{:?}", app.tenant.archetype))
+                .collect::<Vec<_>>()
+        };
+        assert_eq!(
+            archetypes(&a),
+            archetypes(&b),
+            "same seed must reproduce the same initial applicants"
+        );
+    }
+
+    #[test]
     fn condo_sale_multiplier_tracks_the_market() {
         let mut state = GameplayState::new();
         state.city.economy_health = 1.5; // boom

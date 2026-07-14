@@ -124,6 +124,19 @@ pub struct GameplayState {
     /// council can re-form if the landlord backslides.
     #[serde(default)]
     pub council_formed: bool,
+
+    /// The run's RNG seed, recorded so a run can be reproduced (bug reports,
+    /// daily challenges) and re-applied on load so reloading doesn't reroll
+    /// outcomes.
+    #[serde(default)]
+    pub seed: u64,
+}
+
+/// Pick a fresh run seed from wall-clock time. Uses macroquad's date source so
+/// it works on both native and wasm (unlike `std::time`, which panics on wasm).
+fn generate_run_seed() -> u64 {
+    let now = macroquad::miniquad::date::now();
+    ((now * 1_000_000.0) as u64) ^ 0x9E37_79B9_7F4A_7C15
 }
 
 impl GameplayState {
@@ -138,12 +151,31 @@ impl GameplayState {
         Self::new_with_template(config, template)
     }
 
-    /// Create a new game with a specific building template
+    /// Create a new game with a specific building template, choosing a fresh
+    /// run seed from wall-clock entropy. Every game therefore differs (the RNG
+    /// was previously never seeded, so all playthroughs were identical), and the
+    /// chosen seed is recorded for reproducibility / bug reports.
     pub fn new_with_template(
-        mut config: GameConfig,
+        config: GameConfig,
         template: crate::data::templates::BuildingTemplate,
     ) -> Self {
+        Self::new_with_template_seed(config, template, generate_run_seed())
+    }
+
+    /// Create a new game with a specific building template and an explicit run
+    /// seed. Two games created from the same (config, template, seed) produce
+    /// the same randomness — the basis for reproducible runs and daily
+    /// challenges.
+    pub fn new_with_template_seed(
+        mut config: GameConfig,
+        template: crate::data::templates::BuildingTemplate,
+        seed: u64,
+    ) -> Self {
         use crate::building::Building;
+
+        // Seed the shared RNG before any generation so the run is reproducible
+        // from `seed`.
+        macroquad_toolkit::rng::srand(seed);
 
         // Apply the tier's rule modifiers (fines, inspections, problem tenants,
         // overhead) and derive its starting funds — this is what makes the three
@@ -211,6 +243,7 @@ impl GameplayState {
             current_building_id: building_id,
             has_ever_had_tenant: false,
             council_formed: false,
+            seed,
         };
 
         // Handle initial tenant if present in template
@@ -262,6 +295,20 @@ impl GameplayState {
     /// Restore fields that are intentionally skipped from save data.
     pub fn post_load(&mut self) {
         self.config = crate::data::config::load_config();
+        // config isn't serialized, so re-apply the building's difficulty
+        // modifiers that were baked in at new-game time.
+        if let Some(templates) = crate::data::templates::load_templates() {
+            if let Some(template) = templates
+                .templates
+                .iter()
+                .find(|t| t.id == self.current_building_id)
+            {
+                self.config.apply_difficulty(&template.difficulty);
+            }
+        }
+        // Re-seed the shared RNG from the saved run seed so reloading a save
+        // doesn't let the player reroll future random outcomes.
+        macroquad_toolkit::rng::srand(self.seed);
         self.tenant_events_config = load_events_config();
         self.relationship_events_config = load_relationship_config();
         self.view_mode = ViewMode::Building;
