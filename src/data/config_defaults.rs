@@ -39,6 +39,7 @@ impl Default for GameConfig {
             gentrification: GentrificationConfig::default(),
             regulations: RegulationsConfig::default(),
             life_events: LifeEventsConfig::default(),
+            critical_failures: CriticalFailureConfig::default(),
             difficulty: default_difficulty_modifiers(),
             theme: ThemeConfig::default(),
             layout: LayoutConfig::default(),

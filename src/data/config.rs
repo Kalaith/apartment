@@ -37,6 +37,8 @@ pub struct GameConfig {
     pub regulations: RegulationsConfig,
     #[serde(default)]
     pub life_events: LifeEventsConfig,
+    #[serde(default)]
+    pub critical_failures: CriticalFailureConfig,
     /// Per-difficulty rule modifiers, keyed by the building template's
     /// `difficulty` ("Easy"/"Medium"/"Hard"). Empty map → no adjustment.
     #[serde(default)]
@@ -632,6 +634,35 @@ impl Default for RegulationsConfig {
     }
 }
 
+/// Tuning for critical building failures (boiler, structural). Probability and
+/// cost rise as the building ages, so the late game stops being a hands-off
+/// victory lap and keeps demanding maintenance spend and reserves.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct CriticalFailureConfig {
+    /// Base monthly probability (out of 1000) of each failure type in year one.
+    pub base_probability_per_1000: i32,
+    /// Added to that probability for each full year the building has aged.
+    pub aging_probability_per_year: i32,
+    /// Base repair cost of a boiler failure.
+    pub boiler_repair_cost: i32,
+    /// Base repair cost of a structural failure.
+    pub structural_repair_cost: i32,
+    /// Extra repair cost added per full year of aging (applied to both types).
+    pub aging_cost_per_year: i32,
+}
+
+impl Default for CriticalFailureConfig {
+    fn default() -> Self {
+        Self {
+            base_probability_per_1000: 5,
+            aging_probability_per_year: 5,
+            boiler_repair_cost: 1500,
+            structural_repair_cost: 2500,
+            aging_cost_per_year: 350,
+        }
+    }
+}
+
 /// Tuning for emergent tenant life events (new job, job loss, new baby, …). The
 /// per-type consequences are composed from these reusable magnitudes.
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -843,6 +874,20 @@ pub fn load_config() -> GameConfig {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn critical_failure_config_escalates_with_age() {
+        let cfg = CriticalFailureConfig::default();
+        assert!(
+            cfg.aging_probability_per_year > 0,
+            "failures should age upward"
+        );
+        assert!(
+            cfg.aging_cost_per_year > 0,
+            "repairs should get costlier with age"
+        );
+        assert!(cfg.structural_repair_cost > cfg.boiler_repair_cost);
+    }
 
     #[test]
     fn hard_difficulty_tightens_the_rules() {

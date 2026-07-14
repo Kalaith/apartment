@@ -334,8 +334,12 @@ impl GameTick {
     ) {
         use macroquad_toolkit::rng;
 
-        let base_prob = 5; // 0.5% as integer (out of 1000)
-        let mut prob = base_prob;
+        let failure_cfg = &config.critical_failures;
+        // The building ages: failures grow more likely and costlier each year,
+        // so the mid-to-late game keeps demanding upkeep instead of coasting.
+        let years_aged = (current_tick / 12) as i32;
+        let mut prob = failure_cfg.base_probability_per_1000
+            + failure_cfg.aging_probability_per_year * years_aged;
         // Security reduces failure probability
         if building.flags.contains("staff_security") {
             let reduction = config
@@ -344,10 +348,11 @@ impl GameTick {
                 .clamp(0, 100);
             prob = prob * (100 - reduction) / 100;
         }
+        let aging_cost = failure_cfg.aging_cost_per_year * years_aged;
 
         // Boiler Failure (prob out of 1000)
         if rng::gen_range(0, 1000) < prob {
-            let cost = 1500;
+            let cost = failure_cfg.boiler_repair_cost + aging_cost;
             if funds.can_afford(cost) {
                 funds.deduct_expense(Transaction::expense(
                     TransactionType::CriticalFailure,
@@ -374,7 +379,7 @@ impl GameTick {
 
         // Structural Issue
         if rng::gen_range(0, 1000) < prob {
-            let cost = 2500;
+            let cost = failure_cfg.structural_repair_cost + aging_cost;
             let tx = Transaction::expense(
                 TransactionType::CriticalFailure,
                 cost,

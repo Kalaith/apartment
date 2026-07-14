@@ -229,6 +229,13 @@
     "major_move_out_risk": 40,
     "minor_move_out_risk": 15
   },
+  "critical_failures": {
+    "base_probability_per_1000": 5,
+    "aging_probability_per_year": 5,
+    "boiler_repair_cost": 1500,
+    "structural_repair_cost": 2500,
+    "aging_cost_per_year": 350
+  },
   "difficulty": {
     "Easy": {
       "starting_funds": 7000,
