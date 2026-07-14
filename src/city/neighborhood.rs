@@ -177,6 +177,11 @@ impl Neighborhood {
         (self.building_ids.len() as u32) < self.available_slots
     }
 
+    /// Historic quarters carry preservation regulations (stricter inspections).
+    pub fn is_historic(&self) -> bool {
+        matches!(self.neighborhood_type, NeighborhoodType::Historic)
+    }
+
     /// Apply monthly tick
     pub fn tick(&mut self) {
         self.stats.tick(&self.neighborhood_type);

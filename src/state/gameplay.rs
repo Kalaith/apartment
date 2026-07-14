@@ -186,19 +186,31 @@ impl GameplayState {
         let building = Building::from_template(&template);
         let building_id = template.id.clone();
 
-        // Create minimal city with just this building
+        // Place the building in its campaign neighborhood (falls back to a bare
+        // slot if that neighborhood is full/missing).
         let mut city = City::new("Metropolis");
-        let starter_building_index = city.add_building(building.clone(), 0).unwrap_or_else(|_| {
-            let index = city.buildings.len() as u32;
-            city.buildings.push(building.clone());
-            city.total_buildings_managed += 1;
-            index
-        });
+        let neighborhood_id = template.neighborhood_id;
+        let starter_building_index = city
+            .add_building(building.clone(), neighborhood_id)
+            .unwrap_or_else(|_| {
+                let index = city.buildings.len() as u32;
+                city.buildings.push(building.clone());
+                city.total_buildings_managed += 1;
+                index
+            });
         city.active_building_index = starter_building_index as usize;
+
+        // Historic-quarter buildings carry preservation regulations.
+        let is_historic = city
+            .neighborhoods
+            .iter()
+            .find(|n| n.id == neighborhood_id)
+            .map(|n| n.is_historic())
+            .unwrap_or(false);
 
         // Initialize compliance
         let mut compliance = ComplianceSystem::new();
-        compliance.init_building_regulations(starter_building_index, false);
+        compliance.init_building_regulations(starter_building_index, is_historic);
 
         let mut state = Self {
             city,
@@ -653,6 +665,7 @@ fn default_starter_template() -> crate::data::templates::BuildingTemplate {
         name: "Starter Building".to_string(),
         unlock_order: 0,
         difficulty: "easy".to_string(),
+        neighborhood_id: 1,
         description: "A small starter property.".to_string(),
         floors: 2,
         units_per_floor: 2,

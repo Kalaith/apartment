@@ -268,6 +268,36 @@ mod tests {
     }
 
     #[test]
+    fn historic_building_carries_extra_preservation_regulation() {
+        use crate::data::config::load_config;
+        use crate::data::templates::load_templates;
+
+        let templates = load_templates().map(|t| t.templates).unwrap_or_default();
+        let historic = templates.iter().find(|t| t.neighborhood_id == 3).cloned();
+        let plain = templates.iter().find(|t| t.neighborhood_id != 3).cloned();
+        let (Some(historic), Some(plain)) = (historic, plain) else {
+            return;
+        };
+
+        let hstate = GameplayState::new_with_template(load_config(), historic);
+        let pstate = GameplayState::new_with_template(load_config(), plain);
+        let reg_count = |s: &GameplayState| {
+            s.compliance
+                .building_regulations
+                .values()
+                .map(|v| v.len())
+                .max()
+                .unwrap_or(0)
+        };
+        assert!(
+            reg_count(&hstate) > reg_count(&pstate),
+            "historic building should carry the extra preservation regulation ({} vs {})",
+            reg_count(&hstate),
+            reg_count(&pstate)
+        );
+    }
+
+    #[test]
     fn condo_sale_multiplier_tracks_the_market() {
         let mut state = GameplayState::new();
         state.city.economy_health = 1.5; // boom

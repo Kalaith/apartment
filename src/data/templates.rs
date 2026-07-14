@@ -16,6 +16,11 @@ pub struct BuildingTemplate {
     pub unlock_order: u32,
     #[serde(default)]
     pub difficulty: String,
+    /// Which city neighborhood this building sits in (0=Downtown, 1=Suburbs,
+    /// 2=Industrial, 3=Historic). Drives the building's campaign identity —
+    /// e.g. a Historic-quarter building activates preservation regulations.
+    #[serde(default)]
+    pub neighborhood_id: u32,
     #[serde(default)]
     pub description: String,
     pub floors: u32,
