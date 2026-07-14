@@ -4,8 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Apartment Manager | Web Hatchery Games</title>
-    <link rel="stylesheet" href="../shared.css">
+    <title>Second Story | Web Hatchery Games</title>
+    <link rel="stylesheet" href="../shared.css">
     <link rel="stylesheet" href="../bug-report.css">
     <style>
         .game-container canvas {
@@ -18,7 +18,7 @@
 <body>
     <div class="game-page">
         <header class="game-header">
-            <h1>Apartment Manager</h1>
+            <h1>Second Story</h1>
             <a href="../" class="back-link">Back to All Games</a>
         </header>
 
@@ -129,6 +129,16 @@
     <!-- Player bug reporting -> Project Roost Fix Queue (shared widget). -->
     <div id="roost-bug-report" data-roost-slug="rust_apartment"></div>
     <script src="../bug-report.js"></script>
+    <!-- Ko-fi support widget (https://ko-fi.com/webhatchery) -->
+    <script src='https://storage.ko-fi.com/cdn/scripts/overlay-widget.js'></script>
+    <script>
+        kofiWidgetOverlay.draw('webhatchery', {
+            'type': 'floating-chat',
+            'floating-chat.donateButton.text': 'Support me',
+            'floating-chat.donateButton.background-color': '#00b9fe',
+            'floating-chat.donateButton.text-color': '#fff'
+        });
+    </script>
 </body>
 
 </html>
