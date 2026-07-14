@@ -189,8 +189,100 @@ impl GameplayState {
         }
 
         self.compliance.tick(self.current_tick);
+        self.run_due_inspections();
         self.gentrification
             .update_affordable_units(&self.building.apartments, &self.config.gentrification);
+    }
+
+    /// Run any scheduled or random building inspections for the active building,
+    /// bill the resulting fines, and reflect the outcome in reputation. A
+    /// well-maintained building (condition at/above the configured threshold)
+    /// passes cleanly; a neglected one gets cited and fined — the economic teeth
+    /// that make repairs and upgrades matter.
+    fn run_due_inspections(&mut self) {
+        let building_id = self.city.active_building_index as u32;
+        let inspection_score = self
+            .building
+            .average_condition()
+            .min(self.building.hallway_condition);
+
+        let due = self.compliance.has_due_inspection(building_id);
+        let random_check = macroquad_toolkit::rng::gen_range(0, 100)
+            < self.config.regulations.random_inspection_chance_percent;
+
+        if due || random_check {
+            let trigger = if due {
+                crate::consequences::InspectionTrigger::Scheduled
+            } else {
+                crate::consequences::InspectionTrigger::Random
+            };
+            let config = self.config.regulations.clone();
+            let inspection = self.compliance.run_inspection(
+                building_id,
+                inspection_score,
+                self.current_tick,
+                trigger,
+                &config,
+            );
+
+            let citations = inspection.results.iter().filter(|r| !r.passed).count();
+            if citations > 0 {
+                self.adjust_active_neighborhood_reputation(-config.neighborhood_reputation_penalty);
+                self.event_log.log(
+                    GameEvent::Notification {
+                        message: format!(
+                            "Inspection failed: {} citation(s), {} in fines.",
+                            citations, inspection.total_fines
+                        ),
+                        level: crate::simulation::NotificationLevel::Warning,
+                    },
+                    self.current_tick,
+                );
+                self.floating_texts.push(FloatingText::new(
+                    &format!("Inspection: {} cited!", citations),
+                    screen_width() / 2.0,
+                    screen_height() / 2.0,
+                    colors::NEGATIVE,
+                ));
+            } else if !inspection.results.is_empty() {
+                self.adjust_active_neighborhood_reputation(config.neighborhood_reputation_gain);
+                self.floating_texts.push(FloatingText::new(
+                    "Inspection passed",
+                    screen_width() / 2.0,
+                    screen_height() / 2.0,
+                    colors::POSITIVE,
+                ));
+            }
+        }
+
+        // Bill any outstanding fines (from this inspection or missed fix
+        // deadlines escalated in ComplianceSystem::tick). Charged as a required
+        // expense so persistent neglect can genuinely push a landlord toward
+        // bankruptcy.
+        if self.compliance.unpaid_fines > 0 {
+            let amount = self.compliance.unpaid_fines;
+            self.funds.apply_required_expense(Transaction::expense(
+                TransactionType::InspectionFine,
+                amount,
+                "Regulatory fines",
+                self.current_tick,
+            ));
+            self.compliance.unpaid_fines = 0;
+        }
+    }
+
+    /// Nudge the visible reputation of the neighborhood the active building sits
+    /// in, clamped to [0, 100].
+    pub(super) fn adjust_active_neighborhood_reputation(&mut self, delta: i32) {
+        let building_id = self.city.active_building_index as u32;
+        if let Some(neighborhood) = self
+            .city
+            .neighborhoods
+            .iter_mut()
+            .find(|n| n.building_ids.contains(&building_id))
+        {
+            neighborhood.reputation = (neighborhood.reputation + delta).clamp(0, 100);
+        }
     }
 
     fn generate_monthly_narrative(&mut self, result: &TickResult) {

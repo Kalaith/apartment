@@ -1,3 +1,4 @@
+use crate::data::config::RegulationsConfig;
 use serde::{Deserialize, Serialize};
 
 /// Types of building regulations
@@ -35,6 +36,34 @@ impl RegulationType {
             RegulationType::HealthSanitation => 1000,
         }
     }
+
+    /// Months between scheduled inspections for this regulation.
+    pub fn inspection_interval(&self) -> u32 {
+        match self {
+            RegulationType::FireSafety => 12,
+            RegulationType::Electrical => 24,
+            RegulationType::Plumbing => 18,
+            RegulationType::Structural => 36,
+            RegulationType::HistoricPreservation => 6,
+            RegulationType::RentControl => 12,
+            RegulationType::Accessibility => 24,
+            RegulationType::HealthSanitation => 6,
+        }
+    }
+
+    /// Human-readable name for UI / notifications.
+    pub fn name(&self) -> &'static str {
+        match self {
+            RegulationType::FireSafety => "Fire Safety",
+            RegulationType::Electrical => "Electrical",
+            RegulationType::Plumbing => "Plumbing",
+            RegulationType::Structural => "Structural",
+            RegulationType::HistoricPreservation => "Historic Preservation",
+            RegulationType::RentControl => "Rent Control",
+            RegulationType::Accessibility => "Accessibility",
+            RegulationType::HealthSanitation => "Health & Sanitation",
+        }
+    }
 }
 
 /// A specific regulation affecting a building
@@ -55,16 +84,7 @@ pub struct Regulation {
 
 impl Regulation {
     pub fn new(regulation_type: RegulationType) -> Self {
-        let months = match regulation_type {
-            RegulationType::FireSafety => 12,
-            RegulationType::Electrical => 24,
-            RegulationType::Plumbing => 18,
-            RegulationType::Structural => 36,
-            RegulationType::HistoricPreservation => 6,
-            RegulationType::RentControl => 12,
-            RegulationType::Accessibility => 24,
-            RegulationType::HealthSanitation => 6,
-        };
+        let months = regulation_type.inspection_interval();
 
         Self {
             regulation_type,
@@ -77,7 +97,6 @@ impl Regulation {
     }
 
     /// Record a violation against this regulation.
-    #[cfg(test)]
     pub fn add_violation(&mut self) {
         self.violation_count += 1;
         self.compliant = false;
@@ -180,6 +199,113 @@ impl ComplianceSystem {
         self.building_regulations.get(&building_id)
     }
 
+    /// True if any active regulation for the building is due for a scheduled
+    /// inspection this month.
+    pub fn has_due_inspection(&self, building_id: u32) -> bool {
+        self.building_regulations
+            .get(&building_id)
+            .is_some_and(|regs| {
+                regs.iter()
+                    .any(|r| r.active && r.months_until_inspection == 0)
+            })
+    }
+
+    /// Run an inspection against a building. `inspection_score` is the condition
+    /// metric the inspector grades against (typically the min of average unit
+    /// condition and hallway condition). A `Scheduled` trigger only grades the
+    /// regulations that are actually due; any other trigger grades all of them.
+    ///
+    /// Mutates regulation state, accrues fines into `unpaid_fines`, records fix
+    /// deadlines, adjusts `compliance_reputation`, and returns the `Inspection`
+    /// (also pushed to `inspection_history`).
+    pub fn run_inspection(
+        &mut self,
+        building_id: u32,
+        inspection_score: i32,
+        current_month: u32,
+        trigger: InspectionTrigger,
+        config: &RegulationsConfig,
+    ) -> Inspection {
+        let mut results = Vec::new();
+        let mut new_pending = Vec::new();
+        let mut total_fines = 0;
+        let mut citations = 0;
+
+        if let Some(regs) = self.building_regulations.get_mut(&building_id) {
+            for reg in regs.iter_mut() {
+                if !reg.active {
+                    continue;
+                }
+                let due = reg.months_until_inspection == 0;
+                if trigger == InspectionTrigger::Scheduled && !due {
+                    continue;
+                }
+
+                // Reset the clock for the next scheduled cycle.
+                reg.months_until_inspection = reg.regulation_type.inspection_interval();
+
+                if inspection_score >= config.pass_condition_threshold {
+                    reg.compliant = true;
+                    results.push(InspectionResult {
+                        regulation_type: reg.regulation_type.clone(),
+                        passed: true,
+                        issues_found: Vec::new(),
+                        fine_amount: 0,
+                        deadline_months: 0,
+                        required_fixes: Vec::new(),
+                    });
+                } else {
+                    reg.add_violation();
+                    let fine =
+                        (reg.regulation_type.base_fine() as f32 * config.fine_multiplier) as i32;
+                    total_fines += fine;
+                    citations += 1;
+                    new_pending.push((
+                        building_id,
+                        reg.regulation_type.clone(),
+                        current_month + config.fix_deadline_months,
+                    ));
+                    results.push(InspectionResult {
+                        regulation_type: reg.regulation_type.clone(),
+                        passed: false,
+                        issues_found: vec![format!(
+                            "{} below code standard",
+                            reg.regulation_type.name()
+                        )],
+                        fine_amount: fine,
+                        deadline_months: config.fix_deadline_months,
+                        required_fixes: vec![format!(
+                            "Raise building condition to clear the {} citation",
+                            reg.regulation_type.name()
+                        )],
+                    });
+                }
+            }
+        }
+
+        // Apply cross-field mutations now that the `regs` borrow has ended.
+        self.pending_fixes.extend(new_pending);
+        if citations > 0 {
+            self.unpaid_fines += total_fines;
+            self.compliance_reputation = (self.compliance_reputation
+                - citations * config.compliance_penalty_per_violation)
+                .max(0);
+        } else if !results.is_empty() {
+            self.compliance_reputation =
+                (self.compliance_reputation + config.compliance_gain_on_pass).min(100);
+        }
+
+        let inspection = Inspection {
+            building_id,
+            month: current_month,
+            results,
+            total_fines,
+            triggered_by: trigger,
+        };
+        self.inspection_history.push(inspection.clone());
+        inspection
+    }
+
     /// Check if a building currently has any regulation violations.
     #[cfg(test)]
     pub fn has_violations(&self, building_id: u32) -> bool {
@@ -250,5 +376,50 @@ mod tests {
 
         assert!(system.get_regulations(0).is_some());
         assert!(!system.has_violations(0));
+    }
+
+    #[test]
+    fn failed_inspection_cites_and_fines_a_neglected_building() {
+        let cfg = RegulationsConfig::default();
+        let mut system = ComplianceSystem::new();
+        system.init_building_regulations(0, false);
+
+        // A condition well below the pass threshold cites every regulation.
+        let inspection = system.run_inspection(0, 10, 6, InspectionTrigger::Random, &cfg);
+
+        assert!(inspection.total_fines > 0);
+        assert!(inspection.results.iter().all(|r| !r.passed));
+        assert_eq!(system.unpaid_fines, inspection.total_fines);
+        assert!(system.compliance_reputation < 100);
+        assert!(!system.pending_fixes.is_empty());
+        assert!(system.has_violations(0));
+    }
+
+    #[test]
+    fn clean_inspection_passes_a_maintained_building() {
+        let cfg = RegulationsConfig::default();
+        let mut system = ComplianceSystem::new();
+        system.init_building_regulations(0, false);
+
+        let inspection = system.run_inspection(0, 90, 6, InspectionTrigger::Random, &cfg);
+
+        assert_eq!(inspection.total_fines, 0);
+        assert!(inspection.results.iter().all(|r| r.passed));
+        assert_eq!(system.unpaid_fines, 0);
+        assert!(!system.has_violations(0));
+    }
+
+    #[test]
+    fn scheduled_inspection_only_grades_due_regulations() {
+        let cfg = RegulationsConfig::default();
+        let mut system = ComplianceSystem::new();
+        system.init_building_regulations(0, false);
+
+        // Nothing is due on a freshly initialised building, so a scheduled
+        // inspection grades nothing and levies no fine.
+        let inspection = system.run_inspection(0, 10, 1, InspectionTrigger::Scheduled, &cfg);
+
+        assert!(inspection.results.is_empty());
+        assert_eq!(system.unpaid_fines, 0);
     }
 }

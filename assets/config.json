@@ -202,6 +202,16 @@
     "council_formation_threshold": 0.4,
     "council_min_tenants": 4
   },
+  "regulations": {
+    "pass_condition_threshold": 45,
+    "random_inspection_chance_percent": 8,
+    "fine_multiplier": 1.0,
+    "fix_deadline_months": 3,
+    "compliance_penalty_per_violation": 10,
+    "compliance_gain_on_pass": 5,
+    "neighborhood_reputation_penalty": 4,
+    "neighborhood_reputation_gain": 1
+  },
   "theme": {
     "background": [
       0.12,

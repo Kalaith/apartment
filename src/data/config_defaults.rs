@@ -36,6 +36,7 @@ impl Default for GameConfig {
             relationships: RelationshipsConfig::default(),
             cohesion: CohesionConfig::default(),
             gentrification: GentrificationConfig::default(),
+            regulations: RegulationsConfig::default(),
             theme: ThemeConfig::default(),
             layout: LayoutConfig::default(),
             ui_thresholds: UiThresholdsConfig::default(),

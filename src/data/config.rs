@@ -34,6 +34,8 @@ pub struct GameConfig {
     #[serde(default)]
     pub gentrification: GentrificationConfig,
     #[serde(default)]
+    pub regulations: RegulationsConfig,
+    #[serde(default)]
     pub theme: ThemeConfig,
     #[serde(default)]
     pub layout: LayoutConfig,
@@ -523,6 +525,43 @@ impl Default for GentrificationConfig {
             max_gentrification_score: 100,
             council_formation_threshold: 0.4,
             council_min_tenants: 4,
+        }
+    }
+}
+
+/// Tuning for the building-inspection / code-compliance system.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct RegulationsConfig {
+    /// Inspection score (min of average unit condition and hallway condition)
+    /// at/above which a regulation passes. Below it, the regulation is cited.
+    pub pass_condition_threshold: i32,
+    /// Percent chance per month of an unscheduled spot-check inspection.
+    pub random_inspection_chance_percent: i32,
+    /// Multiplier applied to a regulation's base fine per citation.
+    pub fine_multiplier: f32,
+    /// Months granted to remedy a cited regulation before the fine escalates.
+    pub fix_deadline_months: u32,
+    /// Compliance reputation lost per citation.
+    pub compliance_penalty_per_violation: i32,
+    /// Compliance reputation regained after a fully clean inspection.
+    pub compliance_gain_on_pass: i32,
+    /// Visible neighborhood reputation lost when an inspection turns up citations.
+    pub neighborhood_reputation_penalty: i32,
+    /// Visible neighborhood reputation gained on a fully clean inspection.
+    pub neighborhood_reputation_gain: i32,
+}
+
+impl Default for RegulationsConfig {
+    fn default() -> Self {
+        Self {
+            pass_condition_threshold: 45,
+            random_inspection_chance_percent: 8,
+            fine_multiplier: 1.0,
+            fix_deadline_months: 3,
+            compliance_penalty_per_violation: 10,
+            compliance_gain_on_pass: 5,
+            neighborhood_reputation_penalty: 4,
+            neighborhood_reputation_gain: 1,
         }
     }
 }

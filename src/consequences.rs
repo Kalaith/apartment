@@ -11,5 +11,5 @@ mod relationship_dilemma;
 mod relationships;
 
 pub use gentrification::GentrificationTracker;
-pub use regulations::ComplianceSystem;
+pub use regulations::{ComplianceSystem, InspectionTrigger};
 pub use relationships::{RelationshipType, TenantNetwork};
