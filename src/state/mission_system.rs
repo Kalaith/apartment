@@ -1,7 +1,7 @@
 use super::GameplayState;
 use crate::narrative::{ActiveTaxBreak, MissionGoal, MissionReward, MissionStatus};
 use crate::simulation::GameEvent;
-use crate::ui::{colors, FloatingText};
+use crate::ui::colors;
 use macroquad::prelude::*;
 
 /// System for handling mission updates and rewards
@@ -43,12 +43,11 @@ pub fn update_missions(state: &mut GameplayState) {
                 && state.city.buildings.is_empty()
             {
                 mission.fail();
-                state.floating_texts.push(FloatingText::new(
+                state.floating_texts.spawn(
                     "Mission Failed!",
-                    screen_width() / 2.0,
-                    screen_height() / 2.0,
+                    vec2(screen_width() / 2.0, screen_height() / 2.0),
                     colors::NEGATIVE,
-                ));
+                );
             }
         }
     }
@@ -164,21 +163,19 @@ pub fn update_missions(state: &mut GameplayState) {
                     );
                     state.funds.add_income(t);
 
-                    state.floating_texts.push(FloatingText::new(
-                        &format!("+${}", amount),
-                        screen_width() / 2.0,
-                        screen_height() / 2.0 + 30.0,
+                    state.floating_texts.spawn(
+                        format!("+${}", amount),
+                        vec2(screen_width() / 2.0, screen_height() / 2.0 + 30.0),
                         colors::POSITIVE,
-                    ));
+                    );
                 }
                 MissionReward::UnlockBuilding(unlock_order) => {
                     state.unlock_building_by_order(unlock_order);
-                    state.floating_texts.push(FloatingText::new(
+                    state.floating_texts.spawn(
                         "New property unlocked!",
-                        screen_width() / 2.0,
-                        screen_height() / 2.0 + 30.0,
+                        vec2(screen_width() / 2.0, screen_height() / 2.0 + 30.0),
                         colors::ACCENT,
-                    ));
+                    );
                 }
                 MissionReward::Reputation(amount) => {
                     // Reward reputation in the active building's neighborhood.
@@ -188,16 +185,15 @@ pub fn update_missions(state: &mut GameplayState) {
                     state
                         .active_tax_breaks
                         .push(ActiveTaxBreak::new(months, percentage));
-                    state.floating_texts.push(FloatingText::new(
-                        &format!(
+                    state.floating_texts.spawn(
+                        format!(
                             "Tax Break! {}% for {} months",
                             (percentage * 100.0) as i32,
                             months
                         ),
-                        screen_width() / 2.0,
-                        screen_height() / 2.0 + 30.0,
+                        vec2(screen_width() / 2.0, screen_height() / 2.0 + 30.0),
                         colors::POSITIVE,
-                    ));
+                    );
                 }
             }
         }

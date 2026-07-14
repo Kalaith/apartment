@@ -6,7 +6,7 @@ use crate::economy::{FinancialLedger, PlayerFunds};
 use crate::simulation::{ActiveWorldEvent, EventLog, GameOutcome, TickResult};
 use crate::tenant::{Tenant, TenantApplication};
 use crate::ui::layout::HEADER_HEIGHT;
-use crate::ui::{colors, FloatingText, Selection, Tween, UiAction};
+use crate::ui::{colors, FloatingTextLayer, Selection, Tween, UiAction};
 use macroquad::prelude::*;
 use macroquad_toolkit::ui::draw_ui_text_ex;
 use std::collections::HashMap;
@@ -21,6 +21,22 @@ use crate::narrative::{
 };
 
 use serde::{Deserialize, Serialize};
+
+/// Panel slide-in tween defaults, matching the feel of the game's previous
+/// hand-rolled `Tween` (speed 10.0, resting at 0.0).
+fn default_panel_tween() -> Tween {
+    Tween::new(0.0, 10.0)
+}
+
+/// Floating text layer defaults, tuned to match the game's previous
+/// hand-rolled `FloatingText` (1.5s life, 30px/s rise, quick velocity decay).
+fn default_floating_text_layer() -> FloatingTextLayer {
+    let mut layer = FloatingTextLayer::new();
+    layer.default_lifetime = 1.5;
+    layer.default_rise_speed = 30.0;
+    layer.drag = 0.05;
+    layer
+}
 
 /// View mode for the gameplay screen
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
@@ -96,9 +112,9 @@ pub struct GameplayState {
     pub selection: Selection,
     #[serde(skip)]
     pub pending_actions: Vec<UiAction>,
-    #[serde(skip)]
-    pub floating_texts: Vec<FloatingText>,
-    #[serde(skip)]
+    #[serde(skip, default = "default_floating_text_layer")]
+    pub floating_texts: FloatingTextLayer,
+    #[serde(skip, default = "default_panel_tween")]
     pub panel_tween: Tween,
     #[serde(skip)]
     pub panel_scroll_offset: f32,
@@ -246,8 +262,8 @@ impl GameplayState {
             view_mode: ViewMode::Building,
             selection: Selection::None,
             pending_actions: Vec::new(),
-            floating_texts: Vec::new(),
-            panel_tween: Tween::new(0.0),
+            floating_texts: default_floating_text_layer(),
+            panel_tween: default_panel_tween(),
             panel_scroll_offset: 0.0,
             show_pause_menu: false,
             is_fullscreen: false,
@@ -326,8 +342,8 @@ impl GameplayState {
         self.view_mode = ViewMode::Building;
         self.selection = Selection::None;
         self.pending_actions.clear();
-        self.floating_texts.clear();
-        self.panel_tween = Tween::new(0.0);
+        self.floating_texts = default_floating_text_layer();
+        self.panel_tween = default_panel_tween();
         self.panel_scroll_offset = 0.0;
         self.show_pause_menu = false;
         self.pending_quit_to_menu = false;
@@ -503,10 +519,7 @@ impl GameplayState {
         let dt = get_frame_time();
 
         // Update floating texts
-        for text in &mut self.floating_texts {
-            text.update(dt);
-        }
-        self.floating_texts.retain(|t| !t.is_dead());
+        self.floating_texts.update(dt);
 
         // Dialogue generation happens in end_turn() via gameplay_actions.rs
         // Update Dialogue System timeouts
@@ -514,9 +527,9 @@ impl GameplayState {
 
         // Update panel animation
         if matches!(self.selection, Selection::None) {
-            self.panel_tween.target(0.0);
+            self.panel_tween.set_target(0.0);
         } else {
-            self.panel_tween.target(1.0);
+            self.panel_tween.set_target(1.0);
         }
         self.panel_tween.update(dt);
 

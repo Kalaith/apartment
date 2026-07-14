@@ -3,7 +3,8 @@
 //! Pure view layer using Macroquad immediate mode UI:
 //! - Uses `UiAction` pattern to send intents back to the game logic.
 //! - Contains sub-panels for different views (Building, Apartment, City).
-//! - `Visuals`: Floating text and animations.
+//! - Floating text and panel-slide animations come from `macroquad-toolkit`
+//!   (`fx::FloatingTextLayer`, `math::Tween`), re-exported below.
 //! - Strictly separation of concerns: No game state mutation happens here.
 
 pub mod theme;
@@ -23,7 +24,6 @@ mod header;
 mod notifications;
 pub mod ownership_panel; // Phase 3 ownership
 mod tenant_panel;
-pub mod visuals; // Make public so we can use FloatingText // Phase 5 career summary
 
 pub use apartment_panel::draw_apartment_panel;
 pub use building_view::draw_building_view;
@@ -33,8 +33,9 @@ pub use ownership_panel::draw_ownership_panel;
 
 pub use application_panel::draw_application_panel;
 pub use header::draw_header;
+pub use macroquad_toolkit::fx::FloatingTextLayer;
+pub use macroquad_toolkit::math::Tween;
 pub use notifications::draw_notifications;
-pub use visuals::{FloatingText, Tween};
 
 use serde::{Deserialize, Serialize};
 

@@ -1,6 +1,6 @@
 use super::GameplayState;
 use crate::narrative::TutorialMilestone;
-use crate::ui::{colors, FloatingText};
+use crate::ui::colors;
 use macroquad::prelude::*;
 
 /// System for handling tutorial updates and milestones
@@ -33,12 +33,11 @@ pub fn update_tutorial(state: &mut GameplayState) {
     if let Some(hint) = state.tutorial.get_hint() {
         // Show hint as floating text occasionally (every 5 ticks if no progress)
         if state.current_tick.is_multiple_of(5) && state.current_tick > 0 {
-            state.floating_texts.push(FloatingText::new(
+            state.floating_texts.spawn(
                 hint,
-                screen_width() / 2.0,
-                screen_height() - 100.0,
+                vec2(screen_width() / 2.0, screen_height() - 100.0),
                 colors::TEXT_DIM,
-            ));
+            );
         }
     }
 
@@ -54,12 +53,11 @@ pub fn update_tutorial(state: &mut GameplayState) {
                     state
                         .tutorial
                         .complete_milestone(TutorialMilestone::InheritedMess);
-                    state.floating_texts.push(FloatingText::new(
+                    state.floating_texts.spawn(
                         "Tutorial: Cleaned Up!",
-                        screen_width() / 2.0,
-                        screen_height() / 2.0,
+                        vec2(screen_width() / 2.0, screen_height() / 2.0),
                         colors::POSITIVE,
-                    ));
+                    );
                 }
             }
             TutorialMilestone::FirstResident => {
@@ -70,12 +68,11 @@ pub fn update_tutorial(state: &mut GameplayState) {
                     state
                         .tutorial
                         .complete_milestone(TutorialMilestone::FirstResident);
-                    state.floating_texts.push(FloatingText::new(
+                    state.floating_texts.spawn(
                         "Tutorial: First Resident!",
-                        screen_width() / 2.0,
-                        screen_height() / 2.0 + 30.0,
+                        vec2(screen_width() / 2.0, screen_height() / 2.0 + 30.0),
                         colors::POSITIVE,
-                    ));
+                    );
 
                     // Trigger The Leak event immediately implies a problem
                     // We can sabotage a unit or just let narrative flow
@@ -84,12 +81,11 @@ pub fn update_tutorial(state: &mut GameplayState) {
                     }
 
                     // Visual cue
-                    state.floating_texts.push(FloatingText::new(
+                    state.floating_texts.spawn(
                         "⚠ LEAK DETECTED!",
-                        screen_width() / 2.0,
-                        screen_height() / 2.0 + 60.0,
+                        vec2(screen_width() / 2.0, screen_height() / 2.0 + 60.0),
                         colors::NEGATIVE,
-                    ));
+                    );
                 }
             }
             TutorialMilestone::TheLeak => {
@@ -103,12 +99,11 @@ pub fn update_tutorial(state: &mut GameplayState) {
                     state
                         .tutorial
                         .complete_milestone(TutorialMilestone::TheLeak);
-                    state.floating_texts.push(FloatingText::new(
+                    state.floating_texts.spawn(
                         "Tutorial Complete!",
-                        screen_width() / 2.0,
-                        screen_height() / 2.0,
+                        vec2(screen_width() / 2.0, screen_height() / 2.0),
                         colors::POSITIVE,
-                    ));
+                    );
 
                     // Messages are already in pending_messages and will be shown by the tutorial overlay
                 }

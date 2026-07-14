@@ -9,7 +9,7 @@ use macroquad_toolkit::rng;
 use crate::narrative::{LifeChangeType, StoryImpact};
 use crate::simulation::{GameEvent, NotificationLevel};
 use crate::tenant::TenantArchetype;
-use crate::ui::{colors, FloatingText};
+use crate::ui::colors;
 
 use super::gameplay::GameplayState;
 
@@ -62,12 +62,11 @@ impl GameplayState {
                 },
                 self.current_tick,
             );
-            self.floating_texts.push(FloatingText::new(
-                &format!("{}: {}", name, description),
-                screen_width() / 2.0,
-                screen_height() / 2.0 - 40.0,
+            self.floating_texts.spawn(
+                format!("{}: {}", name, description),
+                vec2(screen_width() / 2.0, screen_height() / 2.0 - 40.0),
                 colors::ACCENT,
-            ));
+            );
         }
     }
 }

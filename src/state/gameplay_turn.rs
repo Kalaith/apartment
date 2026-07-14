@@ -5,7 +5,7 @@ use crate::economy::{Transaction, TransactionType};
 use crate::simulation::{
     advance_tick, ActiveWorldEvent, ActiveWorldEventKind, GameEvent, TickResult,
 };
-use crate::ui::{colors, FloatingText};
+use crate::ui::colors;
 use macroquad::prelude::*;
 
 use super::gameplay::{GameplayState, ViewMode};
@@ -86,12 +86,14 @@ impl GameplayState {
     }
 
     fn spawn_center_text(&mut self, text: &str, offset_x: f32, offset_y: f32, color: Color) {
-        self.floating_texts.push(FloatingText::new(
+        self.floating_texts.spawn(
             text,
-            screen_width() / 2.0 + offset_x,
-            screen_height() / 2.0 + offset_y,
+            vec2(
+                screen_width() / 2.0 + offset_x,
+                screen_height() / 2.0 + offset_y,
+            ),
             color,
-        ));
+        );
     }
 
     fn register_active_world_events(&mut self, events: &[GameEvent]) {
@@ -257,20 +259,18 @@ impl GameplayState {
                 },
                 self.current_tick,
             );
-            self.floating_texts.push(FloatingText::new(
-                &format!("Inspection: {} cited!", citations),
-                screen_width() / 2.0,
-                screen_height() / 2.0,
+            self.floating_texts.spawn(
+                format!("Inspection: {} cited!", citations),
+                vec2(screen_width() / 2.0, screen_height() / 2.0),
                 colors::NEGATIVE,
-            ));
+            );
         } else if !inspection.results.is_empty() {
             self.adjust_active_neighborhood_reputation(config.neighborhood_reputation_gain);
-            self.floating_texts.push(FloatingText::new(
+            self.floating_texts.spawn(
                 "Inspection passed",
-                screen_width() / 2.0,
-                screen_height() / 2.0,
+                vec2(screen_width() / 2.0, screen_height() / 2.0),
                 colors::POSITIVE,
-            ));
+            );
         }
     }
 
@@ -426,12 +426,11 @@ impl GameplayState {
         } else {
             colors::NEGATIVE
         };
-        self.floating_texts.push(FloatingText::new(
-            &format!("Rep {:+}", delta),
-            screen_width() / 2.0,
-            screen_height() / 2.0 + 60.0,
+        self.floating_texts.spawn(
+            format!("Rep {:+}", delta),
+            vec2(screen_width() / 2.0, screen_height() / 2.0 + 60.0),
             color,
-        ));
+        );
     }
 
     fn generate_monthly_narrative(&mut self, result: &TickResult) {

@@ -1,7 +1,7 @@
 //! Narrative effect application for gameplay state.
 
 use crate::narrative::events::NarrativeEffect;
-use crate::ui::{colors, FloatingText};
+use crate::ui::colors;
 use macroquad::prelude::*;
 
 use super::gameplay::{GameplayState, ViewMode};
@@ -149,12 +149,11 @@ impl GameplayState {
         } else {
             self.city.active_building_index = 0;
             self.sync_building();
-            self.floating_texts.push(FloatingText::new(
+            self.floating_texts.spawn(
                 "Building Sold!",
-                screen_width() / 2.0,
-                screen_height() / 2.0,
+                vec2(screen_width() / 2.0, screen_height() / 2.0),
                 colors::POSITIVE,
-            ));
+            );
         }
     }
 }

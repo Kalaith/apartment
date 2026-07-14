@@ -5,7 +5,7 @@ use crate::narrative::NotificationCategory;
 use crate::ui::layout::HEADER_HEIGHT;
 use crate::ui::{
     colors, draw_apartment_panel, draw_application_panel, draw_building_view, draw_hallway_panel,
-    draw_header, draw_notifications, draw_ownership_panel, FloatingText, Selection,
+    draw_header, draw_notifications, draw_ownership_panel, Selection,
 };
 use macroquad::prelude::*;
 
@@ -74,9 +74,7 @@ impl GameplayState {
         draw_notifications(&self.event_log, self.current_tick, assets);
 
         // Floating text
-        for text in &self.floating_texts {
-            text.draw();
-        }
+        self.floating_texts.draw();
 
         // Tutorial overlay (takes precedence)
         if self.tutorial.active && !self.tutorial.pending_messages.is_empty() {
@@ -115,7 +113,7 @@ impl GameplayState {
 
         // Slide the detail panel in from the right as the selection tween eases
         // to 1.0 (0 offset = settled in place).
-        let panel_offset = (1.0 - self.panel_tween.current) * 60.0;
+        let panel_offset = (1.0 - self.panel_tween.current()) * 60.0;
 
         match self.selection {
             Selection::Apartment(id) => {
@@ -361,12 +359,11 @@ impl GameplayState {
         // Save button
         if self.menu_button(btn_x, btn_y, btn_w, btn_h, "Save Game") {
             if crate::save::save_game(self).is_ok() {
-                self.floating_texts.push(FloatingText::new(
+                self.floating_texts.spawn(
                     "Game Saved!",
-                    screen_width() / 2.0,
-                    screen_height() / 2.0,
+                    vec2(screen_width() / 2.0, screen_height() / 2.0),
                     colors::POSITIVE,
-                ));
+                );
             }
             self.show_pause_menu = false;
         }

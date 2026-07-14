@@ -4,7 +4,7 @@ use crate::city::NeighborhoodType;
 use crate::economy::process_upgrade;
 use crate::narrative::{StoryImpact, TenantStory};
 use crate::simulation::GameEvent;
-use crate::ui::{colors, FloatingText, Selection, UiAction};
+use crate::ui::{colors, Selection, UiAction};
 use macroquad::prelude::*;
 use macroquad_toolkit::rng;
 
@@ -42,12 +42,11 @@ impl GameplayState {
                     apt.is_listed_for_lease = true;
                     apt.preferred_archetype = preference;
 
-                    self.floating_texts.push(FloatingText::new(
+                    self.floating_texts.spawn(
                         "Listed for Lease",
-                        screen_width() / 2.0,
-                        screen_height() / 2.0,
+                        vec2(screen_width() / 2.0, screen_height() / 2.0),
                         colors::POSITIVE,
-                    ));
+                    );
                 }
             }
 
@@ -56,12 +55,11 @@ impl GameplayState {
                     apt.is_listed_for_lease = false;
                     apt.preferred_archetype = None;
 
-                    self.floating_texts.push(FloatingText::new(
+                    self.floating_texts.spawn(
                         "Property Unlisted",
-                        screen_width() / 2.0,
-                        screen_height() / 2.0,
+                        vec2(screen_width() / 2.0, screen_height() / 2.0),
                         colors::TEXT,
-                    ));
+                    );
                 }
             }
 
@@ -90,12 +88,11 @@ impl GameplayState {
                     );
 
                     let mouse = mouse_position();
-                    self.floating_texts.push(FloatingText::new(
-                        &format!("-${}", cost),
-                        mouse.0,
-                        mouse.1 - 20.0,
+                    self.floating_texts.spawn(
+                        format!("-${}", cost),
+                        vec2(mouse.0, mouse.1 - 20.0),
                         colors::NEGATIVE,
-                    ));
+                    );
                 }
             }
             UiAction::SetRent {
@@ -165,12 +162,11 @@ impl GameplayState {
                         );
 
                         let mouse = mouse_position();
-                        self.floating_texts.push(FloatingText::new(
+                        self.floating_texts.spawn(
                             "Offer Declined",
-                            mouse.0,
-                            mouse.1 - 20.0,
+                            vec2(mouse.0, mouse.1 - 20.0),
                             colors::WARNING,
-                        ));
+                        );
                         return;
                     }
 
@@ -189,12 +185,11 @@ impl GameplayState {
                     );
 
                     let mouse = mouse_position();
-                    self.floating_texts.push(FloatingText::new(
+                    self.floating_texts.spawn(
                         "Welcome!",
-                        mouse.0,
-                        mouse.1 - 20.0,
+                        vec2(mouse.0, mouse.1 - 20.0),
                         colors::POSITIVE,
-                    ));
+                    );
 
                     let story = TenantStory::generate(tenant.id, &tenant.archetype);
                     self.tenant_stories.insert(tenant.id, story);
@@ -216,13 +211,12 @@ impl GameplayState {
                         &self.config.vetting,
                         self.current_tick,
                     ) {
-                        self.floating_texts.push(FloatingText::new(
-                            &format!(
+                        self.floating_texts.spawn(
+                            format!(
                                 "Credit: {} - {}",
                                 result.reliability_score, result.recommendation
                             ),
-                            screen_width() / 2.0,
-                            screen_height() / 2.0,
+                            vec2(screen_width() / 2.0, screen_height() / 2.0),
                             if result.reliability_score >= 75 {
                                 colors::POSITIVE
                             } else if result.reliability_score >= 50 {
@@ -230,14 +224,13 @@ impl GameplayState {
                             } else {
                                 colors::NEGATIVE
                             },
-                        ));
+                        );
                     } else {
-                        self.floating_texts.push(FloatingText::new(
+                        self.floating_texts.spawn(
                             "Cannot perform credit check",
-                            screen_width() / 2.0,
-                            screen_height() / 2.0,
+                            vec2(screen_width() / 2.0, screen_height() / 2.0),
                             colors::NEGATIVE,
-                        ));
+                        );
                     }
                 }
             }
@@ -250,13 +243,12 @@ impl GameplayState {
                         &self.config.vetting,
                         self.current_tick,
                     ) {
-                        self.floating_texts.push(FloatingText::new(
-                            &format!(
+                        self.floating_texts.spawn(
+                            format!(
                                 "Background: {} - {}",
                                 result.behavior_score, result.history_notes
                             ),
-                            screen_width() / 2.0,
-                            screen_height() / 2.0,
+                            vec2(screen_width() / 2.0, screen_height() / 2.0),
                             if result.behavior_score >= 75 {
                                 colors::POSITIVE
                             } else if result.behavior_score >= 50 {
@@ -264,14 +256,13 @@ impl GameplayState {
                             } else {
                                 colors::NEGATIVE
                             },
-                        ));
+                        );
                     } else {
-                        self.floating_texts.push(FloatingText::new(
+                        self.floating_texts.spawn(
                             "Cannot perform background check",
-                            screen_width() / 2.0,
-                            screen_height() / 2.0,
+                            vec2(screen_width() / 2.0, screen_height() / 2.0),
                             colors::NEGATIVE,
-                        ));
+                        );
                     }
                 }
             }
@@ -311,12 +302,11 @@ impl GameplayState {
                 self.sync_building();
                 self.selection = Selection::None;
 
-                self.floating_texts.push(FloatingText::new(
+                self.floating_texts.spawn(
                     "Building Changed",
-                    screen_width() / 2.0,
-                    screen_height() / 2.0,
+                    vec2(screen_width() / 2.0, screen_height() / 2.0),
                     colors::ACCENT,
-                ));
+                );
             }
             UiAction::PurchaseBuilding { listing_id } => {
                 if let Some(listing) = self
@@ -349,12 +339,11 @@ impl GameplayState {
 
                             self.city.market.listings.retain(|l| l.id != listing_id);
 
-                            self.floating_texts.push(FloatingText::new(
+                            self.floating_texts.spawn(
                                 "Building Purchased!",
-                                screen_width() / 2.0,
-                                screen_height() / 2.0,
+                                vec2(screen_width() / 2.0, screen_height() / 2.0),
                                 colors::POSITIVE,
-                            ));
+                            );
 
                             self.event_log.log(
                                 GameEvent::UpgradeCompleted {
@@ -412,12 +401,11 @@ impl GameplayState {
                 proposal_index: _index,
                 vote_yes: _vote,
             } => {
-                self.floating_texts.push(FloatingText::new(
+                self.floating_texts.spawn(
                     "Vote Cast",
-                    screen_width() / 2.0,
-                    screen_height() / 2.0,
+                    vec2(screen_width() / 2.0, screen_height() / 2.0),
                     colors::ACCENT,
-                ));
+                );
             }
             UiAction::SellUnitAsCondo { apartment_id } => {
                 let market_multiplier = self.condo_sale_market_multiplier();
@@ -447,12 +435,11 @@ impl GameplayState {
                     );
                     self.funds.add_income(transaction);
 
-                    self.floating_texts.push(FloatingText::new(
-                        &format!("+${}", sale_price),
-                        screen_width() / 2.0,
-                        screen_height() / 2.0,
+                    self.floating_texts.spawn(
+                        format!("+${}", sale_price),
+                        vec2(screen_width() / 2.0, screen_height() / 2.0),
                         colors::POSITIVE,
-                    ));
+                    );
 
                     self.save_building_to_city();
                 }
@@ -468,19 +455,17 @@ impl GameplayState {
                         );
                         self.funds.deduct_expense(transaction);
 
-                        self.floating_texts.push(FloatingText::new(
-                            &format!("-${}", buyback_cost),
-                            screen_width() / 2.0,
-                            screen_height() / 2.0,
+                        self.floating_texts.spawn(
+                            format!("-${}", buyback_cost),
+                            vec2(screen_width() / 2.0, screen_height() / 2.0),
                             colors::NEGATIVE,
-                        ));
+                        );
 
-                        self.floating_texts.push(FloatingText::new(
+                        self.floating_texts.spawn(
                             "Unit Repurchased!",
-                            screen_width() / 2.0,
-                            screen_height() / 2.0 + 30.0,
+                            vec2(screen_width() / 2.0, screen_height() / 2.0 + 30.0),
                             colors::POSITIVE,
-                        ));
+                        );
 
                         self.save_building_to_city();
                     }
@@ -498,12 +483,11 @@ impl GameplayState {
                         self.apply_dialogue_effect(effect);
                     }
 
-                    self.floating_texts.push(FloatingText::new(
+                    self.floating_texts.spawn(
                         "Dialogue Resolved",
-                        screen_width() / 2.0,
-                        screen_height() / 2.0,
+                        vec2(screen_width() / 2.0, screen_height() / 2.0),
                         colors::ACCENT,
-                    ));
+                    );
                 }
             }
             UiAction::ResolveEventChoice {
