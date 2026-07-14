@@ -6,17 +6,38 @@
                 "options": [
                     "cat",
                     "small dog",
-                    "hamster"
+                    "hamster",
+                    "rabbit",
+                    "corn snake",
+                    "ferret"
                 ],
-                "weight": 30
+                "weight": 22
             },
             {
                 "type": "Sublease",
-                "weight": 20
+                "weight": 18
+            },
+            {
+                "type": "HomeBusiness",
+                "options": [
+                    "online tutoring",
+                    "a streaming setup",
+                    "a small online shop"
+                ],
+                "weight": 15
+            },
+            {
+                "type": "Modification",
+                "options": [
+                    "paint the walls",
+                    "add a study nook",
+                    "install blackout curtains"
+                ],
+                "weight": 10
             },
             {
                 "type": "None",
-                "weight": 50
+                "weight": 35
             }
         ],
         "Professional": [
@@ -25,46 +46,82 @@
                 "options": [
                     "consulting",
                     "freelance work",
-                    "tutoring"
+                    "tutoring",
+                    "a therapy practice",
+                    "financial advising"
                 ],
-                "weight": 20
+                "weight": 18
             },
             {
                 "type": "Modification",
                 "options": [
-                    "install smart home system",
-                    "upgrade lighting",
-                    "soundproof office"
+                    "install a smart-home system",
+                    "upgrade the lighting",
+                    "soundproof a home office",
+                    "add built-in shelving"
                 ],
                 "weight": 15
             },
             {
+                "type": "Pet",
+                "options": [
+                    "cat",
+                    "small dog"
+                ],
+                "weight": 10
+            },
+            {
+                "type": "TemporaryGuest",
+                "options": [
+                    "a visiting colleague",
+                    "family for the holidays"
+                ],
+                "duration_min": 1,
+                "duration_max": 2,
+                "weight": 8
+            },
+            {
                 "type": "None",
-                "weight": 65
+                "weight": 49
             }
         ],
         "Artist": [
             {
                 "type": "HomeBusiness",
                 "options": [
-                    "art studio",
+                    "an art studio",
                     "music lessons",
-                    "craft workshop"
+                    "a craft workshop",
+                    "a pottery kiln",
+                    "a photography darkroom"
                 ],
-                "weight": 40
+                "weight": 34
             },
             {
                 "type": "Modification",
                 "options": [
                     "install better lighting",
                     "add a small loft for storage",
-                    "paint the walls"
+                    "paint a mural",
+                    "hang gallery rails"
                 ],
                 "weight": 20
             },
             {
+                "type": "Pet",
+                "options": [
+                    "a studio cat",
+                    "a parrot"
+                ],
+                "weight": 10
+            },
+            {
+                "type": "Sublease",
+                "weight": 12
+            },
+            {
                 "type": "None",
-                "weight": 40
+                "weight": 24
             }
         ],
         "Family": [
@@ -73,24 +130,36 @@
                 "options": [
                     "dog",
                     "cat",
-                    "goldfish"
+                    "goldfish",
+                    "rabbit",
+                    "guinea pig"
                 ],
-                "weight": 40
+                "weight": 34
             },
             {
                 "type": "TemporaryGuest",
                 "options": [
                     "Grandma (relative)",
                     "Grandpa (relative)",
-                    "Cousin (relative)"
+                    "Cousin (relative)",
+                    "an au pair"
                 ],
                 "duration_min": 1,
                 "duration_max": 4,
-                "weight": 30
+                "weight": 26
+            },
+            {
+                "type": "Modification",
+                "options": [
+                    "childproof the unit",
+                    "add a bunk nook",
+                    "install a play area"
+                ],
+                "weight": 14
             },
             {
                 "type": "None",
-                "weight": 30
+                "weight": 26
             }
         ],
         "Elderly": [
@@ -99,24 +168,35 @@
                 "options": [
                     "cat",
                     "small dog",
-                    "bird"
+                    "bird",
+                    "tortoise"
                 ],
-                "weight": 30
+                "weight": 26
             },
             {
                 "type": "TemporaryGuest",
                 "options": [
                     "my niece (caregiver)",
                     "my nephew (caregiver)",
-                    "a nurse"
+                    "a nurse",
+                    "a home aide"
                 ],
                 "duration_min": 1,
                 "duration_max": 3,
-                "weight": 20
+                "weight": 18
+            },
+            {
+                "type": "Modification",
+                "options": [
+                    "install grab bars",
+                    "add brighter lighting",
+                    "lower the kitchen shelves"
+                ],
+                "weight": 14
             },
             {
                 "type": "None",
-                "weight": 50
+                "weight": 42
             }
         ]
     }
