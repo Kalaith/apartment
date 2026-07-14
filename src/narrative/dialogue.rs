@@ -125,10 +125,13 @@ impl DialogueSystem {
         funds: &crate::economy::PlayerFunds,
         network: &crate::consequences::TenantNetwork,
     ) {
-        self.generate_conflict_mediation(tenants, network);
-        self.generate_rent_negotiations(building, tenants);
+        // Dialogue copy, choices, and effects are data-driven
+        // (assets/dialogue_bodies.json).
+        let bodies = load_dialogue_bodies();
+        self.generate_conflict_mediation(tenants, network, &bodies);
+        self.generate_rent_negotiations(building, tenants, &bodies);
 
-        // Low funds can trigger rent negotiation dialogues
+        // Low funds shave the repair cost the tenant is quoted.
         let is_low_on_funds = funds.balance < 500;
         let building_quality = building.building_appeal();
 
@@ -140,80 +143,42 @@ impl DialogueSystem {
 
             if tenant.happiness < 40 && rng::gen_range(0, 100) < (complaint_chance + months_factor)
             {
-                // Determine request type based on archetype
-                let (headline, desc, choices) = match tenant.archetype {
-                    crate::tenant::TenantArchetype::Student => (
-                        "Party Permission",
-                        "I'm planning a small... study group. Might get a bit loud. Is that cool?",
-                        vec![
-                            DialogueChoice {
-                                text: "Sure, just keep it down after 10pm".to_string(),
-                                effects: vec![DialogueEffect::HappinessChange {
-                                    tenant_id: tenant.id,
-                                    amount: 5,
-                                }],
-                            },
-                            DialogueChoice {
-                                text: "Absolutely not".to_string(),
-                                effects: vec![DialogueEffect::HappinessChange {
-                                    tenant_id: tenant.id,
-                                    amount: -5,
-                                }],
-                            },
-                        ],
-                    ),
-                    _ => {
-                        // Adjust repair cost based on landlord's funds
-                        let repair_cost = if is_low_on_funds { 30 } else { 50 };
-                        (
-                            "Minor Repair Request",
-                            "My faucet is dripping and it's driving me crazy. Can you fix it?",
-                            vec![
-                                DialogueChoice {
-                                    text: format!(
-                                        "I'll send someone right away (${})",
-                                        repair_cost
-                                    ),
-                                    effects: vec![
-                                        DialogueEffect::MoneyChange(-repair_cost),
-                                        DialogueEffect::HappinessChange {
-                                            tenant_id: tenant.id,
-                                            amount: 10,
-                                        },
-                                        DialogueEffect::OpinionChange {
-                                            tenant_id: tenant.id,
-                                            amount: 5,
-                                        },
-                                    ],
-                                },
-                                DialogueChoice {
-                                    text: "It's on the list, give me a week".to_string(),
-                                    effects: vec![DialogueEffect::HappinessChange {
-                                        tenant_id: tenant.id,
-                                        amount: -2,
-                                    }],
-                                },
-                            ],
-                        )
-                    }
+                // Pick the archetype-specific request body, else the default.
+                let key = tenant.archetype.name();
+                let Some(template) = bodies
+                    .face_to_face
+                    .get(key)
+                    .or_else(|| bodies.face_to_face.get("default"))
+                else {
+                    continue;
                 };
 
                 // Avoid duplicates
-                if !self
+                if self
                     .active_dialogues
                     .iter()
                     .any(|d| d.initiator_id == tenant.id)
                 {
-                    self.add_dialogue(
-                        DialogueType::FaceToFaceRequest,
-                        tenant.id,
-                        None,
-                        headline,
-                        desc,
-                        choices,
-                        None,
-                    );
+                    continue;
                 }
+
+                let repair_cost = if is_low_on_funds { 30 } else { 50 };
+                let ctx = DialogueContext {
+                    initiator_id: tenant.id,
+                    target_id: None,
+                    initiator_name: tenant.name.clone(),
+                    target_name: String::new(),
+                    repair_cost,
+                };
+                self.add_dialogue(
+                    DialogueType::FaceToFaceRequest,
+                    tenant.id,
+                    None,
+                    &substitute(&template.headline, &ctx),
+                    &substitute(&template.description, &ctx),
+                    build_choices(template, &ctx),
+                    None,
+                );
             }
         }
     }
@@ -224,8 +189,13 @@ impl DialogueSystem {
         &mut self,
         tenants: &[crate::tenant::Tenant],
         network: &crate::consequences::TenantNetwork,
+        bodies: &DialogueBodies,
     ) {
         use crate::consequences::RelationshipType;
+
+        let Some(template) = &bodies.conflict_mediation else {
+            return;
+        };
 
         let housed = |id: u32| tenants.iter().any(|t| t.id == id);
         let name_of = |id: u32| {
@@ -250,65 +220,21 @@ impl DialogueSystem {
             return;
         };
         let (a, b) = (relationship.tenant_a_id, relationship.tenant_b_id);
-        let a_name = name_of(a);
-        let b_name = name_of(b);
-
-        let choices = vec![
-            DialogueChoice {
-                text: "Mediate between them".to_string(),
-                effects: vec![
-                    DialogueEffect::RelationshipChange {
-                        tenant_a: a,
-                        tenant_b: b,
-                        change: 15,
-                    },
-                    DialogueEffect::HappinessChange {
-                        tenant_id: a,
-                        amount: 3,
-                    },
-                    DialogueEffect::HappinessChange {
-                        tenant_id: b,
-                        amount: 3,
-                    },
-                ],
-            },
-            DialogueChoice {
-                text: format!("Take {}'s side", a_name),
-                effects: vec![
-                    DialogueEffect::HappinessChange {
-                        tenant_id: a,
-                        amount: 6,
-                    },
-                    DialogueEffect::HappinessChange {
-                        tenant_id: b,
-                        amount: -8,
-                    },
-                    DialogueEffect::RelationshipChange {
-                        tenant_a: a,
-                        tenant_b: b,
-                        change: -10,
-                    },
-                ],
-            },
-            DialogueChoice {
-                text: "Stay out of it".to_string(),
-                effects: vec![DialogueEffect::HappinessChange {
-                    tenant_id: a,
-                    amount: -3,
-                }],
-            },
-        ];
+        let ctx = DialogueContext {
+            initiator_id: a,
+            target_id: Some(b),
+            initiator_name: name_of(a),
+            target_name: name_of(b),
+            repair_cost: 0,
+        };
 
         self.add_dialogue(
             DialogueType::ConflictMediation,
             a,
             Some(b),
-            "Neighbor Dispute",
-            &format!(
-                "{} says {} has become impossible to live next to.",
-                a_name, b_name
-            ),
-            choices,
+            &substitute(&template.headline, &ctx),
+            &substitute(&template.description, &ctx),
+            build_choices(template, &ctx),
             None,
         );
     }
@@ -319,9 +245,13 @@ impl DialogueSystem {
         &mut self,
         building: &crate::building::Building,
         tenants: &[crate::tenant::Tenant],
+        bodies: &DialogueBodies,
     ) {
         use crate::tenant::TenantArchetype;
 
+        let Some(template) = &bodies.rent_negotiation else {
+            return;
+        };
         if building.rent_multiplier <= 1.1 {
             return;
         }
@@ -345,44 +275,20 @@ impl DialogueSystem {
                 continue;
             }
 
-            let forgiven = 40;
-            let choices = vec![
-                DialogueChoice {
-                    text: format!("Give a one-time ${} break", forgiven),
-                    effects: vec![
-                        DialogueEffect::MoneyChange(-forgiven),
-                        DialogueEffect::HappinessChange {
-                            tenant_id: tenant.id,
-                            amount: 8,
-                        },
-                        DialogueEffect::OpinionChange {
-                            tenant_id: tenant.id,
-                            amount: 5,
-                        },
-                    ],
-                },
-                DialogueChoice {
-                    text: "Hold firm on the rent".to_string(),
-                    effects: vec![
-                        DialogueEffect::HappinessChange {
-                            tenant_id: tenant.id,
-                            amount: -6,
-                        },
-                        DialogueEffect::OpinionChange {
-                            tenant_id: tenant.id,
-                            amount: -4,
-                        },
-                    ],
-                },
-            ];
-
+            let ctx = DialogueContext {
+                initiator_id: tenant.id,
+                target_id: None,
+                initiator_name: tenant.name.clone(),
+                target_name: String::new(),
+                repair_cost: 0,
+            };
             self.add_dialogue(
                 DialogueType::RentNegotiation,
                 tenant.id,
                 None,
-                "Rent Is Getting Tight",
-                "With the rent where it is, I'm really feeling the squeeze. Any chance of some relief?",
-                choices,
+                &substitute(&template.headline, &ctx),
+                &substitute(&template.description, &ctx),
+                build_choices(template, &ctx),
                 None,
             );
         }
@@ -405,6 +311,116 @@ impl Default for DialogueSystem {
     fn default() -> Self {
         Self::new()
     }
+}
+
+/// A data-driven dialogue effect. The concrete `DialogueEffect` is built at
+/// generation time so runtime tenant ids can be injected — static content can't
+/// know which tenants are involved.
+#[derive(Clone, Debug, Deserialize)]
+struct DialogueEffectSpec {
+    kind: String,
+    /// "initiator" (the tenant who raised the dialogue, the default) or "target"
+    /// (the other tenant, e.g. in a conflict).
+    #[serde(default)]
+    target: String,
+    #[serde(default)]
+    amount: i32,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+struct DialogueChoiceTemplate {
+    text: String,
+    effects: Vec<DialogueEffectSpec>,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+struct DialogueBodyTemplate {
+    headline: String,
+    description: String,
+    choices: Vec<DialogueChoiceTemplate>,
+}
+
+/// All authored dialogue bodies (`assets/dialogue_bodies.json`).
+#[derive(Clone, Debug, Deserialize, Default)]
+struct DialogueBodies {
+    /// Face-to-face requests keyed by archetype name, with a `"default"` entry.
+    #[serde(default)]
+    face_to_face: std::collections::HashMap<String, DialogueBodyTemplate>,
+    #[serde(default)]
+    conflict_mediation: Option<DialogueBodyTemplate>,
+    #[serde(default)]
+    rent_negotiation: Option<DialogueBodyTemplate>,
+}
+
+/// Runtime values substituted into a dialogue template at generation time.
+struct DialogueContext {
+    initiator_id: u32,
+    target_id: Option<u32>,
+    initiator_name: String,
+    target_name: String,
+    repair_cost: i32,
+}
+
+fn substitute(text: &str, ctx: &DialogueContext) -> String {
+    text.replace("{initiator}", &ctx.initiator_name)
+        .replace("{target}", &ctx.target_name)
+        .replace("{cost}", &ctx.repair_cost.to_string())
+}
+
+fn resolve_effect_spec(spec: &DialogueEffectSpec, ctx: &DialogueContext) -> Option<DialogueEffect> {
+    let target_id = if spec.target == "target" {
+        ctx.target_id
+    } else {
+        Some(ctx.initiator_id)
+    };
+    match spec.kind.as_str() {
+        "happiness" => target_id.map(|id| DialogueEffect::HappinessChange {
+            tenant_id: id,
+            amount: spec.amount,
+        }),
+        "opinion" => target_id.map(|id| DialogueEffect::OpinionChange {
+            tenant_id: id,
+            amount: spec.amount,
+        }),
+        "money" => Some(DialogueEffect::MoneyChange(spec.amount)),
+        // The repair quote varies with the landlord's funds, resolved at runtime.
+        "repair_money" => Some(DialogueEffect::MoneyChange(-ctx.repair_cost)),
+        "relationship" => ctx.target_id.map(|t| DialogueEffect::RelationshipChange {
+            tenant_a: ctx.initiator_id,
+            tenant_b: t,
+            change: spec.amount,
+        }),
+        _ => None,
+    }
+}
+
+fn build_choices(template: &DialogueBodyTemplate, ctx: &DialogueContext) -> Vec<DialogueChoice> {
+    template
+        .choices
+        .iter()
+        .map(|choice| DialogueChoice {
+            text: substitute(&choice.text, ctx),
+            effects: choice
+                .effects
+                .iter()
+                .filter_map(|spec| resolve_effect_spec(spec, ctx))
+                .collect(),
+        })
+        .collect()
+}
+
+fn load_dialogue_bodies() -> DialogueBodies {
+    #[cfg(target_arch = "wasm32")]
+    let json = include_str!("../../assets/dialogue_bodies.json").to_string();
+
+    #[cfg(not(target_arch = "wasm32"))]
+    let json = std::fs::read_to_string("assets/dialogue_bodies.json")
+        .unwrap_or_else(|_| include_str!("../../assets/dialogue_bodies.json").to_string());
+
+    serde_json::from_str(&json).unwrap_or_else(|e| {
+        eprintln!("Failed to parse dialogue_bodies.json: {}", e);
+        DialogueBodies::default()
+    })
 }
 
 #[cfg(test)]
@@ -447,12 +463,26 @@ mod tests {
         network.apply_relationship_change(1, 2, -60);
 
         let mut system = DialogueSystem::new();
-        system.generate_conflict_mediation(&tenants, &network);
+        let bodies = load_dialogue_bodies();
+        system.generate_conflict_mediation(&tenants, &network, &bodies);
 
-        assert!(system
+        let dialogue = system
             .active_dialogues
             .iter()
-            .any(|d| d.dialogue_type == DialogueType::ConflictMediation && d.target_id == Some(2)));
+            .find(|d| d.dialogue_type == DialogueType::ConflictMediation);
+        let dialogue = dialogue.expect("a conflict dialogue should be generated");
+        assert_eq!(dialogue.target_id, Some(2));
+        // {initiator}/{target} placeholders are substituted with tenant names.
+        assert!(!dialogue.description.contains('{'));
+        assert!(!dialogue.choices.is_empty());
+    }
+
+    #[test]
+    fn dialogue_bodies_load_from_json() {
+        let bodies = load_dialogue_bodies();
+        assert!(bodies.face_to_face.contains_key("default"));
+        assert!(bodies.conflict_mediation.is_some());
+        assert!(bodies.rent_negotiation.is_some());
     }
 
     #[test]

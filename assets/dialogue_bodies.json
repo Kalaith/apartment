@@ -1,0 +1,83 @@
+{
+  "face_to_face": {
+    "Student": {
+      "headline": "Party Permission",
+      "description": "I'm planning a small... study group. Might get a bit loud. Is that cool?",
+      "choices": [
+        {
+          "text": "Sure, just keep it down after 10pm",
+          "effects": [ { "kind": "happiness", "target": "initiator", "amount": 5 } ]
+        },
+        {
+          "text": "Absolutely not",
+          "effects": [ { "kind": "happiness", "target": "initiator", "amount": -5 } ]
+        }
+      ]
+    },
+    "default": {
+      "headline": "Minor Repair Request",
+      "description": "My faucet is dripping and it's driving me crazy. Can you fix it?",
+      "choices": [
+        {
+          "text": "I'll send someone right away (${cost})",
+          "effects": [
+            { "kind": "repair_money" },
+            { "kind": "happiness", "target": "initiator", "amount": 10 },
+            { "kind": "opinion", "target": "initiator", "amount": 5 }
+          ]
+        },
+        {
+          "text": "It's on the list, give me a week",
+          "effects": [ { "kind": "happiness", "target": "initiator", "amount": -2 } ]
+        }
+      ]
+    }
+  },
+  "conflict_mediation": {
+    "headline": "Neighbor Dispute",
+    "description": "{initiator} says {target} has become impossible to live next to.",
+    "choices": [
+      {
+        "text": "Mediate between them",
+        "effects": [
+          { "kind": "relationship", "amount": 15 },
+          { "kind": "happiness", "target": "initiator", "amount": 3 },
+          { "kind": "happiness", "target": "target", "amount": 3 }
+        ]
+      },
+      {
+        "text": "Take {initiator}'s side",
+        "effects": [
+          { "kind": "happiness", "target": "initiator", "amount": 6 },
+          { "kind": "happiness", "target": "target", "amount": -8 },
+          { "kind": "relationship", "amount": -10 }
+        ]
+      },
+      {
+        "text": "Stay out of it",
+        "effects": [ { "kind": "happiness", "target": "initiator", "amount": -3 } ]
+      }
+    ]
+  },
+  "rent_negotiation": {
+    "headline": "Rent Is Getting Tight",
+    "description": "With the rent where it is, I'm really feeling the squeeze. Any chance of some relief?",
+    "choices": [
+      {
+        "text": "Give a one-time $40 break",
+        "effects": [
+          { "kind": "money", "amount": -40 },
+          { "kind": "happiness", "target": "initiator", "amount": 8 },
+          { "kind": "opinion", "target": "initiator", "amount": 5 }
+        ]
+      },
+      {
+        "text": "Hold firm on the rent",
+        "effects": [
+          { "kind": "happiness", "target": "initiator", "amount": -6 },
+          { "kind": "opinion", "target": "initiator", "amount": -4 }
+        ]
+      }
+    ]
+  }
+}
