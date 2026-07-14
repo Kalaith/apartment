@@ -1,0 +1,47 @@
+[
+  {
+    "title": "Student Housing Initiative",
+    "description": "The city needs affordable student housing. House 3 students in your buildings.",
+    "giver_npc_id": 2,
+    "min_month": 0,
+    "deadline_months": 12,
+    "goal": { "HouseTenants": { "count": 3, "archetype": "Student" } },
+    "reward": { "TaxBreak": { "months": 6, "percentage": 0.15 } }
+  },
+  {
+    "title": "Full House",
+    "description": "Achieve 100% occupancy in your first building.",
+    "giver_npc_id": 2,
+    "min_month": 0,
+    "deadline_months": null,
+    "goal": { "ReachOccupancy": { "percentage": 1.0 } },
+    "reward": { "Money": 5000 }
+  },
+  {
+    "title": "Senior Care Housing",
+    "description": "House 2 elderly tenants to support our senior community.",
+    "giver_npc_id": 2,
+    "min_month": 0,
+    "deadline_months": 18,
+    "goal": { "HouseTenants": { "count": 2, "archetype": "Elderly" } },
+    "reward": { "Reputation": 25 }
+  },
+  {
+    "title": "Expansion Race",
+    "description": "Magnuson Corp is expanding! Acquire a second building before they dominate the market.",
+    "giver_npc_id": 1,
+    "min_month": 6,
+    "deadline_months": 24,
+    "goal": "AcquireBuilding",
+    "reward": { "Money": 10000 }
+  },
+  {
+    "title": "Family Friendly",
+    "description": "Create a family-friendly environment. House 3 family tenants.",
+    "giver_npc_id": 2,
+    "min_month": 12,
+    "deadline_months": 18,
+    "goal": { "HouseTenants": { "count": 3, "archetype": "Family" } },
+    "reward": { "TaxBreak": { "months": 12, "percentage": 0.1 } }
+  }
+]

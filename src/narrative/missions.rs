@@ -286,89 +286,63 @@ impl MissionManager {
         }
     }
 
-    /// Generate initial missions from the council member
-    pub fn generate_starter_missions(&mut self) {
-        // Mission from Councilwoman Reyes
-        let student_housing = Mission::new(
-            0,
-            "Student Housing Initiative",
-            "The city needs affordable student housing. House 3 students in your buildings.",
-            2, // Councilwoman Reyes NPC ID
-            MissionGoal::HouseTenants {
-                count: 3,
-                archetype: Some("Student".to_string()),
-            },
-            MissionReward::TaxBreak {
-                months: 6,
-                percentage: 0.15,
-            },
-            Some(12), // 12 month deadline
-        );
-        self.add_mission(student_housing);
-
-        let full_occupancy = Mission::new(
-            0,
-            "Full House",
-            "Achieve 100% occupancy in your first building.",
-            2,
-            MissionGoal::ReachOccupancy { percentage: 1.0 },
-            MissionReward::Money(5000),
-            None,
-        );
-        self.add_mission(full_occupancy);
-
-        // Senior Housing - for diverse community
-        let senior_housing = Mission::new(
-            0,
-            "Senior Care Housing",
-            "House 2 elderly tenants to support our senior community.",
-            2, // Councilwoman Reyes
-            MissionGoal::HouseTenants {
-                count: 2,
-                archetype: Some("Elderly".to_string()),
-            },
-            MissionReward::Reputation(25),
-            Some(18),
-        );
-        self.add_mission(senior_housing);
-    }
-
-    /// Generate missions that appear later in the game
-    pub fn generate_late_game_missions(&mut self, current_month: u32) {
-        // Magnuson Corp rivalry mission - appears after month 6
-        if current_month >= 6 && !self.missions.iter().any(|m| m.title == "Expansion Race") {
-            let expansion = Mission::new(
+    /// Add every mission from `assets/missions.json` whose `min_month` has
+    /// arrived and that isn't already present. Called at game start (month 0)
+    /// and each month, this replaces the old hardcoded starter/late-game
+    /// generators — mission content now lives in data, not Rust.
+    pub fn generate_available_missions(&mut self, current_month: u32) {
+        for template in load_mission_templates() {
+            if template.min_month > current_month {
+                continue;
+            }
+            if self.missions.iter().any(|m| m.title == template.title) {
+                continue;
+            }
+            // A relative deadline is measured from when the mission unlocks.
+            let deadline = template
+                .deadline_months
+                .map(|months| template.min_month + months);
+            let mission = Mission::new(
                 0,
-                "Expansion Race",
-                "Magnuson Corp is expanding! Acquire a second building before they dominate the market.",
-                1, // Magnuson Corp NPC ID (as challenger)
-                MissionGoal::AcquireBuilding,
-                MissionReward::Money(10000),
-                Some(current_month + 24), // 2 year deadline
+                &template.title,
+                &template.description,
+                template.giver_npc_id,
+                template.goal,
+                template.reward,
+                deadline,
             );
-            self.add_mission(expansion);
-        }
-
-        // Family housing - appears after month 12
-        if current_month >= 12 && !self.missions.iter().any(|m| m.title == "Family Friendly") {
-            let family = Mission::new(
-                0,
-                "Family Friendly",
-                "Create a family-friendly environment. House 3 family tenants.",
-                2, // Councilwoman Reyes
-                MissionGoal::HouseTenants {
-                    count: 3,
-                    archetype: Some("Family".to_string()),
-                },
-                MissionReward::TaxBreak {
-                    months: 12,
-                    percentage: 0.10,
-                },
-                Some(current_month + 18),
-            );
-            self.add_mission(family);
+            self.add_mission(mission);
         }
     }
+}
+
+/// A mission as authored in `assets/missions.json`, before runtime fields
+/// (id/status/started_month) are assigned.
+#[derive(Clone, Debug, Deserialize)]
+struct MissionTemplate {
+    title: String,
+    description: String,
+    giver_npc_id: u32,
+    #[serde(default)]
+    min_month: u32,
+    #[serde(default)]
+    deadline_months: Option<u32>,
+    goal: MissionGoal,
+    reward: MissionReward,
+}
+
+fn load_mission_templates() -> Vec<MissionTemplate> {
+    #[cfg(target_arch = "wasm32")]
+    let json = include_str!("../../assets/missions.json").to_string();
+
+    #[cfg(not(target_arch = "wasm32"))]
+    let json = std::fs::read_to_string("assets/missions.json")
+        .unwrap_or_else(|_| include_str!("../../assets/missions.json").to_string());
+
+    serde_json::from_str(&json).unwrap_or_else(|e| {
+        eprintln!("Failed to parse missions.json: {}", e);
+        Vec::new()
+    })
 }
 
 impl Default for MissionManager {
@@ -427,6 +401,32 @@ mod tests {
         if let Some(mission) = mission {
             assert_eq!(mission.status, MissionStatus::Expired);
         }
+    }
+
+    #[test]
+    fn missions_load_from_json_and_gate_by_month() {
+        let mut manager = MissionManager::new();
+        manager.generate_available_missions(0);
+
+        // The three starter missions are available from month 0.
+        assert!(manager
+            .missions
+            .iter()
+            .any(|m| m.title == "Student Housing Initiative"));
+        assert!(manager.missions.iter().any(|m| m.title == "Full House"));
+        assert!(manager.missions.len() >= 3);
+        // A late-game mission is not available yet.
+        assert!(!manager.missions.iter().any(|m| m.title == "Expansion Race"));
+
+        // By month 6 it unlocks — and re-running doesn't duplicate anything.
+        manager.generate_available_missions(6);
+        assert!(manager.missions.iter().any(|m| m.title == "Expansion Race"));
+        let full_house = manager
+            .missions
+            .iter()
+            .filter(|m| m.title == "Full House")
+            .count();
+        assert_eq!(full_house, 1, "missions must not duplicate across calls");
     }
 
     #[test]

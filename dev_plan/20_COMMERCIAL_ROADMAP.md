@@ -91,7 +91,10 @@ Current volume vs. what a commercial run-based sim needs:
 | Neighborhoods | 4 | 6–8 with mechanical personality |
 | Achievements | 6 | 25–40 |
 
-- [ ] **Move hardcoded content to JSON.** Narrative event templates (`events.rs`), dialogue bodies (`dialogue.rs`), and missions (`missions.rs`) are hardcoded Rust — migrate to `assets/*.json` per the project's own data-driven hard rule before scaling content, so writing content doesn't require recompiling.
+- [~] **Move hardcoded content to JSON.** Narrative event templates (`events.rs`), dialogue bodies (`dialogue.rs`), and missions (`missions.rs`) are hardcoded Rust — migrate to `assets/*.json` per the project's own data-driven hard rule before scaling content, so writing content doesn't require recompiling. *(Split into three, one per subsystem.)*
+  - [x] **Missions → JSON** (2026-07-14). The 5 missions are now authored in `assets/missions.json` (the `Mission`/`MissionGoal`/`MissionReward` types were already serde-ready). New `MissionTemplate` + `load_mission_templates` (wasm `include_str!` / native disk-with-fallback), and `generate_available_missions(current_month)` **replaces both** the hardcoded `generate_starter_missions` and `generate_late_game_missions` — a mission unlocks once its data-driven `min_month` arrives (relative `deadline_months` measured from unlock), with title-dedup so re-running each turn is idempotent. New content can now be added without recompiling. 1 test.
+  - [ ] **Narrative events → JSON** (`events.rs` template banks).
+  - [ ] **Dialogue bodies → JSON** (`dialogue.rs`).
 - [ ] **Campaign arc.** 3 buildings = the whole game. Design a campaign with distinct building identities (rent-controlled walk-up, aging luxury tower, converted warehouse…) where each teaches/tests a different system, plus mission-driven unlocks (the stubbed `UnlockBuilding` reward).
 - [ ] **Endgame mode.** After the campaign: endless/sandbox mode with the multi-building city layer as the driver (portfolio play is mostly built but under-used), or a scored challenge mode leveraging the seeded RNG.
 - [ ] **Name pools** (~10 first names per archetype) will visibly repeat — expand, and add portrait variety (5 tenant portraits currently).

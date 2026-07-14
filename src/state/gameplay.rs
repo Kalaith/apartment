@@ -287,7 +287,7 @@ impl GameplayState {
             &state.config,
         );
 
-        state.missions.generate_starter_missions();
+        state.missions.generate_available_missions(0);
 
         state
     }
