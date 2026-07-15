@@ -36,7 +36,7 @@ pub fn update_tutorial(state: &mut GameplayState) {
             state.floating_texts.spawn(
                 hint,
                 vec2(screen_width() / 2.0, screen_height() - 100.0),
-                colors::TEXT_DIM,
+                colors::TEXT_DIM(),
             );
         }
     }
@@ -56,7 +56,7 @@ pub fn update_tutorial(state: &mut GameplayState) {
                     state.floating_texts.spawn(
                         "Tutorial: Cleaned Up!",
                         vec2(screen_width() / 2.0, screen_height() / 2.0),
-                        colors::POSITIVE,
+                        colors::POSITIVE(),
                     );
                 }
             }
@@ -71,7 +71,7 @@ pub fn update_tutorial(state: &mut GameplayState) {
                     state.floating_texts.spawn(
                         "Tutorial: First Resident!",
                         vec2(screen_width() / 2.0, screen_height() / 2.0 + 30.0),
-                        colors::POSITIVE,
+                        colors::POSITIVE(),
                     );
 
                     // Trigger The Leak event immediately implies a problem
@@ -84,7 +84,7 @@ pub fn update_tutorial(state: &mut GameplayState) {
                     state.floating_texts.spawn(
                         "⚠ LEAK DETECTED!",
                         vec2(screen_width() / 2.0, screen_height() / 2.0 + 60.0),
-                        colors::NEGATIVE,
+                        colors::NEGATIVE(),
                     );
                 }
             }
@@ -102,7 +102,7 @@ pub fn update_tutorial(state: &mut GameplayState) {
                     state.floating_texts.spawn(
                         "Tutorial Complete!",
                         vec2(screen_width() / 2.0, screen_height() / 2.0),
-                        colors::POSITIVE,
+                        colors::POSITIVE(),
                     );
 
                     // Messages are already in pending_messages and will be shown by the tutorial overlay

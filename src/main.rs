@@ -45,7 +45,7 @@ async fn main() {
     if let Some(config) = capture::CaptureConfig::from_env("APARTMENT") {
         game.begin_capture_scene(&config.scene);
         capture::run_capture(&config, |_dt| {
-            clear_background(ui::theme::color::BACKGROUND);
+            clear_background(ui::theme::color::BACKGROUND());
             game.update();
             game.draw();
         })
@@ -54,7 +54,7 @@ async fn main() {
     }
 
     loop {
-        clear_background(ui::theme::color::BACKGROUND);
+        clear_background(ui::theme::color::BACKGROUND());
         game.update();
         game.draw();
         next_frame().await;

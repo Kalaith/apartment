@@ -16,16 +16,18 @@ pub fn draw_hallway_panel(
     let mut action = None;
     let mut new_scroll = scroll_offset;
 
-    let panel_x = screen_width() * layout::PANEL_SPLIT + layout::PADDING + offset_x;
-    let panel_y = layout::HEADER_HEIGHT + layout::PADDING;
-    let panel_w = screen_width() * (1.0 - layout::PANEL_SPLIT) - layout::PADDING * 2.0;
+    let panel_x = screen_width() * layout::PANEL_SPLIT() + layout::PADDING() + offset_x;
+    let panel_y = layout::HEADER_HEIGHT() + layout::PADDING();
+    let panel_w = screen_width() * (1.0 - layout::PANEL_SPLIT()) - layout::PADDING() * 2.0;
 
     if panel_x > screen_width() {
         return (None, scroll_offset);
     }
 
-    let panel_h =
-        screen_height() - layout::HEADER_HEIGHT - layout::FOOTER_HEIGHT - layout::PADDING * 2.0;
+    let panel_h = screen_height()
+        - layout::HEADER_HEIGHT()
+        - layout::FOOTER_HEIGHT()
+        - layout::PADDING() * 2.0;
 
     panel(panel_x, panel_y, panel_w, panel_h, "Hallway");
 
@@ -70,7 +72,7 @@ pub fn draw_hallway_panel(
             content_x,
             y,
             14.0,
-            colors::TEXT_DIM,
+            colors::TEXT_DIM(),
         );
     }
     y += 20.0;
@@ -82,13 +84,13 @@ pub fn draw_hallway_panel(
             content_x,
             y,
             18.0,
-            colors::ACCENT,
+            colors::ACCENT(),
         );
     }
     y += 50.0;
 
     if y + 14.0 > content_top && y < content_bottom {
-        draw_ui_text("STAFF", content_x, y, 14.0, colors::TEXT_DIM);
+        draw_ui_text("STAFF", content_x, y, 14.0, colors::TEXT_DIM());
     }
     y += 25.0;
 
@@ -115,7 +117,7 @@ pub fn draw_hallway_panel(
                     content_x,
                     y,
                     16.0,
-                    colors::TEXT,
+                    colors::TEXT(),
                 );
             }
             y += 25.0;
@@ -125,7 +127,7 @@ pub fn draw_hallway_panel(
 
     if staff_count == 0 {
         if y + 16.0 > content_top && y < content_bottom {
-            draw_ui_text("None hired", content_x, y, 16.0, colors::TEXT_DIM);
+            draw_ui_text("None hired", content_x, y, 16.0, colors::TEXT_DIM());
         }
         y += 25.0;
     }
@@ -207,7 +209,7 @@ pub fn draw_hallway_panel(
     }
 
     if y + 14.0 > content_top && y < content_bottom {
-        draw_ui_text("UPGRADES", content_x, y, 14.0, colors::TEXT_DIM);
+        draw_ui_text("UPGRADES", content_x, y, 14.0, colors::TEXT_DIM());
     }
     y += 25.0;
 

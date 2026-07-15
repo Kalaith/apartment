@@ -16,10 +16,6 @@
     "kitchen_renovation_cost": 800,
     "laundry_installation_cost": 2000,
     "soundproofing_cost": 300,
-    "base_rent": {
-      "small": 600,
-      "medium": 900
-    },
     "staff_costs": {
       "janitor": 150,
       "security": 320,
@@ -264,120 +260,32 @@
     }
   },
   "theme": {
-    "background": [
-      0.12,
-      0.12,
-      0.14,
-      1.0
-    ],
-    "panel": [
-      0.18,
-      0.18,
-      0.22,
-      1.0
-    ],
-    "panel_header": [
-      0.22,
-      0.22,
-      0.28,
-      1.0
-    ],
-    "text": [
-      0.9,
-      0.9,
-      0.9,
-      1.0
-    ],
-    "text_bright": [
-      1.0,
-      1.0,
-      1.0,
-      1.0
-    ],
-    "text_dim": [
-      0.6,
-      0.6,
-      0.6,
-      1.0
-    ],
-    "accent": [
-      0.3,
-      0.6,
-      0.9,
-      1.0
-    ],
-    "positive": [
-      0.3,
-      0.8,
-      0.4,
-      1.0
-    ],
-    "warning": [
-      0.9,
-      0.7,
-      0.2,
-      1.0
-    ],
-    "negative": [
-      0.9,
-      0.3,
-      0.3,
-      1.0
-    ],
-    "vacant": [
-      0.3,
-      0.3,
-      0.35,
-      1.0
-    ],
-    "occupied": [
-      0.25,
-      0.35,
-      0.45,
-      1.0
-    ],
-    "selected": [
-      0.35,
-      0.5,
-      0.7,
-      1.0
-    ],
-    "hovered": [
-      0.3,
-      0.4,
-      0.55,
-      1.0
-    ],
-    "archetype_student": [
-      0.8,
-      0.5,
-      0.3,
-      1.0
-    ],
-    "archetype_professional": [
-      0.3,
-      0.5,
-      0.8,
-      1.0
-    ],
-    "archetype_artist": [
-      0.8,
-      0.3,
-      0.7,
-      1.0
-    ],
-    "archetype_family": [
-      0.4,
-      0.8,
-      0.4,
-      1.0
-    ],
-    "archetype_elderly": [
-      0.7,
-      0.7,
-      0.7,
-      1.0
-    ]
+    "background": [0.07, 0.08, 0.11, 1.0],
+    "surface": [0.12, 0.13, 0.17, 1.0],
+    "surface_alt": [0.16, 0.17, 0.22, 1.0],
+    "surface_header": [0.10, 0.11, 0.15, 1.0],
+    "border": [0.24, 0.26, 0.33, 1.0],
+    "border_strong": [0.38, 0.41, 0.50, 1.0],
+    "text": [0.90, 0.91, 0.94, 1.0],
+    "text_bright": [1.0, 1.0, 1.0, 1.0],
+    "text_dim": [0.58, 0.61, 0.69, 1.0],
+    "primary": [0.96, 0.70, 0.30, 1.0],
+    "primary_hover": [1.0, 0.78, 0.42, 1.0],
+    "primary_pressed": [0.78, 0.55, 0.20, 1.0],
+    "accent": [0.35, 0.78, 0.82, 1.0],
+    "positive": [0.42, 0.80, 0.48, 1.0],
+    "warning": [0.95, 0.68, 0.25, 1.0],
+    "negative": [0.92, 0.36, 0.38, 1.0],
+    "vacant": [0.20, 0.21, 0.26, 1.0],
+    "occupied": [0.18, 0.28, 0.34, 1.0],
+    "selected": [0.30, 0.44, 0.52, 1.0],
+    "hovered": [0.24, 0.30, 0.40, 1.0],
+    "student": [0.90, 0.60, 0.35, 1.0],
+    "professional": [0.40, 0.60, 0.92, 1.0],
+    "artist": [0.82, 0.42, 0.78, 1.0],
+    "family": [0.45, 0.82, 0.50, 1.0],
+    "elderly": [0.72, 0.74, 0.80, 1.0],
+    "shadow": [0.0, 0.0, 0.0, 0.35]
   },
   "layout": {
     "header_height": 60.0,
@@ -397,5 +305,38 @@
     "condition_good": 80,
     "condition_fair": 50,
     "condition_poor": 30
+  },
+  "apartment": {
+    "design_appeal_bare": 0,
+    "design_appeal_practical": 20,
+    "design_appeal_cozy": 40,
+    "design_appeal_luxury": 65,
+    "design_appeal_opulent": 90,
+    "base_rent_small": 600,
+    "base_rent_medium": 850,
+    "base_rent_large": 1200,
+    "base_rent_penthouse": 2500,
+    "space_score_small": 0,
+    "space_score_medium": 15,
+    "space_score_large": 30,
+    "space_score_penthouse": 50,
+    "noise_penalty_high": -20,
+    "market_base_small": 50000,
+    "market_base_medium": 75000,
+    "market_base_large": 120000,
+    "market_base_penthouse": 250000,
+    "market_condition_bonus_above_50_per_point": 500,
+    "market_condition_bonus_below_50_per_point": 300,
+    "market_design_bonus_bare": 0,
+    "market_design_bonus_practical": 5000,
+    "market_design_bonus_cozy": 15000,
+    "market_design_bonus_luxury": 30000,
+    "market_design_bonus_opulent": 60000,
+    "market_kitchen_bonus_level1": 8000,
+    "market_kitchen_bonus_level2_plus": 15000,
+    "market_floor_bonus_per_floor": 2000,
+    "market_soundproofing_bonus": 3000,
+    "market_high_noise_penalty": -5000,
+    "market_value_floor": 10000
   }
 }

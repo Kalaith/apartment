@@ -67,14 +67,14 @@ impl GameplayState {
             self.floating_texts.spawn(
                 format!("Inspection: {} cited!", citations),
                 vec2(screen_width() / 2.0, screen_height() / 2.0),
-                colors::NEGATIVE,
+                colors::NEGATIVE(),
             );
         } else if !inspection.results.is_empty() {
             self.adjust_active_neighborhood_reputation(config.neighborhood_reputation_gain);
             self.floating_texts.spawn(
                 "Inspection passed",
                 vec2(screen_width() / 2.0, screen_height() / 2.0),
-                colors::POSITIVE,
+                colors::POSITIVE(),
             );
         }
     }

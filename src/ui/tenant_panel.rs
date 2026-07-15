@@ -29,7 +29,7 @@ pub(super) fn draw_tenant_info(
             content_x + panel_w - 30.0,
             *y,
             1.0,
-            colors::TEXT_DIM,
+            colors::TEXT_DIM(),
         );
     }
     *y += 15.0;
@@ -109,14 +109,14 @@ fn draw_occupied_tenant_info(
             text_x,
             row_top + 20.0,
             scale::TITLE,
-            colors::TEXT,
+            colors::TEXT(),
         );
         draw_ui_text(
             tenant.archetype.name(),
             text_x,
             row_top + 40.0,
             scale::LABEL,
-            colors::TEXT_DIM,
+            colors::TEXT_DIM(),
         );
         draw_relationship_icons(tenant.id, network, text_x, row_top + 50.0);
     }
@@ -139,7 +139,7 @@ fn draw_occupied_tenant_info(
             w,
             "Tenure",
             &format!("{} months", tenant.months_residing),
-            colors::TEXT_DIM,
+            colors::TEXT_DIM(),
         );
     }
     *y += 26.0;
@@ -173,11 +173,11 @@ fn draw_relationship_icons(tenant_id: u32, network: &TenantNetwork, text_x: f32,
     let chip_h = 16.0;
     for rel in relationships.iter().take(4) {
         let (label, fill) = match rel.relationship_type {
-            RelationshipType::Friendly => ("Friend", colors::POSITIVE),
-            RelationshipType::Hostile => ("Feud", colors::NEGATIVE),
-            RelationshipType::Romantic => ("Romance", colors::ARTIST),
-            RelationshipType::Family => ("Family", colors::FAMILY),
-            RelationshipType::Neutral => ("Neutral", colors::TEXT_DIM),
+            RelationshipType::Friendly => ("Friend", colors::POSITIVE()),
+            RelationshipType::Hostile => ("Feud", colors::NEGATIVE()),
+            RelationshipType::Romantic => ("Romance", colors::ARTIST()),
+            RelationshipType::Family => ("Family", colors::FAMILY()),
+            RelationshipType::Neutral => ("Neutral", colors::TEXT_DIM()),
         };
         let w = crate::ui::widgets::draw_badge(
             icon_x,
@@ -185,7 +185,7 @@ fn draw_relationship_icons(tenant_id: u32, network: &TenantNetwork, text_x: f32,
             chip_h,
             label,
             fill,
-            colors::TEXT_BRIGHT,
+            colors::TEXT_BRIGHT(),
         );
         icon_x += w + 4.0;
     }
@@ -196,7 +196,7 @@ fn draw_relationship_icons(tenant_id: u32, network: &TenantNetwork, text_x: f32,
             icon_x + 2.0,
             icon_y + chip_h - 3.0,
             13.0,
-            colors::TEXT_DIM,
+            colors::TEXT_DIM(),
         );
     }
 }
@@ -216,7 +216,7 @@ fn draw_pending_request(
 
     // Divider + section header.
     if *y > content_top && *y < content_bottom {
-        draw_line(content_x, *y, content_x + w, *y, 1.0, colors::BORDER);
+        draw_line(content_x, *y, content_x + w, *y, 1.0, colors::BORDER());
     }
     *y += 14.0;
     if *y + 18.0 > content_top && *y < content_bottom {
@@ -233,7 +233,7 @@ fn draw_pending_request(
                 content_x,
                 *y + scale::BODY,
                 scale::BODY,
-                colors::TEXT,
+                colors::TEXT(),
             );
         }
         *y += scale::BODY * 1.35;
@@ -248,7 +248,7 @@ fn draw_pending_request(
                 content_x,
                 *y + scale::LABEL,
                 scale::LABEL,
-                colors::ACCENT,
+                colors::ACCENT(),
             );
         }
         *y += 24.0;
@@ -368,7 +368,7 @@ fn draw_vacant_unit_actions(
     content_bottom: f32,
 ) -> Option<UiAction> {
     if *y > content_top && *y < content_bottom {
-        draw_ui_text("VACANT", content_x, *y, 18.0, colors::WARNING);
+        draw_ui_text("VACANT", content_x, *y, 18.0, colors::WARNING());
     }
     *y += 25.0;
 
@@ -390,7 +390,7 @@ fn draw_listed_vacancy_actions(
     content_bottom: f32,
 ) -> Option<UiAction> {
     if *y > content_top && *y < content_bottom {
-        draw_ui_text("Status: LISTED", content_x, *y, 16.0, colors::POSITIVE);
+        draw_ui_text("Status: LISTED", content_x, *y, 16.0, colors::POSITIVE());
     }
     *y += 20.0;
 
@@ -400,7 +400,7 @@ fn draw_listed_vacancy_actions(
         } else {
             "Target: Open (Any)".to_string()
         };
-        draw_ui_text(&target_text, content_x, *y, 14.0, colors::TEXT);
+        draw_ui_text(&target_text, content_x, *y, 14.0, colors::TEXT());
     }
     *y += 30.0;
 
@@ -434,7 +434,13 @@ fn draw_unlisted_vacancy_actions(
     content_bottom: f32,
 ) -> Option<UiAction> {
     if *y > content_top && *y < content_bottom {
-        draw_ui_text("Status: OFF MARKET", content_x, *y, 14.0, colors::TEXT_DIM);
+        draw_ui_text(
+            "Status: OFF MARKET",
+            content_x,
+            *y,
+            14.0,
+            colors::TEXT_DIM(),
+        );
     }
     *y += 30.0;
 
@@ -444,7 +450,7 @@ fn draw_unlisted_vacancy_actions(
             content_x,
             *y,
             20.0,
-            colors::TEXT,
+            colors::TEXT(),
         );
 
         let btn_size = 25.0;
@@ -464,7 +470,7 @@ fn draw_unlisted_vacancy_actions(
     *y += 40.0;
 
     if *y > content_top && *y < content_bottom {
-        draw_ui_text("List for Lease:", content_x, *y, 14.0, colors::ACCENT);
+        draw_ui_text("List for Lease:", content_x, *y, 14.0, colors::ACCENT());
     }
     *y += 20.0;
 

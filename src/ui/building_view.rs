@@ -15,10 +15,10 @@ pub fn draw_building_view(
 ) -> Option<UiAction> {
     let mut action = None;
 
-    let view_width = screen_width() * layout::PANEL_SPLIT;
-    let view_height = screen_height() - layout::HEADER_HEIGHT - layout::FOOTER_HEIGHT;
+    let view_width = screen_width() * layout::PANEL_SPLIT();
+    let view_height = screen_height() - layout::HEADER_HEIGHT() - layout::FOOTER_HEIGHT();
     let view_x = 0.0;
-    let view_y = layout::HEADER_HEIGHT;
+    let view_y = layout::HEADER_HEIGHT();
 
     // Background - Building Exterior
     if let Some(tex) = assets.get_texture("building_exterior") {
@@ -33,7 +33,7 @@ pub fn draw_building_view(
             },
         );
     } else {
-        draw_rectangle(view_x, view_y, view_width, view_height, color::BACKGROUND);
+        draw_rectangle(view_x, view_y, view_width, view_height, color::BACKGROUND());
     }
 
     // Calculate layout - use max units per floor for total width
@@ -48,7 +48,7 @@ pub fn draw_building_view(
         .max()
         .unwrap_or(1);
 
-    let total_width = max_units_per_floor as f32 * (layout::UNIT_WIDTH + layout::UNIT_GAP);
+    let total_width = max_units_per_floor as f32 * (layout::UNIT_WIDTH() + layout::UNIT_GAP());
 
     let center_x = view_x + view_width / 2.0;
     let start_x = view_x + (view_width - total_width) / 2.0;
@@ -56,15 +56,15 @@ pub fn draw_building_view(
 
     // Draw floors (bottom to top)
     for floor in 1..=max_floor {
-        let floor_y = start_y - (floor as f32 * layout::FLOOR_HEIGHT);
+        let floor_y = start_y - (floor as f32 * layout::FLOOR_HEIGHT());
 
         // Floor label
         draw_ui_text(
             &format!("Floor {}", floor),
             start_x - 80.0,
-            floor_y + layout::UNIT_HEIGHT / 2.0,
+            floor_y + layout::UNIT_HEIGHT() / 2.0,
             scale::LABEL,
-            color::TEXT_DIM,
+            color::TEXT_DIM(),
         );
 
         // Draw units on this floor
@@ -78,13 +78,13 @@ pub fn draw_building_view(
         let mut floor_total_width = 0.0;
         for apt in &floor_apartments {
             let unit_w = if matches!(apt.size, ApartmentSize::Penthouse) {
-                (layout::UNIT_WIDTH * 2.0) + layout::UNIT_GAP // Double width
+                (layout::UNIT_WIDTH() * 2.0) + layout::UNIT_GAP() // Double width
             } else {
-                layout::UNIT_WIDTH
+                layout::UNIT_WIDTH()
             };
-            floor_total_width += unit_w + layout::UNIT_GAP;
+            floor_total_width += unit_w + layout::UNIT_GAP();
         }
-        floor_total_width -= layout::UNIT_GAP; // Remove trailing gap
+        floor_total_width -= layout::UNIT_GAP(); // Remove trailing gap
 
         // Center this floor's units
         let floor_start_x = center_x - floor_total_width / 2.0;
@@ -92,9 +92,9 @@ pub fn draw_building_view(
         let mut current_x = floor_start_x;
         for apt in floor_apartments.iter() {
             let unit_w = if matches!(apt.size, ApartmentSize::Penthouse) {
-                (layout::UNIT_WIDTH * 2.0) + layout::UNIT_GAP
+                (layout::UNIT_WIDTH() * 2.0) + layout::UNIT_GAP()
             } else {
-                layout::UNIT_WIDTH
+                layout::UNIT_WIDTH()
             };
 
             if let Some(apt_action) = draw_apartment_unit_sized(
@@ -103,24 +103,24 @@ pub fn draw_building_view(
                 action = Some(apt_action);
             }
 
-            current_x += unit_w + layout::UNIT_GAP;
+            current_x += unit_w + layout::UNIT_GAP();
         }
     }
 
     // Draw hallway at bottom
     let hallway_y = start_y + 20.0;
-    let hallway_width = total_width - layout::UNIT_GAP;
+    let hallway_width = total_width - layout::UNIT_GAP();
     let hallway_h = 44.0;
 
     let hallway_selected = matches!(selection, Selection::Hallway);
     let hallway_hovered = is_hovered(start_x, hallway_y, hallway_width, hallway_h);
 
     let hallway_color = if hallway_selected {
-        color::SELECTED
+        color::SELECTED()
     } else if hallway_hovered {
-        color::HOVERED
+        color::HOVERED()
     } else {
-        color::SURFACE_ALT
+        color::SURFACE_ALT()
     };
 
     // Use texture for hallway if available
@@ -142,9 +142,9 @@ pub fn draw_building_view(
     };
 
     let hallway_border = if hallway_selected {
-        color::PRIMARY
+        color::PRIMARY()
     } else {
-        color::BORDER
+        color::BORDER()
     };
     draw_rectangle_lines(
         start_x,
@@ -165,7 +165,7 @@ pub fn draw_building_view(
         start_x + space::MD,
         hallway_y + hallway_h / 2.0 + scale::LABEL / 2.0,
         scale::LABEL,
-        color::TEXT_BRIGHT,
+        color::TEXT_BRIGHT(),
     );
 
     let cond_color = condition_color(building.hallway_condition);
@@ -215,16 +215,16 @@ fn draw_apartment_unit_sized(
     selection: &Selection,
     assets: &AssetManager,
 ) -> Option<UiAction> {
-    let h = layout::UNIT_HEIGHT;
+    let h = layout::UNIT_HEIGHT();
 
     let is_selected = matches!(selection, Selection::Apartment(id) if *id == apt.id);
     let unit_hovered = is_hovered(x, y, w, h);
 
     // Background color (fallback when no design texture)
     let bg_color = if apt.is_vacant() {
-        color::VACANT
+        color::VACANT()
     } else {
-        color::OCCUPIED
+        color::OCCUPIED()
     };
 
     // Draw Design Texture as background
@@ -258,7 +258,12 @@ fn draw_apartment_unit_sized(
             y,
             w,
             h,
-            Color::new(color::PRIMARY.r, color::PRIMARY.g, color::PRIMARY.b, 0.16),
+            Color::new(
+                color::PRIMARY().r,
+                color::PRIMARY().g,
+                color::PRIMARY().b,
+                0.16,
+            ),
         );
     } else if unit_hovered {
         draw_rectangle(x, y, w, h, Color::new(1.0, 1.0, 1.0, 0.08));
@@ -269,11 +274,11 @@ fn draw_apartment_unit_sized(
 
     // Border
     let (border_w, border_color) = if is_selected {
-        (2.0, color::PRIMARY)
+        (2.0, color::PRIMARY())
     } else if unit_hovered {
-        (1.0, color::BORDER_STRONG)
+        (1.0, color::BORDER_STRONG())
     } else {
-        (1.0, color::BORDER)
+        (1.0, color::BORDER())
     };
     draw_rectangle_lines(x, y, w, h, border_w, border_color);
 
@@ -283,7 +288,7 @@ fn draw_apartment_unit_sized(
         x + space::SM,
         y + 16.0,
         scale::BODY,
-        color::TEXT_BRIGHT,
+        color::TEXT_BRIGHT(),
     );
     let size_text = match apt.size {
         ApartmentSize::Small => "S",
@@ -297,7 +302,7 @@ fn draw_apartment_unit_sized(
         x + w - size_w - space::SM,
         y + 16.0,
         scale::LABEL,
-        color::TEXT_DIM,
+        color::TEXT_DIM(),
     );
 
     // Condition meter
@@ -326,7 +331,7 @@ fn draw_apartment_unit_sized(
                 },
             );
         } else {
-            draw_ui_text("!", x + space::SM, y + 50.0, scale::LABEL, color::WARNING);
+            draw_ui_text("!", x + space::SM, y + 50.0, scale::LABEL, color::WARNING());
         }
     }
 
@@ -344,13 +349,19 @@ fn draw_apartment_unit_sized(
                 },
             );
         } else {
-            draw_ui_text("S", x + 30.0, y + 50.0, scale::LABEL, color::POSITIVE);
+            draw_ui_text("S", x + 30.0, y + 50.0, scale::LABEL, color::POSITIVE());
         }
     }
 
     // Low Condition Warning
     if apt.condition < 40 {
-        draw_ui_text("!", x + w - 16.0, y + 50.0, scale::HEADING, color::NEGATIVE);
+        draw_ui_text(
+            "!",
+            x + w - 16.0,
+            y + 50.0,
+            scale::HEADING,
+            color::NEGATIVE(),
+        );
     }
 
     // Tenant / vacant content
@@ -435,7 +446,7 @@ fn draw_apartment_unit_sized(
             x + space::SM,
             y + h - 8.0,
             scale::CAPTION,
-            color::TEXT_DIM,
+            color::TEXT_DIM(),
         );
         let rent = format!("${}", apt.rent_price);
         let rent_w = measure_ui_text(&rent, None, scale::CAPTION as u16, 1.0).width;
@@ -444,7 +455,7 @@ fn draw_apartment_unit_sized(
             x + w - rent_w - space::SM,
             y + h - 8.0,
             scale::CAPTION,
-            color::PRIMARY,
+            color::PRIMARY(),
         );
     }
 

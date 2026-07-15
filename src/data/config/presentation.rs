@@ -3,14 +3,24 @@
 
 use serde::{Deserialize, Serialize};
 
+/// The palette consumed by `crate::ui::theme::color` — this struct (and the
+/// `theme` block in `assets/config.json`) is the actual source of truth;
+/// `color::NAME()` reads through the active config with these as the
+/// compile-time fallback. Keep in sync with the "Bolder restyle" palette.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ThemeConfig {
     pub background: [f32; 4],
-    pub panel: [f32; 4],
-    pub panel_header: [f32; 4],
+    pub surface: [f32; 4],
+    pub surface_alt: [f32; 4],
+    pub surface_header: [f32; 4],
+    pub border: [f32; 4],
+    pub border_strong: [f32; 4],
     pub text: [f32; 4],
     pub text_bright: [f32; 4],
     pub text_dim: [f32; 4],
+    pub primary: [f32; 4],
+    pub primary_hover: [f32; 4],
+    pub primary_pressed: [f32; 4],
     pub accent: [f32; 4],
     pub positive: [f32; 4],
     pub warning: [f32; 4],
@@ -19,35 +29,43 @@ pub struct ThemeConfig {
     pub occupied: [f32; 4],
     pub selected: [f32; 4],
     pub hovered: [f32; 4],
-    pub archetype_student: [f32; 4],
-    pub archetype_professional: [f32; 4],
-    pub archetype_artist: [f32; 4],
-    pub archetype_family: [f32; 4],
-    pub archetype_elderly: [f32; 4],
+    pub student: [f32; 4],
+    pub professional: [f32; 4],
+    pub artist: [f32; 4],
+    pub family: [f32; 4],
+    pub elderly: [f32; 4],
+    pub shadow: [f32; 4],
 }
 
 impl Default for ThemeConfig {
     fn default() -> Self {
         Self {
-            background: [0.12, 0.12, 0.14, 1.0],
-            panel: [0.18, 0.18, 0.22, 1.0],
-            panel_header: [0.22, 0.22, 0.28, 1.0],
-            text: [0.9, 0.9, 0.9, 1.0],
+            background: [0.07, 0.08, 0.11, 1.0],
+            surface: [0.12, 0.13, 0.17, 1.0],
+            surface_alt: [0.16, 0.17, 0.22, 1.0],
+            surface_header: [0.10, 0.11, 0.15, 1.0],
+            border: [0.24, 0.26, 0.33, 1.0],
+            border_strong: [0.38, 0.41, 0.50, 1.0],
+            text: [0.90, 0.91, 0.94, 1.0],
             text_bright: [1.0, 1.0, 1.0, 1.0],
-            text_dim: [0.6, 0.6, 0.6, 1.0],
-            accent: [0.3, 0.6, 0.9, 1.0],
-            positive: [0.3, 0.8, 0.4, 1.0],
-            warning: [0.9, 0.7, 0.2, 1.0],
-            negative: [0.9, 0.3, 0.3, 1.0],
-            vacant: [0.3, 0.3, 0.35, 1.0],
-            occupied: [0.25, 0.35, 0.45, 1.0],
-            selected: [0.35, 0.5, 0.7, 1.0],
-            hovered: [0.3, 0.4, 0.55, 1.0],
-            archetype_student: [0.8, 0.5, 0.3, 1.0],
-            archetype_professional: [0.3, 0.5, 0.8, 1.0],
-            archetype_artist: [0.8, 0.3, 0.7, 1.0],
-            archetype_family: [0.4, 0.8, 0.4, 1.0],
-            archetype_elderly: [0.7, 0.7, 0.7, 1.0],
+            text_dim: [0.58, 0.61, 0.69, 1.0],
+            primary: [0.96, 0.70, 0.30, 1.0],
+            primary_hover: [1.0, 0.78, 0.42, 1.0],
+            primary_pressed: [0.78, 0.55, 0.20, 1.0],
+            accent: [0.35, 0.78, 0.82, 1.0],
+            positive: [0.42, 0.80, 0.48, 1.0],
+            warning: [0.95, 0.68, 0.25, 1.0],
+            negative: [0.92, 0.36, 0.38, 1.0],
+            vacant: [0.20, 0.21, 0.26, 1.0],
+            occupied: [0.18, 0.28, 0.34, 1.0],
+            selected: [0.30, 0.44, 0.52, 1.0],
+            hovered: [0.24, 0.30, 0.40, 1.0],
+            student: [0.90, 0.60, 0.35, 1.0],
+            professional: [0.40, 0.60, 0.92, 1.0],
+            artist: [0.82, 0.42, 0.78, 1.0],
+            family: [0.45, 0.82, 0.50, 1.0],
+            elderly: [0.72, 0.74, 0.80, 1.0],
+            shadow: [0.0, 0.0, 0.0, 0.35],
         }
     }
 }

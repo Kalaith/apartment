@@ -24,12 +24,13 @@ impl DesignType {
 
     /// Design appeal score (affects tenant happiness)
     pub fn appeal_score(&self) -> i32 {
+        let config = crate::data::config::active().apartment;
         match self {
-            DesignType::Bare => 0,
-            DesignType::Practical => 20,
-            DesignType::Cozy => 40,
-            DesignType::Luxury => 65,
-            DesignType::Opulent => 90,
+            DesignType::Bare => config.design_appeal_bare,
+            DesignType::Practical => config.design_appeal_practical,
+            DesignType::Cozy => config.design_appeal_cozy,
+            DesignType::Luxury => config.design_appeal_luxury,
+            DesignType::Opulent => config.design_appeal_opulent,
         }
     }
 }
@@ -44,20 +45,22 @@ pub enum ApartmentSize {
 
 impl ApartmentSize {
     pub fn base_rent(&self) -> i32 {
+        let config = crate::data::config::active().apartment;
         match self {
-            ApartmentSize::Small => 600,
-            ApartmentSize::Medium => 850,
-            ApartmentSize::Large => 1200,
-            ApartmentSize::Penthouse => 2500,
+            ApartmentSize::Small => config.base_rent_small,
+            ApartmentSize::Medium => config.base_rent_medium,
+            ApartmentSize::Large => config.base_rent_large,
+            ApartmentSize::Penthouse => config.base_rent_penthouse,
         }
     }
 
     pub fn space_score(&self) -> i32 {
+        let config = crate::data::config::active().apartment;
         match self {
-            ApartmentSize::Small => 0,
-            ApartmentSize::Medium => 15,
-            ApartmentSize::Large => 30,
-            ApartmentSize::Penthouse => 50,
+            ApartmentSize::Small => config.space_score_small,
+            ApartmentSize::Medium => config.space_score_medium,
+            ApartmentSize::Large => config.space_score_large,
+            ApartmentSize::Penthouse => config.space_score_penthouse,
         }
     }
 }
@@ -72,7 +75,7 @@ impl NoiseLevel {
     pub fn noise_penalty(&self) -> i32 {
         match self {
             NoiseLevel::Low => 0,
-            NoiseLevel::High => -20,
+            NoiseLevel::High => crate::data::config::active().apartment.noise_penalty_high,
         }
     }
 }
@@ -192,46 +195,52 @@ impl Apartment {
     /// Calculate market value for selling the unit
     /// Takes into account: size, condition, design, kitchen, floor, soundproofing
     pub fn market_value(&self) -> i32 {
+        let config = crate::data::config::active().apartment;
+
         // Base price by size
         let base_price = match self.size {
-            ApartmentSize::Small => 50_000,
-            ApartmentSize::Medium => 75_000,
-            ApartmentSize::Large => 120_000,
-            ApartmentSize::Penthouse => 250_000,
+            ApartmentSize::Small => config.market_base_small,
+            ApartmentSize::Medium => config.market_base_medium,
+            ApartmentSize::Large => config.market_base_large,
+            ApartmentSize::Penthouse => config.market_base_penthouse,
         };
 
-        // Condition bonus: +$500 per point above 50, -$300 per point below 50
+        // Condition bonus: positive per point above 50, negative per point below 50
         let condition_bonus = if self.condition > 50 {
-            (self.condition - 50) * 500
+            (self.condition - 50) * config.market_condition_bonus_above_50_per_point
         } else {
-            (self.condition - 50) * 300 // Negative bonus for poor condition
+            (self.condition - 50) * config.market_condition_bonus_below_50_per_point
         };
 
         // Design bonus
         let design_bonus = match self.design {
-            DesignType::Bare => 0,
-            DesignType::Practical => 5_000,
-            DesignType::Cozy => 15_000,
-            DesignType::Luxury => 30_000,
-            DesignType::Opulent => 60_000,
+            DesignType::Bare => config.market_design_bonus_bare,
+            DesignType::Practical => config.market_design_bonus_practical,
+            DesignType::Cozy => config.market_design_bonus_cozy,
+            DesignType::Luxury => config.market_design_bonus_luxury,
+            DesignType::Opulent => config.market_design_bonus_opulent,
         };
 
         // Kitchen bonus
         let kitchen_bonus = match self.kitchen_level {
             0 => 0,
-            1 => 8_000,
-            _ => 15_000, // Level 2+
+            1 => config.market_kitchen_bonus_level1,
+            _ => config.market_kitchen_bonus_level2_plus, // Level 2+
         };
 
-        // Floor bonus: higher floors worth more (+$2000 per floor)
-        let floor_bonus = (self.floor as i32) * 2_000;
+        // Floor bonus: higher floors worth more
+        let floor_bonus = (self.floor as i32) * config.market_floor_bonus_per_floor;
 
         // Soundproofing bonus
-        let soundproofing_bonus = if self.has_soundproofing { 3_000 } else { 0 };
+        let soundproofing_bonus = if self.has_soundproofing {
+            config.market_soundproofing_bonus
+        } else {
+            0
+        };
 
         // Noise penalty for noisy units without soundproofing
         let noise_penalty = match self.base_noise {
-            NoiseLevel::High if !self.has_soundproofing => -5_000,
+            NoiseLevel::High if !self.has_soundproofing => config.market_high_noise_penalty,
             _ => 0,
         };
 
@@ -242,7 +251,7 @@ impl Apartment {
             + floor_bonus
             + soundproofing_bonus
             + noise_penalty)
-            .max(10_000)
+            .max(config.market_value_floor)
     }
 }
 

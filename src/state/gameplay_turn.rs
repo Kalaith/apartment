@@ -68,16 +68,16 @@ impl GameplayState {
                     &format!("+${}", amount),
                     rng::gen_range(-50.0, 50.0),
                     rng::gen_range(-50.0, 50.0),
-                    colors::POSITIVE,
+                    colors::POSITIVE(),
                 ),
                 GameEvent::RentMissed { .. } => {
-                    self.spawn_center_text("Missed Rent!", 0.0, 0.0, colors::NEGATIVE);
+                    self.spawn_center_text("Missed Rent!", 0.0, 0.0, colors::NEGATIVE());
                 }
                 GameEvent::TenantUnhappy { .. } => self.spawn_center_text(
                     "Unhappy!",
                     rng::gen_range(-50.0, 50.0),
                     rng::gen_range(-50.0, 50.0),
-                    colors::WARNING,
+                    colors::WARNING(),
                 ),
                 _ => {}
             }
@@ -265,7 +265,7 @@ impl GameplayState {
     fn autosave_current_game(&mut self) {
         if let Err(error) = crate::save::save_game(self) {
             eprintln!("Failed to save game: {}", error);
-            self.spawn_center_text("Save Failed!", 0.0, 0.0, colors::NEGATIVE);
+            self.spawn_center_text("Save Failed!", 0.0, 0.0, colors::NEGATIVE());
         }
     }
 

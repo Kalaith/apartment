@@ -176,8 +176,8 @@ impl GameplayState {
             0.0,
             0.0,
             screen_width(),
-            HEADER_HEIGHT,
-            colors::PANEL_HEADER,
+            HEADER_HEIGHT(),
+            colors::SURFACE_HEADER(),
         );
 
         // Show a loading indicator if assets aren't ready
@@ -188,7 +188,7 @@ impl GameplayState {
                 35.0,
                 TextParams {
                     font_size: 14,
-                    color: colors::TEXT_DIM,
+                    color: colors::TEXT_DIM(),
                     ..Default::default()
                 },
             );
@@ -200,7 +200,7 @@ impl GameplayState {
             35.0,
             TextParams {
                 font_size: 28,
-                color: colors::TEXT,
+                color: colors::TEXT(),
                 ..Default::default()
             },
         );
@@ -214,14 +214,14 @@ impl GameplayState {
                 35.0,
                 TextParams {
                     font_size: 16,
-                    color: colors::WARNING,
+                    color: colors::WARNING(),
                     ..Default::default()
                 },
             );
         }
 
         // Mail list
-        let start_y = HEADER_HEIGHT + 20.0;
+        let start_y = HEADER_HEIGHT() + 20.0;
         let mail_height = 80.0;
 
         let mail_to_show = self.mailbox.recent(10);
@@ -243,7 +243,7 @@ impl GameplayState {
                 y + 30.0,
                 TextParams {
                     font_size: 24,
-                    color: colors::TEXT,
+                    color: colors::TEXT(),
                     ..Default::default()
                 },
             );
@@ -256,9 +256,9 @@ impl GameplayState {
                 TextParams {
                     font_size: 18,
                     color: if mail.read {
-                        colors::TEXT_DIM
+                        colors::TEXT_DIM()
                     } else {
-                        colors::TEXT
+                        colors::TEXT()
                     },
                     ..Default::default()
                 },
@@ -271,7 +271,7 @@ impl GameplayState {
                 y + 45.0,
                 TextParams {
                     font_size: 14,
-                    color: colors::TEXT_DIM,
+                    color: colors::TEXT_DIM(),
                     ..Default::default()
                 },
             );
@@ -283,7 +283,7 @@ impl GameplayState {
                 y + 25.0,
                 TextParams {
                     font_size: 12,
-                    color: colors::TEXT_DIM,
+                    color: colors::TEXT_DIM(),
                     ..Default::default()
                 },
             );
@@ -296,7 +296,7 @@ impl GameplayState {
             screen_height() - 30.0,
             TextParams {
                 font_size: 14,
-                color: colors::TEXT_DIM,
+                color: colors::TEXT_DIM(),
                 ..Default::default()
             },
         );
@@ -319,8 +319,8 @@ impl GameplayState {
         let panel_x = (screen_width() - panel_w) / 2.0;
         let panel_y = (screen_height() - panel_h) / 2.0;
 
-        draw_rectangle(panel_x, panel_y, panel_w, panel_h, colors::PANEL);
-        draw_rectangle_lines(panel_x, panel_y, panel_w, panel_h, 2.0, colors::ACCENT);
+        draw_rectangle(panel_x, panel_y, panel_w, panel_h, colors::SURFACE());
+        draw_rectangle_lines(panel_x, panel_y, panel_w, panel_h, 2.0, colors::ACCENT());
 
         // Title
         let title = "PAUSED";
@@ -330,7 +330,7 @@ impl GameplayState {
             panel_x + (panel_w - title_width) / 2.0,
             panel_y + 40.0,
             32.0,
-            colors::TEXT_BRIGHT,
+            colors::TEXT_BRIGHT(),
         );
 
         let btn_w = 200.0;
@@ -362,7 +362,7 @@ impl GameplayState {
                 self.floating_texts.spawn(
                     "Game Saved!",
                     vec2(screen_width() / 2.0, screen_height() / 2.0),
-                    colors::POSITIVE,
+                    colors::POSITIVE(),
                 );
             }
             self.show_pause_menu = false;
@@ -390,7 +390,7 @@ impl GameplayState {
             panel_x + (panel_w - 140.0) / 2.0,
             panel_y + panel_h - 20.0,
             14.0,
-            colors::TEXT_DIM,
+            colors::TEXT_DIM(),
         );
     }
 
@@ -401,9 +401,9 @@ impl GameplayState {
         let clicked = hovered && is_mouse_button_pressed(MouseButton::Left);
 
         let bg_color = if hovered {
-            colors::HOVERED
+            colors::HOVERED()
         } else {
-            colors::SURFACE_ALT
+            colors::SURFACE_ALT()
         };
 
         draw_rectangle(x, y, w, h, bg_color);
@@ -414,9 +414,9 @@ impl GameplayState {
             h,
             1.0,
             if hovered {
-                colors::PRIMARY
+                colors::PRIMARY()
             } else {
-                colors::BORDER_STRONG
+                colors::BORDER_STRONG()
             },
         );
 
@@ -426,7 +426,7 @@ impl GameplayState {
             x + (w - text_width) / 2.0,
             y + h / 2.0 + 6.0,
             20.0,
-            colors::TEXT,
+            colors::TEXT(),
         );
 
         clicked

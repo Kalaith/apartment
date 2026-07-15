@@ -4,7 +4,9 @@
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::sync::{OnceLock, RwLock};
 
+mod apartment;
 mod consequences;
 mod difficulty;
 mod presentation;
@@ -13,6 +15,7 @@ mod social;
 mod tenants;
 mod upgrades;
 
+pub use apartment::ApartmentPropertiesConfig;
 pub use consequences::{
     CriticalFailureConfig, GentrificationConfig, PortfolioConfig, RegulationsConfig,
 };
@@ -79,6 +82,30 @@ pub struct GameConfig {
     pub layout: LayoutConfig,
     #[serde(default)]
     pub ui_thresholds: UiThresholdsConfig,
+    #[serde(default)]
+    pub apartment: ApartmentPropertiesConfig,
+}
+
+/// Process-wide "currently loaded" config, consulted by call sites that would
+/// otherwise need config threaded through many constructors/free functions
+/// (presentation: theme colors, layout metrics, UI thresholds; and a few
+/// enum-keyed scoring helpers on `Apartment`/`DesignType`/etc.). Refreshed
+/// every time [`load_config`] runs. Falls back to `GameConfig::default()`
+/// until the first load, so early/headless callers never see a panic.
+static ACTIVE_CONFIG: OnceLock<RwLock<GameConfig>> = OnceLock::new();
+
+fn active_cell() -> &'static RwLock<GameConfig> {
+    ACTIVE_CONFIG.get_or_init(|| RwLock::new(GameConfig::default()))
+}
+
+fn set_active(config: &GameConfig) {
+    *active_cell().write().unwrap() = config.clone();
+}
+
+/// The most recently loaded [`GameConfig`] (or the default, if none has
+/// loaded yet). Cloned out so callers don't hold the lock.
+pub fn active() -> GameConfig {
+    active_cell().read().unwrap().clone()
 }
 
 pub fn load_config() -> GameConfig {
@@ -108,5 +135,6 @@ pub fn load_config() -> GameConfig {
         config.upgrades = upgrades;
     }
 
+    set_active(&config);
     config
 }

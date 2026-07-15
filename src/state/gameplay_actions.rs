@@ -45,7 +45,7 @@ impl GameplayState {
                     self.floating_texts.spawn(
                         "Listed for Lease",
                         vec2(screen_width() / 2.0, screen_height() / 2.0),
-                        colors::POSITIVE,
+                        colors::POSITIVE(),
                     );
                 }
             }
@@ -58,7 +58,7 @@ impl GameplayState {
                     self.floating_texts.spawn(
                         "Property Unlisted",
                         vec2(screen_width() / 2.0, screen_height() / 2.0),
-                        colors::TEXT,
+                        colors::TEXT(),
                     );
                 }
             }
@@ -91,7 +91,7 @@ impl GameplayState {
                     self.floating_texts.spawn(
                         format!("-${}", cost),
                         vec2(mouse.0, mouse.1 - 20.0),
-                        colors::NEGATIVE,
+                        colors::NEGATIVE(),
                     );
                 }
             }
@@ -165,7 +165,7 @@ impl GameplayState {
                         self.floating_texts.spawn(
                             "Offer Declined",
                             vec2(mouse.0, mouse.1 - 20.0),
-                            colors::WARNING,
+                            colors::WARNING(),
                         );
                         return;
                     }
@@ -188,7 +188,7 @@ impl GameplayState {
                     self.floating_texts.spawn(
                         "Welcome!",
                         vec2(mouse.0, mouse.1 - 20.0),
-                        colors::POSITIVE,
+                        colors::POSITIVE(),
                     );
 
                     let story = TenantStory::generate(tenant.id, &tenant.archetype);
@@ -218,18 +218,18 @@ impl GameplayState {
                             ),
                             vec2(screen_width() / 2.0, screen_height() / 2.0),
                             if result.reliability_score >= 75 {
-                                colors::POSITIVE
+                                colors::POSITIVE()
                             } else if result.reliability_score >= 50 {
-                                colors::WARNING
+                                colors::WARNING()
                             } else {
-                                colors::NEGATIVE
+                                colors::NEGATIVE()
                             },
                         );
                     } else {
                         self.floating_texts.spawn(
                             "Cannot perform credit check",
                             vec2(screen_width() / 2.0, screen_height() / 2.0),
-                            colors::NEGATIVE,
+                            colors::NEGATIVE(),
                         );
                     }
                 }
@@ -250,18 +250,18 @@ impl GameplayState {
                             ),
                             vec2(screen_width() / 2.0, screen_height() / 2.0),
                             if result.behavior_score >= 75 {
-                                colors::POSITIVE
+                                colors::POSITIVE()
                             } else if result.behavior_score >= 50 {
-                                colors::WARNING
+                                colors::WARNING()
                             } else {
-                                colors::NEGATIVE
+                                colors::NEGATIVE()
                             },
                         );
                     } else {
                         self.floating_texts.spawn(
                             "Cannot perform background check",
                             vec2(screen_width() / 2.0, screen_height() / 2.0),
-                            colors::NEGATIVE,
+                            colors::NEGATIVE(),
                         );
                     }
                 }
@@ -305,7 +305,7 @@ impl GameplayState {
                 self.floating_texts.spawn(
                     "Building Changed",
                     vec2(screen_width() / 2.0, screen_height() / 2.0),
-                    colors::ACCENT,
+                    colors::ACCENT(),
                 );
             }
             UiAction::PurchaseBuilding { listing_id } => {
@@ -342,7 +342,7 @@ impl GameplayState {
                             self.floating_texts.spawn(
                                 "Building Purchased!",
                                 vec2(screen_width() / 2.0, screen_height() / 2.0),
-                                colors::POSITIVE,
+                                colors::POSITIVE(),
                             );
 
                             self.event_log.log(
@@ -404,7 +404,7 @@ impl GameplayState {
                 self.floating_texts.spawn(
                     "Vote Cast",
                     vec2(screen_width() / 2.0, screen_height() / 2.0),
-                    colors::ACCENT,
+                    colors::ACCENT(),
                 );
             }
             UiAction::SellUnitAsCondo { apartment_id } => {
@@ -438,7 +438,7 @@ impl GameplayState {
                     self.floating_texts.spawn(
                         format!("+${}", sale_price),
                         vec2(screen_width() / 2.0, screen_height() / 2.0),
-                        colors::POSITIVE,
+                        colors::POSITIVE(),
                     );
 
                     self.save_building_to_city();
@@ -458,13 +458,13 @@ impl GameplayState {
                         self.floating_texts.spawn(
                             format!("-${}", buyback_cost),
                             vec2(screen_width() / 2.0, screen_height() / 2.0),
-                            colors::NEGATIVE,
+                            colors::NEGATIVE(),
                         );
 
                         self.floating_texts.spawn(
                             "Unit Repurchased!",
                             vec2(screen_width() / 2.0, screen_height() / 2.0 + 30.0),
-                            colors::POSITIVE,
+                            colors::POSITIVE(),
                         );
 
                         self.save_building_to_city();
@@ -486,7 +486,7 @@ impl GameplayState {
                     self.floating_texts.spawn(
                         "Dialogue Resolved",
                         vec2(screen_width() / 2.0, screen_height() / 2.0),
-                        colors::ACCENT,
+                        colors::ACCENT(),
                     );
                 }
             }

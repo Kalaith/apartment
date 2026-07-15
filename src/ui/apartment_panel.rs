@@ -25,16 +25,18 @@ pub fn draw_apartment_panel(
     let mut action = None;
     let mut new_scroll = scroll_offset;
 
-    let panel_x = screen_width() * layout::PANEL_SPLIT + layout::PADDING + offset_x;
-    let panel_y = layout::HEADER_HEIGHT + layout::PADDING;
-    let panel_w = screen_width() * (1.0 - layout::PANEL_SPLIT) - layout::PADDING * 2.0;
+    let panel_x = screen_width() * layout::PANEL_SPLIT() + layout::PADDING() + offset_x;
+    let panel_y = layout::HEADER_HEIGHT() + layout::PADDING();
+    let panel_w = screen_width() * (1.0 - layout::PANEL_SPLIT()) - layout::PADDING() * 2.0;
 
     if panel_x > screen_width() {
         return (None, scroll_offset);
     }
 
-    let panel_h =
-        screen_height() - layout::HEADER_HEIGHT - layout::FOOTER_HEIGHT - layout::PADDING * 2.0;
+    let panel_h = screen_height()
+        - layout::HEADER_HEIGHT()
+        - layout::FOOTER_HEIGHT()
+        - layout::PADDING() * 2.0;
 
     if building.is_unit_sold(apt.id) {
         if let Some(act) =

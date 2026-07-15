@@ -46,7 +46,7 @@ pub fn update_missions(state: &mut GameplayState) {
                 state.floating_texts.spawn(
                     "Mission Failed!",
                     vec2(screen_width() / 2.0, screen_height() / 2.0),
-                    colors::NEGATIVE,
+                    colors::NEGATIVE(),
                 );
             }
         }
@@ -166,7 +166,7 @@ pub fn update_missions(state: &mut GameplayState) {
                     state.floating_texts.spawn(
                         format!("+${}", amount),
                         vec2(screen_width() / 2.0, screen_height() / 2.0 + 30.0),
-                        colors::POSITIVE,
+                        colors::POSITIVE(),
                     );
                 }
                 MissionReward::UnlockBuilding(unlock_order) => {
@@ -174,7 +174,7 @@ pub fn update_missions(state: &mut GameplayState) {
                     state.floating_texts.spawn(
                         "New property unlocked!",
                         vec2(screen_width() / 2.0, screen_height() / 2.0 + 30.0),
-                        colors::ACCENT,
+                        colors::ACCENT(),
                     );
                 }
                 MissionReward::Reputation(amount) => {
@@ -192,7 +192,7 @@ pub fn update_missions(state: &mut GameplayState) {
                             months
                         ),
                         vec2(screen_width() / 2.0, screen_height() / 2.0 + 30.0),
-                        colors::POSITIVE,
+                        colors::POSITIVE(),
                     );
                 }
             }

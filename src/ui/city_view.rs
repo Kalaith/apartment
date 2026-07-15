@@ -132,7 +132,7 @@ fn draw_neighborhood_cell(
         &neighborhood.name,
         x + 8.0,
         y + 22.0,
-        text_params(scale::HEADING, colors::TEXT_BRIGHT),
+        text_params(scale::HEADING, colors::TEXT_BRIGHT()),
     );
 
     // Neighborhood type
@@ -140,7 +140,7 @@ fn draw_neighborhood_cell(
         neighborhood.neighborhood_type.name(),
         x + 8.0,
         y + 40.0,
-        text_params(scale::LABEL, colors::TEXT_DIM),
+        text_params(scale::LABEL, colors::TEXT_DIM()),
     );
 
     // Building count
@@ -156,9 +156,9 @@ fn draw_neighborhood_cell(
         text_params(
             scale::LABEL,
             if building_count > 0 {
-                colors::POSITIVE
+                colors::POSITIVE()
             } else {
-                colors::TEXT_DIM
+                colors::TEXT_DIM()
             },
         ),
     );
@@ -172,7 +172,7 @@ fn draw_neighborhood_cell(
         ),
         x + 8.0,
         y + 80.0,
-        text_params(scale::CAPTION, colors::TEXT_DIM),
+        text_params(scale::CAPTION, colors::TEXT_DIM()),
     );
 
     // Reputation bar
@@ -182,7 +182,7 @@ fn draw_neighborhood_cell(
         &format!("Rep: {}", neighborhood.reputation),
         x + 8.0,
         bar_y - 3.0,
-        text_params(scale::CAPTION, colors::TEXT_DIM),
+        text_params(scale::CAPTION, colors::TEXT_DIM()),
     );
     draw_progress_bar(
         x + 8.0,
@@ -190,7 +190,7 @@ fn draw_neighborhood_cell(
         bar_width,
         8.0,
         neighborhood.reputation as f32 / 100.0,
-        colors::POSITIVE,
+        colors::POSITIVE(),
     );
 
     // Event indicator
@@ -202,13 +202,13 @@ fn draw_neighborhood_cell(
     if has_event {
         let icon_x = x + width - 30.0;
         let icon_y = y + 30.0;
-        draw_circle(icon_x, icon_y, 12.0, colors::ACCENT);
+        draw_circle(icon_x, icon_y, 12.0, colors::ACCENT());
         draw_ui_text(
             "!",
             icon_x - 3.0,
             icon_y + 5.0,
             scale::HEADING,
-            colors::TEXT_BRIGHT,
+            colors::TEXT_BRIGHT(),
         );
     }
 
@@ -273,9 +273,9 @@ pub fn draw_portfolio_panel(
             text_params(
                 scale::HEADING,
                 if is_selected {
-                    colors::ACCENT
+                    colors::ACCENT()
                 } else {
-                    colors::TEXT_BRIGHT
+                    colors::TEXT_BRIGHT()
                 },
             ),
         );
@@ -285,7 +285,7 @@ pub fn draw_portfolio_panel(
             &neighborhood_name,
             item_x + 10.0,
             y + 40.0,
-            text_params(scale::LABEL, colors::TEXT_DIM),
+            text_params(scale::LABEL, colors::TEXT_DIM()),
         );
 
         // Stats
@@ -300,9 +300,9 @@ pub fn draw_portfolio_panel(
             text_params(
                 scale::LABEL,
                 if occupancy == total {
-                    colors::POSITIVE
+                    colors::POSITIVE()
                 } else {
-                    colors::TEXT_DIM
+                    colors::TEXT_DIM()
                 },
             ),
         );
@@ -363,7 +363,7 @@ pub fn draw_market_panel(
         &budget_text,
         content.x + content.w - budget_w,
         panel_y + 28.0,
-        text_params(scale::LABEL, colors::POSITIVE),
+        text_params(scale::LABEL, colors::POSITIVE()),
     );
 
     let mut action = None;

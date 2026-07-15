@@ -5,7 +5,7 @@ pub use macroquad_toolkit::input::{is_hovered, was_clicked};
 pub use macroquad_toolkit::ui::progress_bar;
 
 /// Color palette — single source of truth lives in [`crate::ui::theme::color`].
-/// Re-exported here so existing `colors::NAME` references keep working while
+/// Re-exported here so existing `colors::NAME()` references keep working while
 /// the whole UI picks up the restyle.
 pub mod colors {
     pub use crate::ui::theme::color::*;
@@ -16,24 +16,47 @@ use crate::tenant::TenantArchetype;
 /// Get color for tenant archetype
 pub fn archetype_color(archetype: &TenantArchetype) -> macroquad::prelude::Color {
     match archetype {
-        TenantArchetype::Student => colors::STUDENT,
-        TenantArchetype::Professional => colors::PROFESSIONAL,
-        TenantArchetype::Artist => colors::ARTIST,
-        TenantArchetype::Family => colors::FAMILY,
-        TenantArchetype::Elderly => colors::ELDERLY,
+        TenantArchetype::Student => colors::STUDENT(),
+        TenantArchetype::Professional => colors::PROFESSIONAL(),
+        TenantArchetype::Artist => colors::ARTIST(),
+        TenantArchetype::Family => colors::FAMILY(),
+        TenantArchetype::Elderly => colors::ELDERLY(),
     }
 }
 
-/// Layout constants
+/// Layout metrics, read from the active config's `layout` block. Functions
+/// keep the SCREAMING_CASE names call sites already use (they used to be
+/// consts); `non_snake_case` is allowed module-wide for that reason.
+#[allow(non_snake_case)]
 pub mod layout {
-    pub const HEADER_HEIGHT: f32 = 60.0;
-    pub const FOOTER_HEIGHT: f32 = 100.0;
-    pub const PANEL_SPLIT: f32 = 0.6; // Building view takes 60%
-    pub const PADDING: f32 = 10.0;
-    pub const UNIT_WIDTH: f32 = 120.0;
-    pub const UNIT_HEIGHT: f32 = 80.0;
-    pub const UNIT_GAP: f32 = 15.0;
-    pub const FLOOR_HEIGHT: f32 = 100.0;
+    fn layout() -> crate::data::config::LayoutConfig {
+        crate::data::config::active().layout
+    }
+
+    pub fn HEADER_HEIGHT() -> f32 {
+        layout().header_height
+    }
+    pub fn FOOTER_HEIGHT() -> f32 {
+        layout().footer_height
+    }
+    pub fn PANEL_SPLIT() -> f32 {
+        layout().panel_split
+    }
+    pub fn PADDING() -> f32 {
+        layout().padding
+    }
+    pub fn UNIT_WIDTH() -> f32 {
+        layout().unit_width
+    }
+    pub fn UNIT_HEIGHT() -> f32 {
+        layout().unit_height
+    }
+    pub fn UNIT_GAP() -> f32 {
+        layout().unit_gap
+    }
+    pub fn FLOOR_HEIGHT() -> f32 {
+        layout().floor_height
+    }
 }
 
 /// Draw a standard secondary button (returns true on click). Restyled to the
@@ -52,22 +75,33 @@ pub fn panel(x: f32, y: f32, w: f32, h: f32, title: &str) {
     crate::ui::widgets::draw_panel(Rect::new(x, y, w, h), title);
 }
 
-/// Get color for condition value
+/// Get color for condition value, using the active config's `ui_thresholds`.
 pub fn condition_color(condition: i32) -> Color {
-    match condition {
-        80..=100 => colors::POSITIVE,
-        50..=79 => colors::ACCENT,
-        30..=49 => colors::WARNING,
-        _ => colors::NEGATIVE,
+    let t = crate::data::config::active().ui_thresholds;
+    if condition >= t.condition_good {
+        colors::POSITIVE()
+    } else if condition >= t.condition_fair {
+        colors::ACCENT()
+    } else if condition >= t.condition_poor {
+        colors::WARNING()
+    } else {
+        colors::NEGATIVE()
     }
 }
 
-/// Get color for happiness value
+/// Get color for happiness value, using the active config's `ui_thresholds`.
+/// Reuses the happy/neutral/unhappy breakpoints (there's no distinct
+/// "ecstatic" tone — `happiness_ecstatic` is reserved for a future label-only
+/// tier and doesn't affect color).
 pub fn happiness_color(happiness: i32) -> Color {
-    match happiness {
-        70..=100 => colors::POSITIVE,
-        40..=69 => colors::ACCENT,
-        20..=39 => colors::WARNING,
-        _ => colors::NEGATIVE,
+    let t = crate::data::config::active().ui_thresholds;
+    if happiness >= t.happiness_happy {
+        colors::POSITIVE()
+    } else if happiness >= t.happiness_neutral {
+        colors::ACCENT()
+    } else if happiness >= t.happiness_unhappy {
+        colors::WARNING()
+    } else {
+        colors::NEGATIVE()
     }
 }

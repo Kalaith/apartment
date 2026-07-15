@@ -20,7 +20,7 @@ pub fn line_height(size: f32) -> f32 {
 
 /// Small dim uppercase section label. Returns the height consumed.
 pub fn section_label(x: f32, y: f32, text: &str) -> f32 {
-    draw_ui_text(text, x, y + scale::LABEL, scale::LABEL, color::TEXT_DIM);
+    draw_ui_text(text, x, y + scale::LABEL, scale::LABEL, color::TEXT_DIM());
     line_height(scale::LABEL) + space::XS
 }
 
@@ -29,7 +29,7 @@ pub fn section_label(x: f32, y: f32, text: &str) -> f32 {
 /// label text and value/icon from overlapping. Returns height consumed.
 pub fn kv_row(x: f32, y: f32, width: f32, key: &str, value: &str, value_color: Color) -> f32 {
     let size = scale::BODY;
-    draw_ui_text(key, x, y + size, size, color::TEXT_DIM);
+    draw_ui_text(key, x, y + size, size, color::TEXT_DIM());
     let vw = measure_ui_text(value, None, size as u16, 1.0).width;
     draw_ui_text(value, x + width - vw, y + size, size, value_color);
     line_height(size) + 3.0
@@ -49,7 +49,7 @@ pub fn stat_meter(x: f32, y: f32, width: f32, value: i32, max: i32, fill: Color)
         x + width - pct_w,
         y + bar_h - 3.0,
         scale::LABEL,
-        color::TEXT,
+        color::TEXT(),
     );
     bar_h + space::SM
 }
@@ -83,7 +83,7 @@ pub fn draw_panel(rect: Rect, title: &str) -> Rect {
         rect.x + space::PAD,
         baseline,
         scale::HEADING,
-        color::TEXT_BRIGHT,
+        color::TEXT_BRIGHT(),
     );
     Rect::new(
         rect.x + space::PAD,
@@ -138,10 +138,10 @@ pub enum ToastKind {
 impl ToastKind {
     fn accent(self) -> Color {
         match self {
-            ToastKind::Info => color::ACCENT,
-            ToastKind::Positive => color::POSITIVE,
-            ToastKind::Warning => color::WARNING,
-            ToastKind::Hint => color::TEXT_DIM,
+            ToastKind::Info => color::ACCENT(),
+            ToastKind::Positive => color::POSITIVE(),
+            ToastKind::Warning => color::WARNING(),
+            ToastKind::Hint => color::TEXT_DIM(),
         }
     }
 }
@@ -174,9 +174,9 @@ pub fn draw_toast(
     let panel_x = (screen_width() - panel_w) / 2.0;
     let panel_y = screen_height() - panel_h - space::XL;
 
-    let style = macroquad_toolkit::ui::SurfaceStyle::new(color::SURFACE)
-        .with_shadow(vec2(0.0, 4.0), color::SHADOW)
-        .with_border(1.0, color::BORDER)
+    let style = macroquad_toolkit::ui::SurfaceStyle::new(color::SURFACE())
+        .with_shadow(vec2(0.0, 4.0), color::SHADOW())
+        .with_border(1.0, color::BORDER())
         .with_left_accent(5.0, accent);
     draw_surface(Rect::new(panel_x, panel_y, panel_w, panel_h), &style);
 
@@ -191,7 +191,7 @@ pub fn draw_toast(
             panel_x + text_x_pad,
             y + scale::HEADING,
             scale::HEADING,
-            color::TEXT_BRIGHT,
+            color::TEXT_BRIGHT(),
         );
         y += line_height(scale::HEADING);
     }
@@ -201,7 +201,7 @@ pub fn draw_toast(
             panel_x + text_x_pad,
             y + scale::BODY,
             scale::BODY,
-            color::TEXT,
+            color::TEXT(),
         );
         y += line_height(scale::BODY);
     }

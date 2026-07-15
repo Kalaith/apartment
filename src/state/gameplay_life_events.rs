@@ -65,7 +65,7 @@ impl GameplayState {
             self.floating_texts.spawn(
                 format!("{}: {}", name, description),
                 vec2(screen_width() / 2.0, screen_height() / 2.0 - 40.0),
-                colors::ACCENT,
+                colors::ACCENT(),
             );
         }
     }

@@ -152,7 +152,7 @@ impl GameplayState {
             self.floating_texts.spawn(
                 "Building Sold!",
                 vec2(screen_width() / 2.0, screen_height() / 2.0),
-                colors::POSITIVE,
+                colors::POSITIVE(),
             );
         }
     }

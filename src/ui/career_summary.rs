@@ -10,7 +10,7 @@ pub fn draw_career_summary(state: &GameplayState) -> Option<UiAction> {
     let screen_h = screen_height();
 
     // Background
-    draw_rectangle(0., 0., screen_w, screen_h, colors::BACKGROUND);
+    draw_rectangle(0., 0., screen_w, screen_h, colors::BACKGROUND());
 
     // Calculate Score
     let funds = state.funds.balance;
@@ -45,18 +45,18 @@ pub fn draw_career_summary(state: &GameplayState) -> Option<UiAction> {
     };
 
     let color = if score > 25000 {
-        colors::POSITIVE
+        colors::POSITIVE()
     } else if score > 0 {
-        colors::WARNING
+        colors::WARNING()
     } else {
-        colors::NEGATIVE
+        colors::NEGATIVE()
     };
 
     // Header
     let cx = screen_w / 2.0;
     let mut y = 60.0;
 
-    draw_text_centered("CAREER SUMMARY", cx, y, 50.0, colors::TEXT_BRIGHT);
+    draw_text_centered("CAREER SUMMARY", cx, y, 50.0, colors::TEXT_BRIGHT());
     y += 60.0;
 
     draw_text_centered(&format!("Rank: {}", rank), cx, y, 40.0, color);
@@ -67,7 +67,7 @@ pub fn draw_career_summary(state: &GameplayState) -> Option<UiAction> {
         cx,
         y,
         30.0,
-        colors::TEXT,
+        colors::TEXT(),
     );
     y += 60.0;
 
@@ -82,41 +82,41 @@ pub fn draw_career_summary(state: &GameplayState) -> Option<UiAction> {
         &format!("${}", funds),
         start_x,
         stats_y,
-        colors::POSITIVE,
+        colors::POSITIVE(),
     );
     draw_stat(
         "Happiness",
         &format!("{}%", avg_happiness),
         start_x + col_w,
         stats_y,
-        colors::TEXT,
+        colors::TEXT(),
     );
     draw_stat(
         "Avg Rep",
         &format!("{}", reputation),
         start_x + col_w * 2.0,
         stats_y,
-        colors::ACCENT,
+        colors::ACCENT(),
     );
     draw_stat(
         "Months",
         &format!("{}", state.current_tick),
         start_x + col_w * 3.0,
         stats_y,
-        colors::TEXT_DIM,
+        colors::TEXT_DIM(),
     );
     draw_stat(
         "Missions",
         &format!("{}", state.missions.completed_missions().len()),
         start_x + col_w * 4.0,
         stats_y,
-        colors::TEXT_BRIGHT,
+        colors::TEXT_BRIGHT(),
     );
 
     y += 100.0;
 
     // Achievements
-    draw_text_centered("Achievements Unlocked", cx, y, 30.0, colors::TEXT_BRIGHT);
+    draw_text_centered("Achievements Unlocked", cx, y, 30.0, colors::TEXT_BRIGHT());
     y += 40.0;
 
     let ach_w = 250.0;
@@ -140,7 +140,7 @@ pub fn draw_career_summary(state: &GameplayState) -> Option<UiAction> {
                 rect_x + space::SM,
                 ach_y + 25.0,
                 scale::HEADING,
-                color::TEXT_BRIGHT,
+                color::TEXT_BRIGHT(),
             );
             // Wrap description roughly
             draw_ui_text(
@@ -148,7 +148,7 @@ pub fn draw_career_summary(state: &GameplayState) -> Option<UiAction> {
                 rect_x + space::SM,
                 ach_y + 50.0,
                 scale::CAPTION,
-                color::TEXT_DIM,
+                color::TEXT_DIM(),
             );
         } else {
             draw_ui_text(
@@ -156,14 +156,14 @@ pub fn draw_career_summary(state: &GameplayState) -> Option<UiAction> {
                 rect_x + space::SM,
                 ach_y + 25.0,
                 scale::HEADING,
-                color::TEXT_DIM,
+                color::TEXT_DIM(),
             );
             draw_ui_text(
                 "Locked",
                 rect_x + space::SM,
                 ach_y + 50.0,
                 scale::CAPTION,
-                color::TEXT_DIM,
+                color::TEXT_DIM(),
             );
         }
 
@@ -201,6 +201,6 @@ fn draw_text_centered(text: &str, cx: f32, y: f32, size: f32, color: Color) {
 }
 
 fn draw_stat(label: &str, value: &str, x: f32, y: f32, color: Color) {
-    draw_ui_text(label, x, y, 16.0, colors::TEXT_DIM);
+    draw_ui_text(label, x, y, 16.0, colors::TEXT_DIM());
     draw_ui_text(value, x, y + 25.0, 24.0, color);
 }

@@ -15,7 +15,7 @@ impl GameplayState {
                 &format!("Tax Break +${}", refund),
                 0.0,
                 60.0,
-                colors::POSITIVE,
+                colors::POSITIVE(),
             );
         }
     }
@@ -123,7 +123,7 @@ impl GameplayState {
             "Tenants formed a council — rent rolled back!",
             0.0,
             30.0,
-            colors::ACCENT,
+            colors::ACCENT(),
         );
         self.event_log.log(
             GameEvent::Notification {

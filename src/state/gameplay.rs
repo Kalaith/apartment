@@ -586,8 +586,8 @@ impl GameplayState {
             0.0,
             0.0,
             screen_width(),
-            HEADER_HEIGHT,
-            colors::PANEL_HEADER,
+            HEADER_HEIGHT(),
+            colors::SURFACE_HEADER(),
         );
 
         // Title
@@ -597,7 +597,7 @@ impl GameplayState {
             35.0,
             TextParams {
                 font_size: 28,
-                color: colors::TEXT,
+                color: colors::TEXT(),
                 ..Default::default()
             },
         );
@@ -609,7 +609,7 @@ impl GameplayState {
             35.0,
             TextParams {
                 font_size: 24,
-                color: colors::POSITIVE,
+                color: colors::POSITIVE(),
                 ..Default::default()
             },
         );
@@ -625,7 +625,7 @@ impl GameplayState {
             35.0,
             TextParams {
                 font_size: 16,
-                color: colors::TEXT_DIM,
+                color: colors::TEXT_DIM(),
                 ..Default::default()
             },
         );
@@ -640,7 +640,7 @@ impl GameplayState {
             55.0,
             TextParams {
                 font_size: 12,
-                color: colors::TEXT_DIM,
+                color: colors::TEXT_DIM(),
                 ..Default::default()
             },
         );
@@ -660,7 +660,7 @@ impl GameplayState {
             55.0,
             TextParams {
                 font_size: 14,
-                color: colors::TEXT_DIM,
+                color: colors::TEXT_DIM(),
                 ..Default::default()
             },
         );

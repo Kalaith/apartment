@@ -20,7 +20,6 @@ pub struct EconomyConfig {
     pub kitchen_renovation_cost: i32,
     pub laundry_installation_cost: i32,
     pub soundproofing_cost: i32,
-    pub base_rent: HashMap<String, i32>,
     #[serde(default)]
     pub staff_costs: HashMap<String, i32>,
 }

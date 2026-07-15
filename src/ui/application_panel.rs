@@ -39,7 +39,7 @@ pub fn draw_application_panel(
         content_x,
         y,
         16.0,
-        colors::TEXT_DIM,
+        colors::TEXT_DIM(),
     );
     y += 25.0;
 
@@ -51,7 +51,7 @@ pub fn draw_application_panel(
                 content_x,
                 y,
                 14.0,
-                colors::TEXT_DIM,
+                colors::TEXT_DIM(),
             );
             break;
         }
@@ -75,16 +75,19 @@ pub fn draw_application_panel(
 }
 
 fn application_panel_rect(offset_x: f32) -> Option<Rect> {
-    let panel_x = screen_width() * layout::PANEL_SPLIT + layout::PADDING + offset_x;
+    let panel_x = screen_width() * layout::PANEL_SPLIT() + layout::PADDING() + offset_x;
     if panel_x > screen_width() {
         return None;
     }
 
     Some(Rect::new(
         panel_x,
-        layout::HEADER_HEIGHT + layout::PADDING,
-        screen_width() * (1.0 - layout::PANEL_SPLIT) - layout::PADDING * 2.0,
-        screen_height() - layout::HEADER_HEIGHT - layout::FOOTER_HEIGHT - layout::PADDING * 2.0,
+        layout::HEADER_HEIGHT() + layout::PADDING(),
+        screen_width() * (1.0 - layout::PANEL_SPLIT()) - layout::PADDING() * 2.0,
+        screen_height()
+            - layout::HEADER_HEIGHT()
+            - layout::FOOTER_HEIGHT()
+            - layout::PADDING() * 2.0,
     ))
 }
 
@@ -95,7 +98,7 @@ fn draw_empty_applications(content_x: f32, y: f32, filter_apartment_id: Option<u
             content_x,
             y,
             18.0,
-            colors::TEXT_DIM,
+            colors::TEXT_DIM(),
         );
         return;
     }
@@ -105,14 +108,14 @@ fn draw_empty_applications(content_x: f32, y: f32, filter_apartment_id: Option<u
         content_x,
         y,
         18.0,
-        colors::TEXT_DIM,
+        colors::TEXT_DIM(),
     );
     draw_ui_text(
         "List apartments for lease, then End Month!",
         content_x,
         y + 25.0,
         14.0,
-        colors::TEXT_DIM,
+        colors::TEXT_DIM(),
     );
 }
 
@@ -230,14 +233,14 @@ fn draw_application_text(
         text_x,
         y + 22.0,
         18.0,
-        colors::TEXT,
+        colors::TEXT(),
     );
     draw_ui_text(
         &format!("{:?}", application.tenant.archetype),
         text_x,
         y + 42.0,
         14.0,
-        colors::TEXT_DIM,
+        colors::TEXT_DIM(),
     );
 
     if let Some(apartment) = building.get_apartment(application.apartment_id) {
@@ -246,16 +249,16 @@ fn draw_application_text(
             text_x + 140.0,
             y + 22.0,
             16.0,
-            colors::ACCENT,
+            colors::ACCENT(),
         );
     }
 
     let score_color = if application.match_result.score >= 70 {
-        colors::POSITIVE
+        colors::POSITIVE()
     } else if application.match_result.score >= 50 {
-        colors::ACCENT
+        colors::ACCENT()
     } else {
-        colors::WARNING
+        colors::WARNING()
     };
     draw_ui_text(
         &format!("Match: {}%", application.match_result.score),
@@ -270,14 +273,14 @@ fn draw_application_text(
     } else {
         "Fit: Stretch"
     };
-    draw_ui_text(fit_text, text_x + 240.0, y + 42.0, 14.0, colors::TEXT_DIM);
+    draw_ui_text(fit_text, text_x + 240.0, y + 42.0, 14.0, colors::TEXT_DIM());
 
     let credit_text = if application.revealed_reliability {
         format!("Credit: {}", application.tenant.rent_reliability)
     } else {
         "Credit: ?".to_string()
     };
-    draw_ui_text(&credit_text, text_x, y + 67.0, 14.0, colors::TEXT_DIM);
+    draw_ui_text(&credit_text, text_x, y + 67.0, 14.0, colors::TEXT_DIM());
 
     let background_text = if application.revealed_behavior {
         format!("Behavior: {}", application.tenant.behavior_score)
@@ -289,6 +292,6 @@ fn draw_application_text(
         text_x + 140.0,
         y + 67.0,
         14.0,
-        colors::TEXT_DIM,
+        colors::TEXT_DIM(),
     );
 }

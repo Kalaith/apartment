@@ -37,7 +37,7 @@ pub fn draw_ownership_panel(building: &Building, market_multiplier: f32) -> Opti
         y,
         TextParams {
             font_size: 16,
-            color: colors::ACCENT,
+            color: colors::ACCENT(),
             ..Default::default()
         },
     );
@@ -52,7 +52,7 @@ pub fn draw_ownership_panel(building: &Building, market_multiplier: f32) -> Opti
                 y,
                 TextParams {
                     font_size: 14,
-                    color: colors::TEXT,
+                    color: colors::TEXT(),
                     ..Default::default()
                 },
             );
@@ -63,7 +63,7 @@ pub fn draw_ownership_panel(building: &Building, market_multiplier: f32) -> Opti
                 y,
                 TextParams {
                     font_size: 14,
-                    color: colors::TEXT_DIM,
+                    color: colors::TEXT_DIM(),
                     ..Default::default()
                 },
             );
@@ -78,7 +78,7 @@ pub fn draw_ownership_panel(building: &Building, market_multiplier: f32) -> Opti
                 y,
                 TextParams {
                     font_size: 14,
-                    color: colors::TEXT,
+                    color: colors::TEXT(),
                     ..Default::default()
                 },
             );
@@ -95,7 +95,7 @@ pub fn draw_ownership_panel(building: &Building, market_multiplier: f32) -> Opti
                 y,
                 TextParams {
                     font_size: 14,
-                    color: colors::TEXT,
+                    color: colors::TEXT(),
                     ..Default::default()
                 },
             );
@@ -103,7 +103,13 @@ pub fn draw_ownership_panel(building: &Building, market_multiplier: f32) -> Opti
 
             for apt in &building.apartments {
                 // Background strip
-                draw_rectangle(panel_x + 10.0, y, panel_width - 20.0, 30.0, colors::PANEL);
+                draw_rectangle(
+                    panel_x + 10.0,
+                    y,
+                    panel_width - 20.0,
+                    30.0,
+                    colors::SURFACE(),
+                );
 
                 // Unit Name
                 draw_ui_text_ex(
@@ -112,7 +118,7 @@ pub fn draw_ownership_panel(building: &Building, market_multiplier: f32) -> Opti
                     y + 20.0,
                     TextParams {
                         font_size: 14,
-                        color: colors::TEXT,
+                        color: colors::TEXT(),
                         ..Default::default()
                     },
                 );
@@ -130,9 +136,9 @@ pub fn draw_ownership_panel(building: &Building, market_multiplier: f32) -> Opti
                     TextParams {
                         font_size: 14,
                         color: if apt.is_vacant() {
-                            colors::POSITIVE
+                            colors::POSITIVE()
                         } else {
-                            colors::WARNING
+                            colors::WARNING()
                         },
                         ..Default::default()
                     },
@@ -166,7 +172,7 @@ pub fn draw_ownership_panel(building: &Building, market_multiplier: f32) -> Opti
                 y,
                 TextParams {
                     font_size: 16,
-                    color: colors::POSITIVE,
+                    color: colors::POSITIVE(),
                     ..Default::default()
                 },
             );
@@ -182,7 +188,7 @@ pub fn draw_ownership_panel(building: &Building, market_multiplier: f32) -> Opti
                 y,
                 TextParams {
                     font_size: 14,
-                    color: colors::TEXT,
+                    color: colors::TEXT(),
                     ..Default::default()
                 },
             );
@@ -205,7 +211,7 @@ pub fn draw_ownership_panel(building: &Building, market_multiplier: f32) -> Opti
                     y,
                     TextParams {
                         font_size: 14,
-                        color: colors::ACCENT,
+                        color: colors::ACCENT(),
                         ..Default::default()
                     },
                 );
@@ -213,7 +219,13 @@ pub fn draw_ownership_panel(building: &Building, market_multiplier: f32) -> Opti
 
                 for apt in unsold {
                     // Background strip
-                    draw_rectangle(panel_x + 10.0, y, panel_width - 20.0, 30.0, colors::PANEL);
+                    draw_rectangle(
+                        panel_x + 10.0,
+                        y,
+                        panel_width - 20.0,
+                        30.0,
+                        colors::SURFACE(),
+                    );
 
                     // Unit Name
                     draw_ui_text_ex(
@@ -222,7 +234,7 @@ pub fn draw_ownership_panel(building: &Building, market_multiplier: f32) -> Opti
                         y + 20.0,
                         TextParams {
                             font_size: 14,
-                            color: colors::TEXT,
+                            color: colors::TEXT(),
                             ..Default::default()
                         },
                     );
@@ -240,9 +252,9 @@ pub fn draw_ownership_panel(building: &Building, market_multiplier: f32) -> Opti
                         TextParams {
                             font_size: 14,
                             color: if apt.is_vacant() {
-                                colors::POSITIVE
+                                colors::POSITIVE()
                             } else {
-                                colors::WARNING
+                                colors::WARNING()
                             },
                             ..Default::default()
                         },
@@ -274,7 +286,7 @@ pub fn draw_ownership_panel(building: &Building, market_multiplier: f32) -> Opti
                     y,
                     TextParams {
                         font_size: 14,
-                        color: colors::TEXT_DIM,
+                        color: colors::TEXT_DIM(),
                         ..Default::default()
                     },
                 );
@@ -287,7 +299,7 @@ pub fn draw_ownership_panel(building: &Building, market_multiplier: f32) -> Opti
                 y,
                 TextParams {
                     font_size: 14,
-                    color: colors::TEXT_DIM,
+                    color: colors::TEXT_DIM(),
                     ..Default::default()
                 },
             );

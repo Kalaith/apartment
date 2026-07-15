@@ -85,9 +85,9 @@ impl GameplayState {
         }
 
         let color = if delta >= 0 {
-            colors::POSITIVE
+            colors::POSITIVE()
         } else {
-            colors::NEGATIVE
+            colors::NEGATIVE()
         };
         self.floating_texts.spawn(
             format!("Rep {:+}", delta),

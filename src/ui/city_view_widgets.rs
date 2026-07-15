@@ -73,16 +73,16 @@ fn draw_listing_background(
     neighborhood: Option<&Neighborhood>,
 ) {
     let bg_color = if hovered {
-        colors::SURFACE_ALT
+        colors::SURFACE_ALT()
     } else {
-        colors::SURFACE
+        colors::SURFACE()
     };
     let neighborhood_color = neighborhood
         .map(|n| n.neighborhood_type.color())
-        .unwrap_or(colors::BORDER_STRONG);
+        .unwrap_or(colors::BORDER_STRONG());
 
     let style = SurfaceStyle::new(bg_color)
-        .with_border(1.0, colors::BORDER)
+        .with_border(1.0, colors::BORDER())
         .with_left_accent(5.0, neighborhood_color);
     draw_surface(Rect::new(x, y, width, height), &style);
 }
@@ -129,7 +129,7 @@ fn draw_listing_text(
         &listing.name,
         x + 15.0,
         y + 22.0,
-        text_params(scale::HEADING as u16, colors::TEXT_BRIGHT),
+        text_params(scale::HEADING as u16, colors::TEXT_BRIGHT()),
     );
 
     let location_name = neighborhood.map(|n| n.name.as_str()).unwrap_or("Unknown");
@@ -137,7 +137,7 @@ fn draw_listing_text(
         location_name,
         x + 15.0,
         y + 40.0,
-        text_params(scale::LABEL as u16, colors::TEXT_DIM),
+        text_params(scale::LABEL as u16, colors::TEXT_DIM()),
     );
     draw_ui_text_ex(
         &format!(
@@ -148,7 +148,7 @@ fn draw_listing_text(
         ),
         x + 15.0,
         y + 58.0,
-        text_params(scale::CAPTION as u16, colors::TEXT_DIM),
+        text_params(scale::CAPTION as u16, colors::TEXT_DIM()),
     );
 
     if listing.existing_tenants > 0 {
@@ -156,7 +156,7 @@ fn draw_listing_text(
             &format!("{} existing tenants", listing.existing_tenants),
             x + 15.0,
             y + 73.0,
-            text_params(scale::CAPTION as u16, colors::WARNING),
+            text_params(scale::CAPTION as u16, colors::WARNING()),
         );
     }
 }
@@ -190,7 +190,7 @@ fn draw_listing_purchase(
             "Can't afford",
             btn_x,
             btn_y + 15.0,
-            text_params(scale::CAPTION as u16, colors::TEXT_DIM),
+            text_params(scale::CAPTION as u16, colors::TEXT_DIM()),
         );
     }
 
@@ -199,9 +199,9 @@ fn draw_listing_purchase(
 
 fn price_color(listing: &PropertyListing, player_funds: i32) -> Color {
     if player_funds >= listing.asking_price {
-        colors::POSITIVE
+        colors::POSITIVE()
     } else {
-        colors::NEGATIVE
+        colors::NEGATIVE()
     }
 }
 

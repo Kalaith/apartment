@@ -26,7 +26,7 @@ pub fn check_win_condition(
     current_tick: u32,
     has_ever_had_tenant: bool,
     win_conditions: &WinConditions,
-    _happiness_config: &HappinessConfig,
+    happiness_config: &HappinessConfig,
     thresholds: &ThresholdsConfig,
 ) -> Option<GameOutcome> {
     // Check for bankruptcy
@@ -52,8 +52,26 @@ pub fn check_win_condition(
             tenants.iter().map(|t| t.happiness).sum::<i32>() / tenants.len() as i32
         };
 
-        let occupancy_bonus = if building.vacancy_count() == 0 {
-            100
+        // Full occupancy is only required to earn the bonus when the config
+        // says so; otherwise it's awarded unconditionally.
+        let occupancy_bonus =
+            if !win_conditions.full_occupancy_required || building.vacancy_count() == 0 {
+                100
+            } else {
+                0
+            };
+        // Reward clearing the configured happiness bar, on top of the
+        // continuous happiness contribution below.
+        let happiness_bonus = if avg_happiness >= happiness_config.min_for_victory {
+            50
+        } else {
+            0
+        };
+        // A defensive floor: a run that (via a very low game_duration_ticks)
+        // ends before min_ticks_for_victory still gets an outcome, just
+        // without this small "played it out" bonus.
+        let maturity_bonus = if current_tick >= win_conditions.min_ticks_for_victory {
+            20
         } else {
             0
         };
@@ -62,6 +80,8 @@ pub fn check_win_condition(
         let score = (avg_happiness * 5)  // Happiness contribution
             + (funds.total_income / 100)  // Income contribution
             + occupancy_bonus             // Full building bonus
+            + happiness_bonus             // Cleared the victory happiness bar
+            + maturity_bonus              // Played out at least the minimum duration
             + tenant_count_bonus; // Tenant retention bonus
 
         return Some(GameOutcome::Victory {

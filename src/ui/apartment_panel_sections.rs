@@ -30,7 +30,7 @@ pub(super) fn draw_sold_condo_panel(
         content_x,
         y,
         20.0,
-        colors::WARNING,
+        colors::WARNING(),
     );
     y += 35.0;
 
@@ -40,7 +40,7 @@ pub(super) fn draw_sold_condo_panel(
             content_x,
             y,
             18.0,
-            colors::TEXT,
+            colors::TEXT(),
         );
         y += 25.0;
         draw_ui_text(
@@ -48,12 +48,12 @@ pub(super) fn draw_sold_condo_panel(
             content_x,
             y,
             16.0,
-            colors::TEXT_DIM,
+            colors::TEXT_DIM(),
         );
         y += 35.0;
 
         let buyback_price = (purchase_price as f32 * 1.1) as i32;
-        draw_ui_text("Buyback Option:", content_x, y, 16.0, colors::ACCENT);
+        draw_ui_text("Buyback Option:", content_x, y, 16.0, colors::ACCENT());
         y += 25.0;
 
         let can_afford = money >= buyback_price;
@@ -67,7 +67,7 @@ pub(super) fn draw_sold_condo_panel(
         y += 45.0;
 
         if !can_afford {
-            draw_ui_text("Insufficient funds", content_x, y, 14.0, colors::NEGATIVE);
+            draw_ui_text("Insufficient funds", content_x, y, 14.0, colors::NEGATIVE());
         }
     }
 
@@ -77,7 +77,7 @@ pub(super) fn draw_sold_condo_panel(
         content_x,
         y,
         14.0,
-        colors::TEXT_DIM,
+        colors::TEXT_DIM(),
     );
     y += 20.0;
     draw_ui_text(
@@ -85,7 +85,7 @@ pub(super) fn draw_sold_condo_panel(
         content_x,
         y,
         14.0,
-        colors::TEXT_DIM,
+        colors::TEXT_DIM(),
     );
 
     None
@@ -128,7 +128,7 @@ pub(super) fn draw_apartment_stats(
         DesignType::Opulent => "Opulent",
     };
     if vis(*y) {
-        kv_row(content_x, *y, w, "Design", design_text, colors::TEXT);
+        kv_row(content_x, *y, w, "Design", design_text, colors::TEXT());
     }
     *y += 24.0;
 
@@ -139,13 +139,13 @@ pub(super) fn draw_apartment_stats(
         ApartmentSize::Penthouse => "Penthouse",
     };
     if vis(*y) {
-        kv_row(content_x, *y, w, "Size", size_text, colors::TEXT);
+        kv_row(content_x, *y, w, "Size", size_text, colors::TEXT());
     }
     *y += 24.0;
 
     let (noise_text, noise_color) = match apt.effective_noise() {
-        NoiseLevel::Low => ("Quiet", colors::POSITIVE),
-        NoiseLevel::High => ("Noisy", colors::WARNING),
+        NoiseLevel::Low => ("Quiet", colors::POSITIVE()),
+        NoiseLevel::High => ("Noisy", colors::WARNING()),
     };
     if vis(*y) {
         kv_row(content_x, *y, w, "Noise", noise_text, noise_color);
@@ -154,7 +154,7 @@ pub(super) fn draw_apartment_stats(
 
     if apt.has_soundproofing {
         if vis(*y) {
-            kv_row(content_x, *y, w, "Soundproofing", "Yes", colors::POSITIVE);
+            kv_row(content_x, *y, w, "Soundproofing", "Yes", colors::POSITIVE());
         }
         *y += 24.0;
     }
@@ -166,7 +166,7 @@ pub(super) fn draw_apartment_stats(
             w,
             "Rent",
             &format!("${}/mo", apt.rent_price),
-            colors::PRIMARY,
+            colors::PRIMARY(),
         );
     }
     *y += 24.0;
@@ -178,7 +178,7 @@ pub(super) fn draw_apartment_stats(
             w,
             "Quality Score",
             &apt.quality_score().to_string(),
-            colors::TEXT_DIM,
+            colors::TEXT_DIM(),
         );
     }
     *y += 30.0;
@@ -198,7 +198,7 @@ pub(super) fn draw_upgrades(
 ) -> (Option<UiAction>, f32) {
     let w = panel_w - 30.0;
     if *y > content_top && *y < content_bottom {
-        draw_line(content_x, *y, content_x + w, *y, 1.0, colors::BORDER);
+        draw_line(content_x, *y, content_x + w, *y, 1.0, colors::BORDER());
     }
     *y += 14.0;
 
@@ -257,7 +257,7 @@ pub(super) fn draw_upgrades(
                 content_x + w - hw,
                 header_y + 13.0,
                 13.0,
-                colors::TEXT_DIM,
+                colors::TEXT_DIM(),
             );
         }
     }

@@ -36,7 +36,7 @@ pub fn draw_event_modal(event: &NarrativeEvent) -> Option<UiAction> {
             content.x,
             text_y + scale::BODY,
             scale::BODY,
-            color::TEXT,
+            color::TEXT(),
         );
         text_y += line_height(scale::BODY);
     }

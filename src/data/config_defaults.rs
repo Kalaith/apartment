@@ -45,6 +45,7 @@ impl Default for GameConfig {
             theme: ThemeConfig::default(),
             layout: LayoutConfig::default(),
             ui_thresholds: UiThresholdsConfig::default(),
+            apartment: ApartmentPropertiesConfig::default(),
         }
     }
 }
@@ -66,7 +67,6 @@ fn default_economy() -> EconomyConfig {
         kitchen_renovation_cost: 800,
         laundry_installation_cost: 2000,
         soundproofing_cost: 300,
-        base_rent: default_base_rent(),
         staff_costs: default_staff_costs(),
     }
 }
@@ -76,13 +76,6 @@ fn default_design_upgrade_costs() -> HashMap<String, i32> {
     costs.insert("bare_to_practical".to_string(), 500);
     costs.insert("practical_to_cozy".to_string(), 1000);
     costs
-}
-
-fn default_base_rent() -> HashMap<String, i32> {
-    let mut rents = HashMap::new();
-    rents.insert("small".to_string(), 600);
-    rents.insert("medium".to_string(), 900);
-    rents
 }
 
 fn default_difficulty_modifiers() -> HashMap<String, DifficultyModifiers> {

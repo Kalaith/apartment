@@ -27,7 +27,7 @@ fn stat_chip(
     };
     let w = space::MD + icon_w + text_w + space::MD;
 
-    let style = SurfaceStyle::new(color::SURFACE_ALT).with_border(1.0, color::BORDER);
+    let style = SurfaceStyle::new(color::SURFACE_ALT()).with_border(1.0, color::BORDER());
     draw_surface(Rect::new(x, chip_y, w, chip_h), &style);
 
     let mut cx = x + space::MD;
@@ -64,11 +64,11 @@ pub fn draw_header(
 ) -> Option<UiAction> {
     let mut action = None;
     let w = screen_width();
-    let h = layout::HEADER_HEIGHT;
+    let h = layout::HEADER_HEIGHT();
 
     // Background + bottom hairline
-    draw_rectangle(0.0, 0.0, w, h, color::SURFACE_HEADER);
-    draw_line(0.0, h, w, h, 1.0, color::BORDER_STRONG);
+    draw_rectangle(0.0, 0.0, w, h, color::SURFACE_HEADER());
+    draw_line(0.0, h, w, h, 1.0, color::BORDER_STRONG());
 
     // End Month button, right-anchored, vertically centered.
     let btn_h = 40.0;
@@ -92,17 +92,17 @@ pub fn draw_header(
         hint_x,
         h / 2.0 + scale::CAPTION / 2.0,
         scale::CAPTION,
-        color::TEXT_DIM,
+        color::TEXT_DIM(),
     );
 
     // Stat cluster: money / month / occupancy chips, flowed right-to-left so
     // they hug the button and never collide with the building name.
     let money_color = if money < 0 {
-        color::NEGATIVE
+        color::NEGATIVE()
     } else if money < 500 {
-        color::WARNING
+        color::WARNING()
     } else {
-        color::POSITIVE
+        color::POSITIVE()
     };
     let money_label = macroquad_toolkit::ui::format_money(money as i64);
     let month_label = format!("Month {}", tick);
@@ -115,9 +115,9 @@ pub fn draw_header(
         (
             assets.get_texture("icon_calendar"),
             &month_label,
-            color::TEXT,
+            color::TEXT(),
         ),
-        (assets.get_texture("icon_key"), &occ_label, color::TEXT),
+        (assets.get_texture("icon_key"), &occ_label, color::TEXT()),
     ];
     let widths: Vec<f32> = chips
         .iter()
@@ -149,7 +149,7 @@ pub fn draw_header(
         name_x,
         h / 2.0 + scale::TITLE / 2.0 - 1.0,
         scale::TITLE,
-        color::TEXT_BRIGHT,
+        color::TEXT_BRIGHT(),
     );
 
     action
