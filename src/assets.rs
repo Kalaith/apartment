@@ -84,18 +84,25 @@ impl AssetManager {
         ];
 
         for id in asset_ids {
-            let path = format!("assets/textures/{}.png", id);
-            match load_texture_from_pack_or_file(asset_pack.as_ref(), &path, FilterMode::Nearest)
-                .await
-            {
-                Ok(texture) => {
+            // Large painterly art ships as JPEG to keep the web package small; the small
+            // pixel-art icons stay lossless PNG, where JPEG ringing would be visible.
+            let mut loaded = false;
+            for extension in ["jpg", "png"] {
+                let path = format!("assets/textures/{}.{}", id, extension);
+                if let Ok(texture) =
+                    load_texture_from_pack_or_file(asset_pack.as_ref(), &path, FilterMode::Nearest)
+                        .await
+                {
                     self.textures.insert(id.to_string(), texture);
+                    loaded = true;
+                    break;
                 }
-                Err(_e) => {
-                    // Silently skip missing textures - game uses fallback rendering
-                    #[cfg(not(target_arch = "wasm32"))]
-                    println!("Texture not found: {}", path);
-                }
+            }
+
+            if !loaded {
+                // Silently skip missing textures - game uses fallback rendering
+                #[cfg(not(target_arch = "wasm32"))]
+                println!("Texture not found: assets/textures/{}", id);
             }
         }
 
