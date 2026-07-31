@@ -25,10 +25,18 @@ Survive 36 months while keeping the building financially stable and livable. Com
 ## Current Scope
 
 Playable building progression with multiple properties, tenant systems, repairs, upgrades, missions, and month-by-month management.
-# Practical Future Improvements
 
-- Add month-step regression tests for rent changes, occupancy, tenant happiness, maintenance debt, and property unlock progression.
-- Separate building economics and tenant simulation from UI panels so city, hallway, tenant, and ownership views render derived state only.
-- Add validation for tenant applications and apartment assignments to prevent duplicate tenants, impossible vacancies, or stale lease records.
-- Create scenario fixtures for each property tier to make balancing repair costs, upgrades, and reputation less manual.
+## Balance Harness
 
+`src/sim_harness.rs` plays the full 36 months headlessly under three strategies
+(greedy, investor, slumlord) across many seeds and writes a comparison table:
+
+```powershell
+cargo test balance_report -- --ignored --nocapture   # writes balance_report.md
+```
+
+The report is generated output and is not tracked; regenerate it when tuning
+the economy. A fast single-playthrough smoke test runs in CI as
+`balance_harness_runs_without_panic`.
+
+Open work is tracked in `TODO.md`.
