@@ -15,7 +15,7 @@ There is no local wrapper for the everyday loop — use `cargo` directly from th
 - Tests: `cargo test` — run a single test with `cargo test <name>` (e.g. `cargo test rent`)
 - Format check: `cargo fmt -- --check` (CI enforces this)
 - Lint: `cargo clippy --all-targets --all-features -- -D warnings` (CI treats warnings as errors)
-- WebGL build: `cargo build --release --target wasm32-unknown-unknown` with `RUSTFLAGS="-C link-arg=--allow-undefined"`
+- WebGL build: `cargo build --release --target wasm32-unknown-unknown` — the wasm link flags come from the workspace `.cargo/config.toml`; do not set `RUSTFLAGS`, it replaces that list and forces a full rebuild of every wasm dependency
 
 `publish.ps1` is a thin wrapper that delegates to the workspace-root `../publish.ps1` for cross-platform builds and deployment (`-WindowsOnly`, `-WebGLOnly`, `-Production`, `-DryRun`, etc.). Per `AGENTS.md`, `.\publish.ps1` (no params) is the sanctioned end-to-end validation path after meaningful changes — but for tight iteration prefer `cargo clippy` + `cargo test`, which is exactly what CI (`.github/workflows/rust-ci.yml`) runs.
 
