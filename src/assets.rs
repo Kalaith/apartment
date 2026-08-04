@@ -4,6 +4,22 @@ use std::collections::HashMap;
 
 const ASSET_PACK_PATH: &str = "assets.zip";
 
+const JPEG_TEXTURE_IDS: &[&str] = &[
+    "building_exterior",
+    "design_cozy",
+    "hallway",
+    "neighborhood_downtown",
+    "neighborhood_historic",
+    "neighborhood_industrial",
+    "neighborhood_suburbs",
+    "tenant_artist",
+    "tenant_elderly",
+    "tenant_family",
+    "tenant_professional",
+    "tenant_student",
+    "title_background",
+];
+
 pub struct AssetManager {
     pub textures: HashMap<String, Texture2D>,
     pub loaded: bool,
@@ -87,7 +103,12 @@ impl AssetManager {
             // Large painterly art ships as JPEG to keep the web package small; the small
             // pixel-art icons stay lossless PNG, where JPEG ringing would be visible.
             let mut loaded = false;
-            for extension in ["jpg", "png"] {
+            let extensions = if JPEG_TEXTURE_IDS.contains(&id) {
+                ["jpg", "png"]
+            } else {
+                ["png", "jpg"]
+            };
+            for extension in extensions {
                 let path = format!("assets/textures/{}.{}", id, extension);
                 if let Ok(texture) =
                     load_texture_from_pack_or_file(asset_pack.as_ref(), &path, FilterMode::Nearest)
