@@ -129,7 +129,7 @@
   "operating_costs": {
     "property_tax_rate": 0.10,
     "property_tax_annual_increase": 0.035,
-    "base_monthly_cost_per_unit": 140,
+    "base_monthly_cost_per_unit": 400,
     "utility_cost_per_unit": 50,
     "insurance_base_rate": 150,
     "insurance_good_condition_discount": 50,
@@ -155,7 +155,7 @@
     "none_cost": 0,
     "social_media_cost": 50,
     "local_newspaper_cost": 150,
-    "premium_agency_cost": 500,
+    "premium_agency_cost": 250,
     "open_house_cost": 250,
     "open_house_duration": 2
   },
@@ -199,7 +199,8 @@
     "council_min_tenants": 4,
     "council_rent_rollback": 0.1,
     "council_solidarity_happiness": 5,
-    "condo_sale_boom_bonus": 0.5
+    "condo_sale_boom_bonus": 0.5,
+    "condo_sale_equity_share": 0.25
   },
   "regulations": {
     "pass_condition_threshold": 45,
@@ -234,21 +235,21 @@
   },
   "difficulty": {
     "Easy": {
-      "starting_funds": 7000,
+      "starting_funds": 10000,
       "inspection_fine_multiplier": 0.75,
       "random_inspection_chance_percent": 5,
       "problem_applicant_chance_percent": 10,
       "operating_cost_multiplier": 0.85
     },
     "Medium": {
-      "starting_funds": 5000,
+      "starting_funds": 8000,
       "inspection_fine_multiplier": 1.0,
       "random_inspection_chance_percent": 8,
       "problem_applicant_chance_percent": 18,
       "operating_cost_multiplier": 1.0
     },
     "Hard": {
-      "starting_funds": 3500,
+      "starting_funds": 7000,
       "inspection_fine_multiplier": 1.5,
       "random_inspection_chance_percent": 12,
       "problem_applicant_chance_percent": 28,

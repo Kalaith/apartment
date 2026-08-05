@@ -79,7 +79,7 @@
                 "condition_sensitivity": 0.8,
                 "noise_sensitivity": 0.9,
                 "design_sensitivity": 0.5,
-                "ideal_rent_max": 1200,
+                "ideal_rent_max": 2600,
                 "min_acceptable_condition": 60,
                 "prefers_quiet": true,
                 "preferred_design": null,

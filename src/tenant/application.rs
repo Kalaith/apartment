@@ -107,7 +107,7 @@ pub fn generate_applications(
         crate::building::MarketingType::None => 1.0,
         crate::building::MarketingType::SocialMedia => 2.0,
         crate::building::MarketingType::LocalNewspaper => 1.5,
-        crate::building::MarketingType::PremiumAgency => 0.8,
+        crate::building::MarketingType::PremiumAgency => 1.5,
     };
 
     let open_house_multiplier = if building.open_house_remaining > 0 {

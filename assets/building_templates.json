@@ -261,10 +261,14 @@
                     "base_noise": "low",
                     "initial_condition": 35,
                     "initial_design": "practical",
-                    "initial_rent": 4500
+                    "initial_rent": 2800
                 }
             ],
-            "initial_tenant": null
+            "initial_tenant": {
+                "apartment_unit": "4A",
+                "archetype": "professional",
+                "name": "Elias B."
+            }
         },
         {
             "id": "foundry_lofts",
@@ -440,7 +444,11 @@
                     "initial_rent": 2800
                 }
             ],
-            "initial_tenant": null
+            "initial_tenant": {
+                "apartment_unit": "4B",
+                "archetype": "professional",
+                "name": "Jordan V."
+            }
         },
         {
             "id": "the_commons",

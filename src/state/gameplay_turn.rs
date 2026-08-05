@@ -211,6 +211,16 @@ impl GameplayState {
             }
         }
 
+        let inspection_score = self
+            .building
+            .average_condition()
+            .min(self.building.hallway_condition);
+        let active_building_id = self.active_building_id();
+        self.compliance.resolve_fixes_if_compliant(
+            active_building_id,
+            inspection_score,
+            self.config.regulations.pass_condition_threshold,
+        );
         self.compliance.tick(self.current_tick);
         self.run_due_inspections();
         self.gentrification

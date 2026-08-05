@@ -67,6 +67,10 @@ pub struct PlayerFunds {
 }
 
 impl PlayerFunds {
+    /// Short operating-credit buffer before the run is irrecoverably bankrupt.
+    /// A single mandatory bill may take cash negative; the player gets a brief
+    /// chance to lease a unit or sell an asset before the bank closes the run.
+    pub const BANKRUPTCY_DEBT_LIMIT: i32 = 2_500;
     pub fn new(starting_balance: i32) -> Self {
         Self {
             balance: starting_balance,
@@ -112,7 +116,7 @@ impl PlayerFunds {
 
     /// Check if player is bankrupt
     pub fn is_bankrupt(&self) -> bool {
-        self.balance < 0
+        self.balance < -Self::BANKRUPTCY_DEBT_LIMIT
     }
 
     /// Get transactions for a specific tick
@@ -127,5 +131,19 @@ impl PlayerFunds {
 impl Default for PlayerFunds {
     fn default() -> Self {
         Self::new(5000) // Default starting funds
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn operating_credit_allows_recovery_but_has_a_hard_limit() {
+        let mut funds = PlayerFunds::new(0);
+        funds.balance = -PlayerFunds::BANKRUPTCY_DEBT_LIMIT;
+        assert!(!funds.is_bankrupt());
+        funds.balance -= 1;
+        assert!(funds.is_bankrupt());
     }
 }

@@ -41,15 +41,15 @@ impl GameplayState {
             .unwrap_or(0)
     }
 
-    /// Market multiplier applied to a condo's base value at sale time. A booming
-    /// economy and a gentrifying neighborhood raise it well above 1.0; a
-    /// recession drags it below — so timing a sale to a hot market is worth real
-    /// money, giving selling a purpose beyond emergency liquidity.
+    /// Realizable equity multiplier applied to a condo's market value. Debt,
+    /// conversion costs, and closing costs keep the base proceeds below full
+    /// market value; a boom and gentrification still make timing matter.
     pub(super) fn condo_sale_market_multiplier(&self) -> f32 {
         let economy = self.city.economy_health; // 0.5..1.5
         let gentrification = self.active_neighborhood_gentrification() as f32 / 100.0;
         let boom_bonus = self.config.gentrification.condo_sale_boom_bonus;
-        (economy * (1.0 + gentrification * boom_bonus)).clamp(0.4, 2.5)
+        let equity_share = self.config.gentrification.condo_sale_equity_share;
+        (equity_share * economy * (1.0 + gentrification * boom_bonus)).clamp(0.1, 0.75)
     }
 
     /// Reputation of the neighborhood the active building sits in (0–100),

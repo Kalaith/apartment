@@ -218,7 +218,7 @@
     "upgrade_to_practical": {
         "id": "upgrade_to_practical",
         "name": "Upgrade to Practical",
-        "cost": 5000,
+        "cost": 1200,
         "target": "apartment",
         "effects": [
             {
@@ -236,7 +236,7 @@
     "upgrade_to_cozy": {
         "id": "upgrade_to_cozy",
         "name": "Upgrade to Cozy",
-        "cost": 10000,
+        "cost": 2500,
         "target": "apartment",
         "effects": [
             {
@@ -254,7 +254,7 @@
     "upgrade_to_luxury": {
         "id": "upgrade_to_luxury",
         "name": "Upgrade to Luxury",
-        "cost": 25000,
+        "cost": 7500,
         "target": "apartment",
         "effects": [
             {
@@ -276,7 +276,7 @@
     "upgrade_to_opulent": {
         "id": "upgrade_to_opulent",
         "name": "Upgrade to Opulent",
-        "cost": 50000,
+        "cost": 15000,
         "target": "apartment",
         "effects": [
             {

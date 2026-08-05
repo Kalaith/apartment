@@ -24,6 +24,10 @@ pub struct GentrificationConfig {
     /// decision rather than a flat, purposeless payout.
     #[serde(default = "default_condo_sale_boom_bonus")]
     pub condo_sale_boom_bonus: f32,
+    /// Share of market value realized as cash after debt payoff, closing costs,
+    /// and conversion fees. The market multiplier is applied on top of this.
+    #[serde(default = "default_condo_sale_equity_share")]
+    pub condo_sale_equity_share: f32,
 }
 
 fn default_council_rent_rollback() -> f32 {
@@ -38,6 +42,10 @@ fn default_condo_sale_boom_bonus() -> f32 {
     0.5
 }
 
+fn default_condo_sale_equity_share() -> f32 {
+    0.25
+}
+
 impl Default for GentrificationConfig {
     fn default() -> Self {
         Self {
@@ -50,6 +58,7 @@ impl Default for GentrificationConfig {
             council_rent_rollback: default_council_rent_rollback(),
             council_solidarity_happiness: default_council_solidarity_happiness(),
             condo_sale_boom_bonus: default_condo_sale_boom_bonus(),
+            condo_sale_equity_share: default_condo_sale_equity_share(),
         }
     }
 }

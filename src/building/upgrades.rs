@@ -354,7 +354,7 @@ mod tests {
             upgrade_id: "upgrade_to_practical".to_string(),
             target_id: Some(0),
         };
-        assert_eq!(design.cost(&building, &config, &upgrades), Some(5000));
+        assert_eq!(design.cost(&building, &config, &upgrades), Some(1200));
     }
 
     #[test]

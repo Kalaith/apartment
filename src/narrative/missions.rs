@@ -152,6 +152,15 @@ pub struct BuildingAward {
     pub building_name: String,
 }
 
+/// A completed mission and the authored reward to apply. Goal evaluation is
+/// shared by live gameplay and the balance harness; presentation and reward
+/// side effects remain with their respective caller.
+pub struct CompletedMission {
+    pub title: String,
+    pub description: String,
+    pub reward: MissionReward,
+}
+
 impl MissionManager {
     pub fn new() -> Self {
         Self {
@@ -313,6 +322,90 @@ impl MissionManager {
             );
             self.add_mission(mission);
         }
+    }
+
+    /// Evaluate active missions from an authoritative monthly snapshot.
+    #[allow(clippy::too_many_arguments)]
+    pub fn evaluate_active(
+        &mut self,
+        current_month: u32,
+        active_building_id: u32,
+        active_tenants: &[crate::tenant::Tenant],
+        occupancy: f32,
+        avg_happiness: f32,
+        perfect_collection: bool,
+        fully_repaired_by_building: &std::collections::HashMap<u32, bool>,
+        building_count: usize,
+    ) -> Vec<CompletedMission> {
+        self.check_expirations(current_month);
+        if building_count == 0 {
+            for mission in &mut self.missions {
+                if mission.status == MissionStatus::Active
+                    && matches!(mission.goal, MissionGoal::AcquireBuilding)
+                {
+                    mission.fail();
+                }
+            }
+        }
+
+        let mut completed = Vec::new();
+        for mission in &mut self.missions {
+            if mission.status != MissionStatus::Active {
+                continue;
+            }
+            let goal_met = match &mut mission.goal {
+                MissionGoal::HouseTenants { count, archetype } => {
+                    active_tenants
+                        .iter()
+                        .filter(|tenant| {
+                            tenant.building_id == active_building_id
+                                && archetype
+                                    .as_ref()
+                                    .is_none_or(|name| tenant.archetype.name() == name)
+                        })
+                        .count() as u32
+                        >= *count
+                }
+                MissionGoal::ReachOccupancy { percentage } => occupancy >= *percentage,
+                MissionGoal::AcquireBuilding => building_count > 1,
+                MissionGoal::MaintainHappiness {
+                    threshold,
+                    months,
+                    current_months,
+                } => {
+                    if !active_tenants.is_empty() && avg_happiness >= *threshold {
+                        *current_months += 1;
+                    } else {
+                        *current_months = 0;
+                    }
+                    *current_months >= *months
+                }
+                MissionGoal::PerfectCollection {
+                    months,
+                    current_months,
+                } => {
+                    if perfect_collection {
+                        *current_months += 1;
+                    } else {
+                        *current_months = 0;
+                    }
+                    *current_months >= *months
+                }
+                MissionGoal::FullRepair { building_id } => fully_repaired_by_building
+                    .get(building_id)
+                    .copied()
+                    .unwrap_or(false),
+            };
+            if goal_met {
+                mission.complete();
+                completed.push(CompletedMission {
+                    title: mission.title.clone(),
+                    description: mission.description.clone(),
+                    reward: mission.reward.clone(),
+                });
+            }
+        }
+        completed
     }
 }
 

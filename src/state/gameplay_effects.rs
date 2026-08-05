@@ -587,11 +587,8 @@ mod tests {
         let boom = state.condo_sale_market_multiplier();
         state.city.economy_health = 0.5; // recession
         let bust = state.condo_sale_market_multiplier();
-        assert!(
-            boom > 1.0,
-            "a booming economy should lift condo sale prices"
-        );
-        assert!(bust < 1.0, "a recession should depress condo sale prices");
+        assert!(boom > state.config.gentrification.condo_sale_equity_share);
+        assert!(bust < state.config.gentrification.condo_sale_equity_share);
         assert!(boom > bust);
     }
 

@@ -1,6 +1,6 @@
 use crate::building::Building;
 use crate::data::config::{HappinessConfig, ThresholdsConfig, WinConditions};
-use crate::economy::PlayerFunds;
+use crate::economy::{PlayerFunds, TransactionType};
 use crate::tenant::Tenant;
 use serde::{Deserialize, Serialize};
 
@@ -90,8 +90,21 @@ pub fn check_win_condition(
         };
         let tenant_count_bonus = (active_tenants.len() as i32) * 10;
 
-        let score = (avg_happiness * 5)  // Happiness contribution
-            + (funds.total_income / 100)  // Income contribution
+        // Only earned operating income contributes to performance. Grants and
+        // asset sales are useful liquidity, but counting them as income made a
+        // condo conversion or mission cheque an immediate score exploit.
+        let earned_rent: i32 = funds
+            .transactions
+            .iter()
+            .filter(|transaction| transaction.transaction_type == TransactionType::RentIncome)
+            .map(|transaction| transaction.amount.max(0))
+            .sum();
+
+        // Stewardship is the centre of the score: rent still matters, but it
+        // cannot overwhelm tenant wellbeing and the state of the property.
+        let score = (avg_happiness * 8)  // Tenant wellbeing contribution
+            + (building.average_condition() * 5) // Building stewardship
+            + (earned_rent / 400)         // Earned rent contribution
             + occupancy_bonus             // Full building bonus
             + happiness_bonus             // Cleared the victory happiness bar
             + maturity_bonus              // Played out at least the minimum duration
@@ -148,5 +161,50 @@ mod tests {
     fn empty_before_check_tick_is_not_yet_a_loss() {
         // tick 2 <= all_left_check_tick (3): a temporary early vacancy is tolerated.
         assert!(check(&[], 2, true).is_none());
+    }
+
+    #[test]
+    fn grants_and_asset_sales_do_not_inflate_victory_score() {
+        use crate::economy::{Transaction, TransactionType};
+
+        let building = Building::new("Test", 1, 1);
+        let cfg = GameConfig::default();
+        let mut base = PlayerFunds::new(5_000);
+        base.add_income(Transaction::income(
+            TransactionType::RentIncome,
+            1_000,
+            "Rent",
+            36,
+        ));
+        let mut windfall = base.clone();
+        windfall.add_income(Transaction::income(
+            TransactionType::Grant,
+            100_000,
+            "Grant",
+            36,
+        ));
+        windfall.add_income(Transaction::income(
+            TransactionType::AssetSale,
+            100_000,
+            "Condo sale",
+            36,
+        ));
+
+        let score = |funds: &PlayerFunds| match check_win_condition(
+            0,
+            &building,
+            &[],
+            funds,
+            36,
+            false,
+            &cfg.win_conditions,
+            &cfg.happiness,
+            &cfg.thresholds,
+        ) {
+            Some(GameOutcome::Victory { score, .. }) => score,
+            outcome => panic!("expected victory, got {outcome:?}"),
+        };
+
+        assert_eq!(score(&base), score(&windfall));
     }
 }

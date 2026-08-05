@@ -1,5 +1,5 @@
 use super::GameplayState;
-use crate::narrative::{ActiveTaxBreak, MissionGoal, MissionReward, MissionStatus};
+use crate::narrative::{ActiveTaxBreak, MissionReward};
 use crate::simulation::GameEvent;
 use crate::ui::colors;
 use macroquad::prelude::*;
@@ -31,174 +31,71 @@ pub fn update_missions(state: &mut GameplayState) {
         });
     let fully_repaired_by_building = fully_repaired_buildings(state);
 
-    // Check for expirations (expired missions are marked as such)
-    state.missions.check_expirations(current_month);
+    let rental_units = state.building.rental_unit_count();
+    let occupancy = if rental_units > 0 {
+        state.building.occupancy_count() as f32 / rental_units as f32
+    } else {
+        0.0
+    };
+    let completed_missions = state.missions.evaluate_active(
+        current_month,
+        active_building_id,
+        &active_tenants,
+        occupancy,
+        avg_happiness,
+        perfect_collection,
+        &fully_repaired_by_building,
+        state.city.buildings.len(),
+    );
 
-    // Check for unrecoverable failures (e.g., building sold that was needed)
-    for mission in &mut state.missions.missions {
-        if mission.status == MissionStatus::Active {
-            // Check if "AcquireBuilding" mission should fail if we sold a building
-            if matches!(mission.goal, MissionGoal::AcquireBuilding)
-                && state.city.buildings.is_empty()
-            {
-                mission.fail();
+    for mission in completed_missions {
+        state.missions.record_legacy_event(
+            current_month,
+            &format!("Mission Complete: {}", mission.title),
+            &format!("Completed objective: {}", mission.description),
+        );
+
+        match mission.reward {
+            MissionReward::Money(amount) => {
+                let t = crate::economy::Transaction::income(
+                    crate::economy::TransactionType::Grant,
+                    amount,
+                    "Mission Reward",
+                    current_month,
+                );
+                state.funds.add_income(t);
+
                 state.floating_texts.spawn(
-                    "Mission Failed!",
-                    vec2(screen_width() / 2.0, screen_height() / 2.0),
-                    colors::NEGATIVE(),
+                    format!("+${}", amount),
+                    vec2(screen_width() / 2.0, screen_height() / 2.0 + 30.0),
+                    colors::POSITIVE(),
                 );
             }
-        }
-    }
-
-    // Check active missions for completion
-    let active_mission_ids: Vec<u32> = state
-        .missions
-        .active_missions()
-        .iter()
-        .map(|m| m.id)
-        .collect();
-
-    for mission_id in active_mission_ids {
-        let mut completed = false;
-        let mut reward = None;
-        let mut legacy_info: Option<(String, String)> = None;
-
-        if let Some(mission) = state
-            .missions
-            .missions
-            .iter_mut()
-            .find(|m| m.id == mission_id)
-        {
-            match &mut mission.goal {
-                MissionGoal::HouseTenants { count, archetype } => {
-                    let current_count = state
-                        .tenants
-                        .iter()
-                        .filter(|t| {
-                            t.building_id == active_building_id
-                                && archetype
-                                    .as_ref()
-                                    .is_none_or(|arch| t.archetype.name() == arch)
-                        })
-                        .count();
-                    if current_count as u32 >= *count {
-                        completed = true;
-                    }
-                }
-                MissionGoal::ReachOccupancy { percentage } => {
-                    let total = state.building.rental_unit_count();
-                    let occupied = state.building.occupancy_count();
-                    if total > 0 && (occupied as f32 / total as f32) >= *percentage {
-                        completed = true;
-                    }
-                }
-                MissionGoal::AcquireBuilding => {
-                    if state.city.buildings.len() > 1 {
-                        // Started with 1.
-                        completed = true;
-                    }
-                }
-                MissionGoal::MaintainHappiness {
-                    threshold,
-                    months,
-                    current_months,
-                } => {
-                    // Accrue consecutive months at/above the happiness threshold;
-                    // a bad month resets the streak.
-                    if !active_tenants.is_empty() && avg_happiness >= *threshold {
-                        *current_months += 1;
-                    } else {
-                        *current_months = 0;
-                    }
-                    if *current_months >= *months {
-                        completed = true;
-                    }
-                }
-                MissionGoal::PerfectCollection {
-                    months,
-                    current_months,
-                } => {
-                    if perfect_collection {
-                        *current_months += 1;
-                    } else {
-                        *current_months = 0;
-                    }
-                    if *current_months >= *months {
-                        completed = true;
-                    }
-                }
-                MissionGoal::FullRepair { building_id } => {
-                    if fully_repaired_by_building
-                        .get(building_id)
-                        .copied()
-                        .unwrap_or(false)
-                    {
-                        completed = true;
-                    }
-                }
+            MissionReward::UnlockBuilding(unlock_order) => {
+                state.unlock_building_by_order(unlock_order);
+                state.floating_texts.spawn(
+                    "New property unlocked!",
+                    vec2(screen_width() / 2.0, screen_height() / 2.0 + 30.0),
+                    colors::ACCENT(),
+                );
             }
-
-            if completed {
-                mission.complete();
-                reward = Some(mission.reward.clone());
-                legacy_info = Some((mission.title.clone(), mission.description.clone()));
+            MissionReward::Reputation(amount) => {
+                // Reward reputation in the active building's neighborhood.
+                state.apply_reputation_change(amount, None);
             }
-        }
-
-        // Record legacy (outside the mutable borrow)
-        if let Some((title, description)) = legacy_info {
-            state.missions.record_legacy_event(
-                current_month,
-                &format!("Mission Complete: {}", title),
-                &format!("Completed objective: {}", description),
-            );
-        }
-
-        // Grant reward
-        if let Some(r) = reward {
-            match r {
-                MissionReward::Money(amount) => {
-                    let t = crate::economy::Transaction::income(
-                        crate::economy::TransactionType::Grant,
-                        amount,
-                        "Mission Reward",
-                        current_month,
-                    );
-                    state.funds.add_income(t);
-
-                    state.floating_texts.spawn(
-                        format!("+${}", amount),
-                        vec2(screen_width() / 2.0, screen_height() / 2.0 + 30.0),
-                        colors::POSITIVE(),
-                    );
-                }
-                MissionReward::UnlockBuilding(unlock_order) => {
-                    state.unlock_building_by_order(unlock_order);
-                    state.floating_texts.spawn(
-                        "New property unlocked!",
-                        vec2(screen_width() / 2.0, screen_height() / 2.0 + 30.0),
-                        colors::ACCENT(),
-                    );
-                }
-                MissionReward::Reputation(amount) => {
-                    // Reward reputation in the active building's neighborhood.
-                    state.apply_reputation_change(amount, None);
-                }
-                MissionReward::TaxBreak { months, percentage } => {
-                    state
-                        .active_tax_breaks
-                        .push(ActiveTaxBreak::new(months, percentage));
-                    state.floating_texts.spawn(
-                        format!(
-                            "Tax Break! {}% for {} months",
-                            (percentage * 100.0) as i32,
-                            months
-                        ),
-                        vec2(screen_width() / 2.0, screen_height() / 2.0 + 30.0),
-                        colors::POSITIVE(),
-                    );
-                }
+            MissionReward::TaxBreak { months, percentage } => {
+                state
+                    .active_tax_breaks
+                    .push(ActiveTaxBreak::new(months, percentage));
+                state.floating_texts.spawn(
+                    format!(
+                        "Tax Break! {}% for {} months",
+                        (percentage * 100.0) as i32,
+                        months
+                    ),
+                    vec2(screen_width() / 2.0, screen_height() / 2.0 + 30.0),
+                    colors::POSITIVE(),
+                );
             }
         }
     }
@@ -239,6 +136,7 @@ fn fully_repaired_buildings(state: &GameplayState) -> std::collections::HashMap<
 mod tests {
     use super::*;
     use crate::narrative::missions::Mission;
+    use crate::narrative::{MissionGoal, MissionStatus};
     use crate::state::GameplayState;
 
     #[test]

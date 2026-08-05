@@ -228,6 +228,7 @@ impl ComplianceSystem {
     ) -> Inspection {
         let mut results = Vec::new();
         let mut new_pending = Vec::new();
+        let mut cleared_types = Vec::new();
         let mut total_fines = 0;
         let mut citations = 0;
 
@@ -246,6 +247,9 @@ impl ComplianceSystem {
 
                 if inspection_score >= config.pass_condition_threshold {
                     reg.compliant = true;
+                    reg.warned = false;
+                    reg.violation_count = 0;
+                    cleared_types.push(reg.regulation_type.clone());
                     results.push(InspectionResult {
                         regulation_type: reg.regulation_type.clone(),
                         passed: true,
@@ -255,9 +259,16 @@ impl ComplianceSystem {
                         required_fixes: Vec::new(),
                     });
                 } else {
+                    let repeated_violation = !reg.compliant;
                     reg.add_violation();
-                    let fine =
-                        (reg.regulation_type.base_fine() as f32 * config.fine_multiplier) as i32;
+                    // A first citation is a repair order with the configured
+                    // grace period. Repeat failures (or a missed deadline in
+                    // `tick`) carry the fine.
+                    let fine = if repeated_violation {
+                        (reg.regulation_type.base_fine() as f32 * config.fine_multiplier) as i32
+                    } else {
+                        0
+                    };
                     total_fines += fine;
                     citations += 1;
                     new_pending.push((
@@ -284,7 +295,19 @@ impl ComplianceSystem {
         }
 
         // Apply cross-field mutations now that the `regs` borrow has ended.
-        self.pending_fixes.extend(new_pending);
+        self.pending_fixes
+            .retain(|(pending_building, pending_type, _)| {
+                *pending_building != building_id || !cleared_types.contains(pending_type)
+            });
+        for pending in new_pending {
+            if !self
+                .pending_fixes
+                .iter()
+                .any(|existing| existing.0 == pending.0 && existing.1 == pending.1)
+            {
+                self.pending_fixes.push(pending);
+            }
+        }
         if citations > 0 {
             self.unpaid_fines += total_fines;
             self.compliance_reputation = (self.compliance_reputation
@@ -346,6 +369,32 @@ impl ComplianceSystem {
             self.compliance_reputation = (self.compliance_reputation - 15).max(0);
         }
     }
+
+    /// Clear outstanding repair orders once the building actually meets code.
+    /// This makes the advertised repair deadline meaningful even when no
+    /// follow-up inspection happens before it expires.
+    pub fn resolve_fixes_if_compliant(
+        &mut self,
+        building_id: u32,
+        inspection_score: i32,
+        pass_threshold: i32,
+    ) -> usize {
+        if inspection_score < pass_threshold {
+            return 0;
+        }
+
+        let before = self.pending_fixes.len();
+        self.pending_fixes
+            .retain(|(pending_building, _, _)| *pending_building != building_id);
+        if let Some(regulations) = self.building_regulations.get_mut(&building_id) {
+            for regulation in regulations {
+                regulation.compliant = true;
+                regulation.warned = false;
+                regulation.violation_count = 0;
+            }
+        }
+        before - self.pending_fixes.len()
+    }
 }
 
 impl Default for ComplianceSystem {
@@ -379,7 +428,7 @@ mod tests {
     }
 
     #[test]
-    fn failed_inspection_cites_and_fines_a_neglected_building() {
+    fn first_failed_inspection_warns_before_fining() {
         let cfg = RegulationsConfig::default();
         let mut system = ComplianceSystem::new();
         system.init_building_regulations(0, false);
@@ -387,12 +436,29 @@ mod tests {
         // A condition well below the pass threshold cites every regulation.
         let inspection = system.run_inspection(0, 10, 6, InspectionTrigger::Random, &cfg);
 
-        assert!(inspection.total_fines > 0);
+        assert_eq!(inspection.total_fines, 0);
         assert!(inspection.results.iter().all(|r| !r.passed));
-        assert_eq!(system.unpaid_fines, inspection.total_fines);
+        assert_eq!(system.unpaid_fines, 0);
         assert!(system.compliance_reputation < 100);
         assert!(!system.pending_fixes.is_empty());
         assert!(system.has_violations(0));
+
+        let repeat = system.run_inspection(0, 10, 7, InspectionTrigger::Random, &cfg);
+        assert!(repeat.total_fines > 0);
+        assert_eq!(system.unpaid_fines, repeat.total_fines);
+    }
+
+    #[test]
+    fn repairs_clear_pending_orders_before_the_deadline() {
+        let cfg = RegulationsConfig::default();
+        let mut system = ComplianceSystem::new();
+        system.init_building_regulations(0, false);
+        system.run_inspection(0, 10, 6, InspectionTrigger::Random, &cfg);
+
+        assert!(system.resolve_fixes_if_compliant(0, 90, cfg.pass_condition_threshold) > 0);
+        system.tick(20);
+        assert_eq!(system.unpaid_fines, 0);
+        assert!(system.pending_fixes.is_empty());
     }
 
     #[test]
