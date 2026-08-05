@@ -27,6 +27,7 @@ pub struct ApartmentPropertiesConfig {
 
     // NoiseLevel::noise_penalty (Low is always 0)
     pub noise_penalty_high: i32,
+    pub lighting_quality_bonus: i32,
 
     // Apartment::market_value
     pub market_base_small: i32,
@@ -44,6 +45,7 @@ pub struct ApartmentPropertiesConfig {
     pub market_kitchen_bonus_level2_plus: i32,
     pub market_floor_bonus_per_floor: i32,
     pub market_soundproofing_bonus: i32,
+    pub market_lighting_bonus: i32,
     pub market_high_noise_penalty: i32,
     pub market_value_floor: i32,
 }
@@ -68,6 +70,7 @@ impl Default for ApartmentPropertiesConfig {
             space_score_penthouse: 50,
 
             noise_penalty_high: -20,
+            lighting_quality_bonus: 8,
 
             market_base_small: 50_000,
             market_base_medium: 75_000,
@@ -84,6 +87,7 @@ impl Default for ApartmentPropertiesConfig {
             market_kitchen_bonus_level2_plus: 15_000,
             market_floor_bonus_per_floor: 2_000,
             market_soundproofing_bonus: 3_000,
+            market_lighting_bonus: 2_000,
             market_high_noise_penalty: -5_000,
             market_value_floor: 10_000,
         }

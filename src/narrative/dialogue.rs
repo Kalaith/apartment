@@ -249,21 +249,17 @@ impl DialogueSystem {
         tenants: &[crate::tenant::Tenant],
         bodies: &DialogueBodies,
     ) {
-        use crate::tenant::TenantArchetype;
-
         let Some(template) = &bodies.rent_negotiation else {
             return;
         };
-        if building.rent_multiplier <= 1.1 {
-            return;
-        }
-
         for tenant in tenants {
-            let price_sensitive = matches!(
-                tenant.archetype,
-                TenantArchetype::Elderly | TenantArchetype::Family | TenantArchetype::Student
-            );
-            if !price_sensitive || tenant.happiness >= 55 {
+            let Some(apartment) = tenant
+                .apartment_id
+                .and_then(|apartment_id| building.get_apartment(apartment_id))
+            else {
+                continue;
+            };
+            if !rent_negotiation_eligible(tenant, apartment.rent_price) {
                 continue;
             }
             if self
@@ -307,6 +303,17 @@ impl DialogueSystem {
             }
         });
     }
+}
+
+fn rent_negotiation_eligible(tenant: &crate::tenant::Tenant, rent: i32) -> bool {
+    use crate::tenant::TenantArchetype;
+
+    rent > tenant.rent_tolerance
+        && tenant.happiness < 55
+        && matches!(
+            tenant.archetype,
+            TenantArchetype::Elderly | TenantArchetype::Family | TenantArchetype::Student
+        )
 }
 
 impl Default for DialogueSystem {
@@ -450,6 +457,18 @@ mod tests {
 
         assert_eq!(system.pending_dialogues().len(), 1);
         assert_eq!(system.pending_dialogues()[0].id, id);
+    }
+
+    #[test]
+    fn rent_negotiation_uses_the_tenants_actual_rent_ceiling() {
+        use crate::tenant::{Tenant, TenantArchetype};
+
+        let mut tenant = Tenant::new(1, "Renter", TenantArchetype::Student);
+        tenant.rent_tolerance = 800;
+        tenant.happiness = 40;
+
+        assert!(!rent_negotiation_eligible(&tenant, 800));
+        assert!(rent_negotiation_eligible(&tenant, 801));
     }
 
     #[test]

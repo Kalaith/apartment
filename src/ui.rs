@@ -24,6 +24,9 @@ mod header;
 mod notifications;
 pub mod ownership_panel; // Phase 3 ownership
 mod tenant_panel;
+pub mod workspace_nav;
+pub mod workspace_tasks;
+pub mod workspace_views;
 
 pub use apartment_panel::draw_apartment_panel;
 pub use building_view::draw_building_view;
@@ -45,7 +48,6 @@ pub enum Selection {
     #[default]
     None,
     Apartment(u32),            // Apartment ID
-    Tenant(u32),               // Tenant ID
     Applications(Option<u32>), // Show pending applications (Optionally filtered by apartment)
     Hallway,                   // Hallway details
     Ownership,                 // Ownership View
@@ -57,7 +59,6 @@ use crate::building::UpgradeAction;
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum UiAction {
     SelectApartment(u32),
-    SelectTenant(u32),
     SelectApplications(Option<u32>),
     SelectHallway,
     SelectOwnership,
@@ -84,16 +85,20 @@ pub enum UiAction {
     ReturnToMenu, // Used by Career Summary
 
     // Phase 3: City navigation
+    OpenBuilding,
+    OpenTenants,
+    OpenFinances,
     OpenCityMap,
-    CloseCityView,
-    OpenMarket,
-    CloseMarket,
     OpenMail,
-    CloseMail,
-
-    // Phase 3: Multi-building
-    SwitchBuilding {
-        index: usize,
+    OpenTasks,
+    OpenMailItem {
+        mail_id: u32,
+    },
+    SetInboxPage {
+        page: usize,
+    },
+    AcceptMission {
+        mission_id: u32,
     },
     PurchaseBuilding {
         listing_id: u32,
@@ -114,9 +119,15 @@ pub enum UiAction {
     BuybackCondo {
         apartment_id: u32,
     },
-    VoteOnProposal {
-        proposal_index: usize,
-        vote_yes: bool,
+    SetMarketing {
+        strategy: crate::building::MarketingType,
+    },
+    StartOpenHouse,
+    SetUtilitiesIncluded {
+        included: bool,
+    },
+    SetInsuranceActive {
+        active: bool,
     },
 
     // Phase 4: Dialogue system
@@ -144,9 +155,5 @@ pub enum UiAction {
     },
     UnlistApartment {
         apartment_id: u32,
-    },
-    AdjustRent {
-        apartment_id: u32,
-        amount: i32,
     },
 }

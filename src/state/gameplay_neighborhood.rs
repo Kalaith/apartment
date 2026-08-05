@@ -11,6 +11,14 @@ impl GameplayState {
     /// in, clamped to [0, 100].
     pub(super) fn adjust_active_neighborhood_reputation(&mut self, delta: i32) {
         let building_id = self.city.active_building_index as u32;
+        self.adjust_neighborhood_reputation_for_building(building_id, delta);
+    }
+
+    pub(super) fn adjust_neighborhood_reputation_for_building(
+        &mut self,
+        building_id: u32,
+        delta: i32,
+    ) {
         if let Some(neighborhood) = self
             .city
             .neighborhoods

@@ -1,6 +1,6 @@
 use super::theme::{color, scale, space, Tone};
 use super::widgets::{button_at, button_width};
-use super::{common::*, UiAction};
+use super::UiAction;
 use crate::assets::AssetManager;
 use macroquad::prelude::*;
 use macroquad_toolkit::ui::{
@@ -64,7 +64,7 @@ pub fn draw_header(
 ) -> Option<UiAction> {
     let mut action = None;
     let w = screen_width();
-    let h = layout::HEADER_HEIGHT();
+    let h = super::workspace_nav::STATUS_BAR_HEIGHT;
 
     // Background + bottom hairline
     draw_rectangle(0.0, 0.0, w, h, color::SURFACE_HEADER());

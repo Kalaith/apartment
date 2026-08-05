@@ -5,6 +5,7 @@ use crate::assets::AssetManager;
 use crate::city::{City, Neighborhood, NeighborhoodType, PropertyListing};
 use crate::narrative::NarrativeEventSystem;
 use crate::ui::colors;
+use crate::ui::layout;
 use crate::ui::theme::scale;
 use crate::ui::widgets::{draw_card, draw_panel};
 use macroquad::prelude::*;
@@ -25,9 +26,9 @@ pub fn draw_city_map(
     narrative: &NarrativeEventSystem,
 ) -> Option<CityMapAction> {
     let map_x = 20.0;
-    let map_y = 80.0;
+    let map_y = layout::HEADER_HEIGHT() + 16.0;
     let map_width = screen_width() * 0.5 - 40.0;
-    let map_height = screen_height() - 140.0;
+    let map_height = screen_height() - map_y - layout::FOOTER_HEIGHT() - 16.0;
 
     let content = draw_panel(Rect::new(map_x, map_y, map_width, map_height), &city.name);
 
@@ -227,9 +228,9 @@ pub fn draw_portfolio_panel(
     assets: &AssetManager,
 ) -> Option<CityMapAction> {
     let panel_x = screen_width() * 0.5 + 10.0;
-    let panel_y = 80.0;
+    let panel_y = layout::HEADER_HEIGHT() + 16.0;
     let panel_width = screen_width() * 0.5 - 30.0;
-    let panel_height = screen_height() - 140.0;
+    let panel_height = screen_height() - panel_y - layout::FOOTER_HEIGHT() - 16.0;
 
     let content = draw_panel(
         Rect::new(panel_x, panel_y, panel_width, panel_height),
@@ -346,9 +347,9 @@ pub fn draw_market_panel(
     assets: &AssetManager,
 ) -> Option<CityMapAction> {
     let panel_x = 20.0;
-    let panel_y = 80.0;
+    let panel_y = layout::HEADER_HEIGHT() + 16.0;
     let panel_width = screen_width() - 40.0;
-    let panel_height = screen_height() - 140.0;
+    let panel_height = screen_height() - panel_y - layout::FOOTER_HEIGHT() - 16.0;
 
     let content = draw_panel(
         Rect::new(panel_x, panel_y, panel_width, panel_height),

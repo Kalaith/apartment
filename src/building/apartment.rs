@@ -11,17 +11,6 @@ pub enum DesignType {
 }
 
 impl DesignType {
-    /// Returns the next design upgrade level, if available
-    pub fn next_upgrade(&self) -> Option<DesignType> {
-        match self {
-            DesignType::Bare => Some(DesignType::Practical),
-            DesignType::Practical => Some(DesignType::Cozy),
-            DesignType::Cozy => Some(DesignType::Luxury),
-            DesignType::Luxury => Some(DesignType::Opulent),
-            DesignType::Opulent => None,
-        }
-    }
-
     /// Design appeal score (affects tenant happiness)
     pub fn appeal_score(&self) -> i32 {
         let config = crate::data::config::active().apartment;
@@ -156,8 +145,16 @@ impl Apartment {
         let noise_mod = self.effective_noise().noise_penalty();
         let space_bonus = self.size.space_score();
         let kitchen_bonus = self.kitchen_level * 15;
+        let lighting_bonus = if self.flags.contains("has_better_lighting") {
+            crate::data::config::active()
+                .apartment
+                .lighting_quality_bonus
+        } else {
+            0
+        };
 
-        (base + design_bonus + noise_mod + space_bonus + kitchen_bonus).clamp(0, 100)
+        (base + design_bonus + noise_mod + space_bonus + kitchen_bonus + lighting_bonus)
+            .clamp(0, 100)
     }
 
     /// Apply condition decay (called each tick)
@@ -168,16 +165,6 @@ impl Apartment {
     /// Repair the apartment
     pub fn repair(&mut self, amount: i32) {
         self.condition = (self.condition + amount).min(100);
-    }
-
-    /// Upgrade design to next level
-    pub fn upgrade_design(&mut self) -> bool {
-        if let Some(next) = self.design.next_upgrade() {
-            self.design = next;
-            true
-        } else {
-            false
-        }
     }
 
     /// Move a tenant in
@@ -237,6 +224,11 @@ impl Apartment {
         } else {
             0
         };
+        let lighting_bonus = if self.flags.contains("has_better_lighting") {
+            config.market_lighting_bonus
+        } else {
+            0
+        };
 
         // Noise penalty for noisy units without soundproofing
         let noise_penalty = match self.base_noise {
@@ -250,6 +242,7 @@ impl Apartment {
             + kitchen_bonus
             + floor_bonus
             + soundproofing_bonus
+            + lighting_bonus
             + noise_penalty)
             .max(config.market_value_floor)
     }
@@ -277,27 +270,6 @@ mod tests {
 
         apt.has_soundproofing = true;
         assert_eq!(apt.effective_noise(), NoiseLevel::Low);
-    }
-
-    #[test]
-    fn test_design_upgrade() {
-        let mut apt = Apartment::new(0, "1A", 1, ApartmentSize::Small, NoiseLevel::Low);
-        assert_eq!(apt.design, DesignType::Bare);
-
-        assert!(apt.upgrade_design());
-        assert_eq!(apt.design, DesignType::Practical);
-
-        assert!(apt.upgrade_design());
-        assert_eq!(apt.design, DesignType::Cozy);
-
-        assert!(apt.upgrade_design());
-        assert_eq!(apt.design, DesignType::Luxury);
-
-        assert!(apt.upgrade_design());
-        assert_eq!(apt.design, DesignType::Opulent);
-
-        assert!(!apt.upgrade_design()); // Already at max
-        assert_eq!(apt.design, DesignType::Opulent);
     }
 
     #[test]

@@ -63,19 +63,8 @@ fn default_economy() -> EconomyConfig {
     EconomyConfig {
         repair_cost_per_point: 10,
         hallway_repair_cost_per_point: 15,
-        design_upgrade_costs: default_design_upgrade_costs(),
-        kitchen_renovation_cost: 800,
-        laundry_installation_cost: 2000,
-        soundproofing_cost: 300,
         staff_costs: default_staff_costs(),
     }
-}
-
-fn default_design_upgrade_costs() -> HashMap<String, i32> {
-    let mut costs = HashMap::new();
-    costs.insert("bare_to_practical".to_string(), 500);
-    costs.insert("practical_to_cozy".to_string(), 1000);
-    costs
 }
 
 fn default_difficulty_modifiers() -> HashMap<String, DifficultyModifiers> {
@@ -165,11 +154,6 @@ fn default_upgrade_labels() -> HashMap<String, String> {
         "repair_hallway_fmt".to_string(),
         "Repair Hallway +{}".to_string(),
     );
-    labels.insert(
-        "upgrade_design_fmt".to_string(),
-        "Upgrade to {}".to_string(),
-    );
-    labels.insert("max_design".to_string(), "Max Design".to_string());
     labels.insert("soundproofing".to_string(), "Add Soundproofing".to_string());
     labels.insert(
         "kitchen_renovation".to_string(),

@@ -29,9 +29,7 @@ pub fn update_missions(state: &mut GameplayState) {
                 .iter()
                 .any(|e| matches!(e, GameEvent::RentMissed { .. }))
         });
-    let building_fully_repaired = !state.building.apartments.is_empty()
-        && state.building.apartments.iter().all(|a| a.condition >= 90)
-        && state.building.hallway_condition >= 90;
+    let fully_repaired_by_building = fully_repaired_buildings(state);
 
     // Check for expirations (expired missions are marked as such)
     state.missions.check_expirations(current_month);
@@ -130,8 +128,12 @@ pub fn update_missions(state: &mut GameplayState) {
                         completed = true;
                     }
                 }
-                MissionGoal::FullRepair { building_id: _ } => {
-                    if building_fully_repaired {
+                MissionGoal::FullRepair { building_id } => {
+                    if fully_repaired_by_building
+                        .get(building_id)
+                        .copied()
+                        .unwrap_or(false)
+                    {
                         completed = true;
                     }
                 }
@@ -202,6 +204,37 @@ pub fn update_missions(state: &mut GameplayState) {
     }
 }
 
+fn fully_repaired_buildings(state: &GameplayState) -> std::collections::HashMap<u32, bool> {
+    let mut repaired: std::collections::HashMap<u32, bool> = state
+        .city
+        .buildings
+        .iter()
+        .enumerate()
+        .map(|(building_id, building)| {
+            (
+                building_id as u32,
+                !building.apartments.is_empty()
+                    && building
+                        .apartments
+                        .iter()
+                        .all(|apartment| apartment.condition >= 90)
+                    && building.hallway_condition >= 90,
+            )
+        })
+        .collect();
+    repaired.insert(
+        state.active_building_id(),
+        !state.building.apartments.is_empty()
+            && state
+                .building
+                .apartments
+                .iter()
+                .all(|apartment| apartment.condition >= 90)
+            && state.building.hallway_condition >= 90,
+    );
+    repaired
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -270,5 +303,23 @@ mod tests {
 
         let mission = state.missions.missions.iter().find(|m| m.id == id).unwrap();
         assert_eq!(mission.status, MissionStatus::Active);
+    }
+
+    #[test]
+    fn full_repair_goal_uses_its_target_building() {
+        let mut state = GameplayState::new();
+        for apartment in &mut state.building.apartments {
+            apartment.condition = 40;
+        }
+        state.building.hallway_condition = 40;
+
+        let mut repaired = crate::building::Building::new("Repaired", 1, 1);
+        repaired.apartments[0].condition = 95;
+        repaired.hallway_condition = 95;
+        state.city.add_building(repaired, 0).unwrap();
+
+        let repaired = fully_repaired_buildings(&state);
+        assert_eq!(repaired.get(&0), Some(&false));
+        assert_eq!(repaired.get(&1), Some(&true));
     }
 }

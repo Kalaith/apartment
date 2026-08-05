@@ -37,10 +37,23 @@ impl GameplayState {
     /// `compliance.unpaid_fines`; call `bill_outstanding_fines` to charge them.
     pub(super) fn execute_inspection(&mut self, trigger: crate::consequences::InspectionTrigger) {
         let building_id = self.city.active_building_index as u32;
-        let inspection_score = self
-            .building
-            .average_condition()
-            .min(self.building.hallway_condition);
+        self.execute_inspection_for(building_id, trigger);
+    }
+
+    pub(super) fn execute_inspection_for(
+        &mut self,
+        building_id: u32,
+        trigger: crate::consequences::InspectionTrigger,
+    ) {
+        let building = if building_id == self.active_building_id() {
+            Some(&self.building)
+        } else {
+            self.city.buildings.get(building_id as usize)
+        };
+        let Some(building) = building else {
+            return;
+        };
+        let inspection_score = building.average_condition().min(building.hallway_condition);
         let config = self.config.regulations.clone();
 
         let inspection = self.compliance.run_inspection(
@@ -53,7 +66,10 @@ impl GameplayState {
 
         let citations = inspection.results.iter().filter(|r| !r.passed).count();
         if citations > 0 {
-            self.adjust_active_neighborhood_reputation(-config.neighborhood_reputation_penalty);
+            self.adjust_neighborhood_reputation_for_building(
+                building_id,
+                -config.neighborhood_reputation_penalty,
+            );
             self.event_log.log(
                 GameEvent::Notification {
                     message: format!(
@@ -70,7 +86,10 @@ impl GameplayState {
                 colors::NEGATIVE(),
             );
         } else if !inspection.results.is_empty() {
-            self.adjust_active_neighborhood_reputation(config.neighborhood_reputation_gain);
+            self.adjust_neighborhood_reputation_for_building(
+                building_id,
+                config.neighborhood_reputation_gain,
+            );
             self.floating_texts.spawn(
                 "Inspection passed",
                 vec2(screen_width() / 2.0, screen_height() / 2.0),

@@ -121,6 +121,32 @@ pub fn draw_hallway_panel(
                 );
             }
             y += 25.0;
+            let benefit = match staff_type.as_str() {
+                "janitor" => format!(
+                    "Maintains {} units against monthly wear",
+                    config.staff_effects.janitor_units_maintained
+                ),
+                "security" => format!(
+                    "+{} happiness; {}% fewer emergencies",
+                    config.staff_effects.security_happiness_bonus,
+                    config.staff_effects.security_failure_reduction_percent
+                ),
+                "manager" => format!(
+                    "+{} happiness; handles resident requests",
+                    config.staff_effects.manager_happiness_bonus
+                ),
+                "receptionist" => format!(
+                    "{:.2}× applicant volume",
+                    config.staff_effects.receptionist_application_multiplier
+                ),
+                _ => String::new(),
+            };
+            if !benefit.is_empty() {
+                if y + 13.0 > content_top && y < content_bottom {
+                    draw_ui_text(&benefit, content_x, y, 13.0, colors::TEXT_DIM());
+                }
+                y += 20.0;
+            }
             staff_count += 1;
         }
     }
@@ -192,10 +218,17 @@ pub fn draw_hallway_panel(
     for upgrade in staff_actions {
         if let Some(cost) = upgrade.cost(building, &config.economy, &config.upgrades) {
             let can_afford = money >= cost;
-            let label = format!(
-                "{} (${})",
-                upgrade.label(building, &config.ui, &config.upgrades),
-                cost
+            let action_label = upgrade.label(building, &config.ui, &config.upgrades);
+            let monthly_cost = match &upgrade {
+                crate::building::upgrades::UpgradeAction::Apply { upgrade_id, .. } => upgrade_id
+                    .strip_prefix("hire_")
+                    .and_then(|role| config.economy.staff_costs.get(role))
+                    .copied(),
+                _ => None,
+            };
+            let label = monthly_cost.map_or_else(
+                || action_label.clone(),
+                |monthly| format!("{} (${} / month)", action_label, monthly),
             );
 
             if y + 36.0 > content_top

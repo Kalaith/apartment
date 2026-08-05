@@ -106,6 +106,13 @@ pub struct CriticalFailureConfig {
     pub structural_repair_cost: i32,
     /// Extra repair cost added per full year of aging (applied to both types).
     pub aging_cost_per_year: i32,
+    /// Percent of an emergency repair bill paid by insurance.
+    #[serde(default = "default_insurance_cost_reduction_percent")]
+    pub insurance_cost_reduction_percent: i32,
+}
+
+fn default_insurance_cost_reduction_percent() -> i32 {
+    50
 }
 
 impl Default for CriticalFailureConfig {
@@ -116,6 +123,7 @@ impl Default for CriticalFailureConfig {
             boiler_repair_cost: 1500,
             structural_repair_cost: 2500,
             aging_cost_per_year: 350,
+            insurance_cost_reduction_percent: default_insurance_cost_reduction_percent(),
         }
     }
 }

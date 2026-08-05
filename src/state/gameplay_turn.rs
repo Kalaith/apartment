@@ -200,13 +200,13 @@ impl GameplayState {
             if event.requires_response {
                 event.response_deadline = Some(self.current_tick + 2);
             }
-            let immediate_effect = if event.requires_response {
-                None
-            } else {
-                Some(event.default_effect.clone())
-            };
-            self.narrative_events.add_event(event);
-            if let Some(effect) = immediate_effect {
+            let requires_response = event.requires_response;
+            let event_id = self.narrative_events.add_event(event);
+            if !requires_response {
+                let effect = self
+                    .narrative_events
+                    .process_default_now(event_id)
+                    .unwrap_or(crate::narrative::events::NarrativeEffect::None);
                 self.apply_narrative_effect(&effect);
             }
         }

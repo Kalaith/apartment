@@ -182,7 +182,6 @@ impl Mailbox {
     }
 
     /// Mark a mail item as read.
-    #[cfg(test)]
     pub fn mark_read(&mut self, id: u32) -> bool {
         if let Some(item) = self.items.iter_mut().find(|item| item.id == id) {
             if !item.read {
@@ -265,9 +264,8 @@ impl Mailbox {
         // Find tenant's apartment
         let apt = tenant.apartment_id.and_then(|apt_id| {
             buildings
-                .iter()
-                .flat_map(|b| &b.apartments)
-                .find(|a| a.id == apt_id)
+                .get(tenant.building_id as usize)
+                .and_then(|building| building.get_apartment(apt_id))
         })?;
 
         let templates: Vec<(&str, String)> = match () {

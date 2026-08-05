@@ -161,10 +161,13 @@ fn draw_status_header(state: &GameplayState) {
     );
 
     let nav_hint = match state.view_mode {
-        ViewMode::Building => "[Tab] City Map | [M] Mail",
-        ViewMode::CityMap => "[Tab] Building View | [M] Mail",
-        ViewMode::Market => "[Tab] City Map | [M] Mail",
-        ViewMode::Mail => "[Tab] Return | [Esc] Return",
+        ViewMode::Building => "Building workspace",
+        ViewMode::Tenants => "Resident roster and leasing",
+        ViewMode::Finances => "Ledger and operating policies",
+        ViewMode::CityMap => "City portfolio",
+        ViewMode::Market => "Property market",
+        ViewMode::Mail => "Letters and conversations",
+        ViewMode::Tasks => "Missions and resident requests",
         ViewMode::CareerSummary => "",
     };
     draw_ui_text_ex(

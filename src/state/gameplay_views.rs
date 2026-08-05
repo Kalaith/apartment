@@ -3,6 +3,7 @@
 use crate::assets::AssetManager;
 use crate::narrative::NotificationCategory;
 use crate::ui::layout::HEADER_HEIGHT;
+use crate::ui::workspace_nav::{draw_workspace_nav, WorkspaceTab};
 use crate::ui::{
     colors, draw_apartment_panel, draw_application_panel, draw_building_view, draw_hallway_panel,
     draw_header, draw_notifications, draw_ownership_panel, Selection,
@@ -19,6 +20,16 @@ impl GameplayState {
         match self.view_mode {
             ViewMode::Building => {
                 self.draw_building_mode(assets);
+            }
+            ViewMode::Tenants => {
+                if let Some(action) = crate::ui::workspace_views::draw_tenants_view(self) {
+                    self.pending_actions.push(action);
+                }
+            }
+            ViewMode::Finances => {
+                if let Some(action) = crate::ui::workspace_views::draw_finances_view(self) {
+                    self.pending_actions.push(action);
+                }
             }
             ViewMode::CityMap => {
                 if let Some(action) =
@@ -48,12 +59,43 @@ impl GameplayState {
                 }
             }
             ViewMode::Mail => {
-                self.draw_mail_view(assets);
+                if let Some(action) = crate::ui::workspace_views::draw_inbox_view(self) {
+                    self.pending_actions.push(action);
+                }
+            }
+            ViewMode::Tasks => {
+                if let Some(action) = crate::ui::workspace_tasks::draw_tasks_view(self) {
+                    self.pending_actions.push(action);
+                }
             }
             ViewMode::CareerSummary => {
                 if let Some(action) = crate::ui::career_summary::draw_career_summary(self) {
                     self.pending_actions.push(action);
                 }
+            }
+        }
+
+        if self.view_mode != ViewMode::CareerSummary {
+            let active_tab = match self.view_mode {
+                ViewMode::Building => WorkspaceTab::Building,
+                ViewMode::Tenants => WorkspaceTab::Tenants,
+                ViewMode::Finances => WorkspaceTab::Finances,
+                ViewMode::CityMap | ViewMode::Market => WorkspaceTab::City,
+                ViewMode::Mail => WorkspaceTab::Inbox,
+                ViewMode::Tasks => WorkspaceTab::Tasks,
+                ViewMode::CareerSummary => unreachable!(),
+            };
+            let pending_tasks = self.missions.available_missions().len()
+                + self.missions.active_missions().len()
+                + self
+                    .tenant_stories
+                    .values()
+                    .filter(|story| story.pending_request.is_some())
+                    .count();
+            if let Some(action) =
+                draw_workspace_nav(active_tab, self.mailbox.unread_count(), pending_tasks)
+            {
+                self.pending_actions.push(action);
             }
         }
 
@@ -188,7 +230,8 @@ impl GameplayState {
         }
     }
 
-    /// Draw mail view
+    #[allow(dead_code)]
+    /// Legacy mailbox renderer retained until the responsive UI milestone removes it.
     pub(super) fn draw_mail_view(&self, assets: &AssetManager) {
         // Use assets to check if textures are loaded
         let has_assets = assets.loaded;

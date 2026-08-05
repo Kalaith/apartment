@@ -95,11 +95,6 @@ pub fn process_upgrade(
                 return Err("Apartment already at max condition".to_string());
             }
         }
-        UpgradeAction::UpgradeDesign { apartment_id } => {
-            building
-                .get_apartment(*apartment_id)
-                .ok_or("Apartment not found")?;
-        }
         UpgradeAction::RepairHallway { .. } => {
             if building.hallway_condition >= 100 {
                 return Err("Hallway already at max condition".to_string());
@@ -110,80 +105,29 @@ pub fn process_upgrade(
             target_id,
         } => {
             let def = config.upgrades.get(upgrade_id).ok_or("Unknown upgrade")?;
-
-            // Validate requirements
             match def.target {
                 crate::data::config::UpgradeTarget::Apartment => {
                     let apt_id = target_id.ok_or("Missing apartment ID")?;
                     let apt = building
                         .get_apartment(apt_id)
                         .ok_or("Apartment not found")?;
-
-                    // Verify requirements again (safety check)
-                    for req in &def.requirements {
-                        match req {
-                            crate::data::config::UpgradeRequirement::MissingFlag(flag) => {
-                                if apt.flags.contains(flag)
-                                    || (flag == "has_soundproofing" && apt.has_soundproofing)
-                                    || (flag == "has_renovated_kitchen" && apt.kitchen_level >= 2)
-                                {
-                                    return Err(format!("Requirement failed: {}", flag));
-                                }
-                            }
-                            crate::data::config::UpgradeRequirement::HasFlag(flag) => {
-                                let has = apt.flags.contains(flag)
-                                    || (flag == "has_soundproofing" && apt.has_soundproofing)
-                                    || (flag == "has_renovated_kitchen" && apt.kitchen_level >= 2);
-                                if !has {
-                                    return Err(format!("Missing requirement: {}", flag));
-                                }
-                            }
-                            crate::data::config::UpgradeRequirement::HasDesign(design_str) => {
-                                let current = match apt.design {
-                                    crate::building::DesignType::Bare => "Bare",
-                                    crate::building::DesignType::Practical => "Practical",
-                                    crate::building::DesignType::Cozy => "Cozy",
-                                    crate::building::DesignType::Luxury => "Luxury",
-                                    crate::building::DesignType::Opulent => "Opulent",
-                                };
-                                if current != design_str {
-                                    return Err(format!(
-                                        "Requirement failed: Design must be {}",
-                                        design_str
-                                    ));
-                                }
-                            }
-                            crate::data::config::UpgradeRequirement::MissingDesign(design_str) => {
-                                let current = match apt.design {
-                                    crate::building::DesignType::Bare => "Bare",
-                                    crate::building::DesignType::Practical => "Practical",
-                                    crate::building::DesignType::Cozy => "Cozy",
-                                    crate::building::DesignType::Luxury => "Luxury",
-                                    crate::building::DesignType::Opulent => "Opulent",
-                                };
-                                if current == design_str {
-                                    return Err(format!(
-                                        "Requirement failed: Design cannot be {}",
-                                        design_str
-                                    ));
-                                }
-                            }
-                            _ => {}
-                        }
+                    if !crate::building::upgrades::check_requirements(
+                        &def.requirements,
+                        apt,
+                        Some(building),
+                    ) {
+                        return Err("Upgrade requirements are no longer satisfied".to_string());
                     }
                 }
                 crate::data::config::UpgradeTarget::Building => {
-                    for req in &def.requirements {
-                        match req {
-                            crate::data::config::UpgradeRequirement::MissingFlag(flag)
-                                if (building.flags.contains(flag)
-                                    || (flag == "has_laundry" && building.has_laundry)) =>
-                            {
-                                return Err(format!("Requirement failed: {}", flag));
-                            }
-                            // ... check other reqs
-                            _ => {}
-                        }
+                    if target_id.is_some() {
+                        return Err("Building upgrades do not accept an apartment ID".to_string());
+                    }
+                    if !crate::building::upgrades::check_requirements_building(
+                        &def.requirements,
+                        building,
+                    ) {
+                        return Err("Upgrade requirements are no longer satisfied".to_string());
                     }
                 }
             }
@@ -209,17 +153,6 @@ pub fn process_upgrade(
                 .map(|a| a.unit_number.clone())
                 .unwrap_or_default();
             format!("Repair Unit {} (+{} condition)", unit, amount)
-        }
-        UpgradeAction::UpgradeDesign { apartment_id } => {
-            let apt = building
-                .get_apartment(*apartment_id)
-                .ok_or("Apartment not found")?;
-            let unit = apt.unit_number.clone();
-            let to_design = apt
-                .design
-                .next_upgrade()
-                .ok_or("Apartment already at max design")?;
-            format!("Upgrade Unit {} to {:?}", unit, to_design)
         }
         UpgradeAction::RepairHallway { amount } => {
             format!("Hallway repair (+{} condition)", amount)
@@ -248,7 +181,6 @@ pub fn process_upgrade(
     let transaction = Transaction::expense(
         match action {
             UpgradeAction::RepairApartment { .. } => TransactionType::RepairCost,
-            UpgradeAction::UpgradeDesign { .. } => TransactionType::UpgradeCost,
             UpgradeAction::RepairHallway { .. } => TransactionType::HallwayRepair,
             UpgradeAction::Apply { .. } => TransactionType::UpgradeCost,
         },
@@ -257,13 +189,15 @@ pub fn process_upgrade(
         current_tick,
     );
 
-    // Deduct funds
+    // Prove the state transition succeeds before charging, keeping the action
+    // atomic even if authored upgrade data is invalid.
+    let mut updated_building = building.clone();
+    apply_upgrade(&mut updated_building, action, &config.upgrades)
+        .ok_or("Failed to apply upgrade")?;
     if !funds.deduct_expense(transaction) {
         return Err("Failed to deduct funds".to_string());
     }
-
-    // Apply the upgrade
-    apply_upgrade(building, action, &config.upgrades).ok_or("Failed to apply upgrade")?;
+    *building = updated_building;
 
     Ok(cost)
 }
@@ -271,6 +205,7 @@ pub fn process_upgrade(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::building::DesignType;
     use crate::data::config::OperatingCostsConfig;
 
     #[test]
@@ -281,6 +216,30 @@ mod tests {
             OperatingCosts::calculate_base_overhead(&building, &config),
             6 * config.base_monthly_cost_per_unit
         );
+    }
+
+    #[test]
+    fn stale_upgrade_action_cannot_bypass_size_requirements_or_charge_funds() {
+        let config = crate::data::config::load_config();
+        let mut building = Building::new("Small Units", 1, 1);
+        building.apartments[0].design = DesignType::Cozy;
+        let mut funds = PlayerFunds::new(100_000);
+        let before = funds.balance;
+
+        let result = process_upgrade(
+            &UpgradeAction::Apply {
+                upgrade_id: "upgrade_to_luxury".to_string(),
+                target_id: Some(0),
+            },
+            &mut building,
+            &mut funds,
+            &config,
+            1,
+        );
+
+        assert!(result.is_err());
+        assert_eq!(funds.balance, before);
+        assert_eq!(building.apartments[0].design, DesignType::Cozy);
     }
 
     #[test]

@@ -306,8 +306,20 @@ impl Sim {
                 }
             });
             if let Some(id) = target {
+                let upgrade_id = self
+                    .building
+                    .get_apartment(id)
+                    .map(|apartment| match apartment.design {
+                        DesignType::Bare => "upgrade_to_practical",
+                        DesignType::Practical => "upgrade_to_cozy",
+                        _ => "",
+                    })
+                    .unwrap_or("");
                 if process_upgrade(
-                    &UpgradeAction::UpgradeDesign { apartment_id: id },
+                    &UpgradeAction::Apply {
+                        upgrade_id: upgrade_id.to_string(),
+                        target_id: Some(id),
+                    },
                     &mut self.building,
                     &mut self.funds,
                     &self.config,

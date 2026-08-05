@@ -38,9 +38,12 @@ fn default_floating_text_layer() -> FloatingTextLayer {
 pub enum ViewMode {
     #[default]
     Building, // Current single-building view
-    CityMap,       // City overview with all neighborhoods
-    Market,        // Property acquisition screen
-    Mail,          // Mailbox view
+    Tenants,
+    Finances,
+    CityMap, // City overview with all neighborhoods
+    Market,  // Property acquisition screen
+    Mail,    // Mailbox view
+    Tasks,
     CareerSummary, // Phase 5: Endgame result
 }
 
@@ -113,6 +116,10 @@ pub struct GameplayState {
     pub panel_tween: Tween,
     #[serde(skip)]
     pub panel_scroll_offset: f32,
+    #[serde(skip)]
+    pub selected_mail_id: Option<u32>,
+    #[serde(skip)]
+    pub inbox_page: usize,
     #[serde(skip)]
     pub show_pause_menu: bool,
     #[serde(skip)]
@@ -265,6 +272,8 @@ impl GameplayState {
             floating_texts: default_floating_text_layer(),
             panel_tween: default_panel_tween(),
             panel_scroll_offset: 0.0,
+            selected_mail_id: None,
+            inbox_page: 0,
             show_pause_menu: false,
             is_fullscreen: false,
             pending_quit_to_menu: false,
@@ -355,6 +364,8 @@ impl GameplayState {
         self.floating_texts = default_floating_text_layer();
         self.panel_tween = default_panel_tween();
         self.panel_scroll_offset = 0.0;
+        self.selected_mail_id = None;
+        self.inbox_page = 0;
         self.show_pause_menu = false;
         self.pending_quit_to_menu = false;
         self.active_world_events

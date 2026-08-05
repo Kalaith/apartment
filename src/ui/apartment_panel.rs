@@ -74,6 +74,7 @@ pub fn draw_apartment_panel(
 
     draw_apartment_stats(
         apt,
+        building,
         assets,
         content_x,
         &mut y,

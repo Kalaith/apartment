@@ -211,6 +211,51 @@ impl NarrativeEventSystem {
         })
     }
 
+    /// Consume non-interactive news exactly once. These events describe world
+    /// changes rather than player decisions, so their default effect applies
+    /// immediately and the headline is returned for the visible event log.
+    pub fn process_immediate_events(&mut self) -> Vec<(String, NarrativeEffect)> {
+        let ids: Vec<u32> = self
+            .events
+            .iter()
+            .filter(|event| {
+                !event.requires_response
+                    && matches!(
+                        event.event_type,
+                        NarrativeEventType::NeighborhoodNews
+                            | NarrativeEventType::CityEvent
+                            | NarrativeEventType::SeasonalEvent
+                            | NarrativeEventType::BuildingMilestone
+                    )
+                    && !self.processed_events.contains(&event.id)
+            })
+            .map(|event| event.id)
+            .collect();
+
+        let mut outcomes = Vec::new();
+        for id in ids {
+            if let Some(event) = self.events.iter_mut().find(|event| event.id == id) {
+                event.read = true;
+                self.processed_events.push(id);
+                outcomes.push((event.headline.clone(), event.default_effect.clone()));
+            }
+        }
+        outcomes
+    }
+
+    /// Mark one authored non-response event handled and return its default
+    /// effect. Callers that generate special event categories can use this to
+    /// apply the effect immediately without leaving stale processed state.
+    pub fn process_default_now(&mut self, event_id: u32) -> Option<NarrativeEffect> {
+        let event = self.events.iter_mut().find(|event| event.id == event_id)?;
+        if event.requires_response || self.processed_events.contains(&event_id) {
+            return None;
+        }
+        event.read = true;
+        self.processed_events.push(event_id);
+        Some(event.default_effect.clone())
+    }
+
     /// Expire an event and return the default consequence for no response.
     pub fn expire_event(&mut self, event_id: u32) -> Option<NarrativeEffect> {
         let event = self.events.iter_mut().find(|e| e.id == event_id)?;
@@ -595,5 +640,22 @@ mod tests {
             Some(NarrativeEffect::Money { amount: 750 })
         ));
         assert!(system.processed_events.contains(&event_id));
+    }
+
+    #[test]
+    fn immediate_news_is_processed_only_once() {
+        let mut system = NarrativeEventSystem::new();
+        let mut event = NarrativeEvent::news(0, 1, "Market shifts", "Demand rose.");
+        event.default_effect = NarrativeEffect::EconomyChange {
+            economy_health_change: 0.1,
+        };
+        system.add_event(event);
+
+        let first = system.process_immediate_events();
+        let second = system.process_immediate_events();
+
+        assert_eq!(first.len(), 1);
+        assert!(second.is_empty());
+        assert!(system.events[0].read);
     }
 }

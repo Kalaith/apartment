@@ -9,13 +9,6 @@
   "economy": {
     "repair_cost_per_point": 10,
     "hallway_repair_cost_per_point": 15,
-    "design_upgrade_costs": {
-      "bare_to_practical": 500,
-      "practical_to_cozy": 1000
-    },
-    "kitchen_renovation_cost": 800,
-    "laundry_installation_cost": 2000,
-    "soundproofing_cost": 300,
     "staff_costs": {
       "janitor": 150,
       "security": 320,
@@ -32,7 +25,9 @@
     "security_happiness_bonus": 6,
     "security_failure_reduction_percent": 50,
     "manager_happiness_bonus": 4,
-    "manager_auto_approve_requests": true
+    "manager_auto_approve_requests": true,
+    "receptionist_application_multiplier": 1.25,
+    "utilities_happiness_bonus": 5
   },
   "tenant_risk": {
     "unreliable_threshold": 50,
@@ -89,8 +84,6 @@
     "upgrade_labels": {
       "repair_fmt": "Repair +{}",
       "repair_hallway_fmt": "Repair Hallway +{}",
-      "upgrade_design_fmt": "Upgrade to {}",
-      "max_design": "Max Design",
       "soundproofing": "Add Soundproofing",
       "kitchen_renovation": "Renovate Kitchen",
       "install_laundry": "Install Laundry"
@@ -162,7 +155,9 @@
     "none_cost": 0,
     "social_media_cost": 50,
     "local_newspaper_cost": 150,
-    "premium_agency_cost": 500
+    "premium_agency_cost": 500,
+    "open_house_cost": 250,
+    "open_house_duration": 2
   },
   "relationships": {
     "happiness_modifiers": {
@@ -230,7 +225,8 @@
     "aging_probability_per_year": 5,
     "boiler_repair_cost": 1500,
     "structural_repair_cost": 2500,
-    "aging_cost_per_year": 350
+    "aging_cost_per_year": 350,
+    "insurance_cost_reduction_percent": 50
   },
   "portfolio": {
     "passive_occupancy": 0.8,
@@ -288,7 +284,7 @@
     "shadow": [0.0, 0.0, 0.0, 0.35]
   },
   "layout": {
-    "header_height": 60.0,
+    "header_height": 108.0,
     "footer_height": 100.0,
     "panel_split": 0.6,
     "padding": 10.0,
@@ -321,6 +317,7 @@
     "space_score_large": 30,
     "space_score_penthouse": 50,
     "noise_penalty_high": -20,
+    "lighting_quality_bonus": 8,
     "market_base_small": 50000,
     "market_base_medium": 75000,
     "market_base_large": 120000,
@@ -336,6 +333,7 @@
     "market_kitchen_bonus_level2_plus": 15000,
     "market_floor_bonus_per_floor": 2000,
     "market_soundproofing_bonus": 3000,
+    "market_lighting_bonus": 2000,
     "market_high_noise_penalty": -5000,
     "market_value_floor": 10000
   }

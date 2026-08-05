@@ -3,7 +3,7 @@
 
 use macroquad_toolkit::rng;
 
-use crate::simulation::TickResult;
+use crate::simulation::{GameEvent, NotificationLevel, TickResult};
 
 use super::gameplay::GameplayState;
 
@@ -15,6 +15,16 @@ impl GameplayState {
             &self.city.buildings,
             &self.tenants,
         );
+        for (headline, effect) in self.narrative_events.process_immediate_events() {
+            self.apply_narrative_effect(&effect);
+            self.event_log.log(
+                GameEvent::Notification {
+                    message: headline,
+                    level: NotificationLevel::Info,
+                },
+                self.current_tick,
+            );
+        }
 
         let expenses = self
             .funds
@@ -33,7 +43,6 @@ impl GameplayState {
         self.mailbox.cleanup(self.current_tick, 12);
 
         self.generate_dialogues();
-        self.accept_available_missions();
         self.generate_tenant_requests();
     }
 
@@ -48,18 +57,6 @@ impl GameplayState {
             &funds,
             &self.tenant_network,
         );
-    }
-
-    fn accept_available_missions(&mut self) {
-        let available_ids: Vec<u32> = self
-            .missions
-            .available_missions()
-            .iter()
-            .map(|mission| mission.id)
-            .collect();
-        for mission_id in available_ids {
-            self.missions.accept_mission(mission_id, self.current_tick);
-        }
     }
 
     /// With a manager employed, routine tenant requests are handled for you

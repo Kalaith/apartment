@@ -67,6 +67,9 @@ fn calculate_staff_factor(building: &Building, staff: &StaffEffectsConfig) -> i3
     if building.flags.contains("staff_manager") {
         factor += staff.manager_happiness_bonus;
     }
+    if building.utilities_included {
+        factor += staff.utilities_happiness_bonus;
+    }
     factor
 }
 
@@ -242,5 +245,14 @@ mod tests {
             calculate_staff_factor(&building, &staff),
             staff.security_happiness_bonus + staff.manager_happiness_bonus
         );
+    }
+
+    #[test]
+    fn included_utilities_have_a_persistent_happiness_benefit() {
+        let mut building = Building::new("Utilities", 1, 1);
+        let staff = StaffEffectsConfig::default();
+        building.utilities_included = true;
+
+        assert_eq!(calculate_staff_factor(&building, &staff), 5);
     }
 }

@@ -15,6 +15,7 @@ mod gameplay_life_events; // Emergent tenant life events
 mod gameplay_narrative_turn; // Monthly narrative, mail, dialogue, requests
 mod gameplay_neighborhood; // Neighborhood reputation and market conditions
 mod gameplay_ownership; // Safe condo sale and buyback transactions
+mod gameplay_policies; // Rent, marketing, and operating-policy changes
 mod gameplay_turn; // Monthly turn advancement
 mod gameplay_views; // Drawing functions (draw, draw_building_mode, etc.)
 mod menu;

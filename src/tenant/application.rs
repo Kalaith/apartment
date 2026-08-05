@@ -101,7 +101,8 @@ pub fn generate_applications(
 
     let building_appeal = building.building_appeal();
 
-    // Marketing multipliers (same as before)
+    // Marketing and front-desk staffing both make listed units easier for
+    // applicants to discover.
     let marketing_multiplier = match building.marketing_strategy {
         crate::building::MarketingType::None => 1.0,
         crate::building::MarketingType::SocialMedia => 2.0,
@@ -114,6 +115,7 @@ pub fn generate_applications(
     } else {
         1.0
     };
+    let staff_multiplier = application_staff_multiplier(building, &config.staff_effects);
 
     // 2. Generate applications for EACH listed apartment
     for apt in listed_apartments {
@@ -124,6 +126,7 @@ pub fn generate_applications(
             * appeal_factor
             * marketing_multiplier
             * open_house_multiplier
+            * staff_multiplier
             * reputation_multiplier;
 
         // Random check to see if we generate an applicant this tick
@@ -170,6 +173,17 @@ pub fn generate_applications(
     }
 
     new_applications
+}
+
+pub fn application_staff_multiplier(
+    building: &Building,
+    config: &crate::data::config::StaffEffectsConfig,
+) -> f32 {
+    if building.flags.contains("staff_receptionist") {
+        config.receptionist_application_multiplier
+    } else {
+        1.0
+    }
 }
 
 fn pick_archetype_with_preference(
@@ -305,5 +319,18 @@ mod tests {
         let base = tenant.rent_tolerance;
         apply_risk_rent_premium(&mut tenant, &cfg);
         assert_eq!(tenant.rent_tolerance, base);
+    }
+
+    #[test]
+    fn receptionist_increases_application_rate() {
+        let config = crate::data::config::StaffEffectsConfig::default();
+        let mut building = Building::new("Test", 1, 1);
+        assert_eq!(application_staff_multiplier(&building, &config), 1.0);
+
+        building.flags.insert("staff_receptionist".to_string());
+        assert_eq!(
+            application_staff_multiplier(&building, &config),
+            config.receptionist_application_multiplier
+        );
     }
 }

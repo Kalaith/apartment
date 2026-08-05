@@ -11,9 +11,6 @@ pub enum UpgradeAction {
         apartment_id: u32,
         amount: i32,
     },
-    UpgradeDesign {
-        apartment_id: u32,
-    },
     RepairHallway {
         amount: i32,
     },
@@ -28,7 +25,7 @@ impl UpgradeAction {
     /// Get a user-friendly label for this action
     pub fn label(
         &self,
-        building: &Building,
+        _building: &Building,
         config: &UiConfig,
         upgrades: &HashMap<String, UpgradeDefinition>,
     ) -> String {
@@ -40,23 +37,6 @@ impl UpgradeAction {
                     .map(|s| s.as_str())
                     .unwrap_or("Repair +{}");
                 fmt.replace("{}", &amount.to_string())
-            }
-            UpgradeAction::UpgradeDesign { apartment_id } => {
-                if let Some(apt) = building.get_apartment(*apartment_id) {
-                    if let Some(next) = apt.design.next_upgrade() {
-                        let fmt = config
-                            .upgrade_labels
-                            .get("upgrade_design_fmt")
-                            .map(|s| s.as_str())
-                            .unwrap_or("Upgrade to {}");
-                        return fmt.replace("{}", &format!("{:?}", next));
-                    }
-                }
-                config
-                    .upgrade_labels
-                    .get("max_design")
-                    .cloned()
-                    .unwrap_or_else(|| "Max Design".to_string())
             }
             UpgradeAction::RepairHallway { amount } => {
                 let fmt = config
@@ -76,7 +56,7 @@ impl UpgradeAction {
     /// Calculate the cost of this action
     pub fn cost(
         &self,
-        building: &Building,
+        _building: &Building,
         config: &EconomyConfig,
         upgrades: &HashMap<String, UpgradeDefinition>,
     ) -> Option<i32> {
@@ -84,36 +64,14 @@ impl UpgradeAction {
             UpgradeAction::RepairApartment { amount, .. } => {
                 Some(amount * config.repair_cost_per_point)
             }
-            UpgradeAction::UpgradeDesign { apartment_id } => {
-                let apt = building.get_apartment(*apartment_id)?;
-                let current_design_key = match apt.design {
-                    DesignType::Bare => "bare_to_practical",
-                    DesignType::Practical => "practical_to_cozy",
-                    DesignType::Cozy => "cozy_to_luxury",
-                    DesignType::Luxury => "luxury_to_opulent",
-                    DesignType::Opulent => return None,
-                };
-                config.design_upgrade_costs.get(current_design_key).cloned()
-            }
             UpgradeAction::RepairHallway { amount } => {
                 Some(amount * config.hallway_repair_cost_per_point)
             }
             UpgradeAction::Apply {
                 upgrade_id,
-                target_id,
+                target_id: _,
             } => {
                 let base_cost = upgrades.get(upgrade_id).map(|u| u.cost)?;
-
-                // Discount logic: If upgrading to Cozy and already Practical, discount by 5000
-                if upgrade_id == "upgrade_to_cozy" {
-                    if let Some(tid) = target_id {
-                        if let Some(apt) = building.get_apartment(*tid) {
-                            if apt.design == DesignType::Practical {
-                                return Some(base_cost - 5000);
-                            }
-                        }
-                    }
-                }
 
                 Some(base_cost)
             }
@@ -135,11 +93,6 @@ pub fn apply_upgrade(
         } => {
             let apt = building.get_apartment_mut(*apartment_id)?;
             apt.repair(*amount);
-            Some(())
-        }
-        UpgradeAction::UpgradeDesign { apartment_id } => {
-            let apt = building.get_apartment_mut(*apartment_id)?;
-            apt.upgrade_design();
             Some(())
         }
         UpgradeAction::RepairHallway { amount } => {
@@ -165,11 +118,17 @@ pub fn apply_upgrade(
                                     apt.has_soundproofing = true;
                                 }
                                 if flag == "has_renovated_kitchen" && apt.kitchen_level < 1 {
-                                    apt.kitchen_level = 1;
+                                    apt.kitchen_level = 2;
                                 }
                             }
                             crate::data::config::UpgradeEffect::RemoveFlag(flag) => {
                                 apt.flags.remove(flag);
+                                if flag == "has_soundproofing" {
+                                    apt.has_soundproofing = false;
+                                }
+                                if flag == "has_renovated_kitchen" {
+                                    apt.kitchen_level = 0;
+                                }
                             }
                             crate::data::config::UpgradeEffect::SetDesign(design_str) => {
                                 match design_str.as_str() {
@@ -181,7 +140,6 @@ pub fn apply_upgrade(
                                     _ => {}
                                 }
                             }
-                            _ => {}
                         }
                     }
                     Some(())
@@ -191,11 +149,17 @@ pub fn apply_upgrade(
                         match effect {
                             crate::data::config::UpgradeEffect::SetFlag(flag) => {
                                 building.flags.insert(flag.clone());
+                                if flag == "has_laundry" {
+                                    building.has_laundry = true;
+                                }
                             }
                             crate::data::config::UpgradeEffect::RemoveFlag(flag) => {
                                 building.flags.remove(flag);
+                                if flag == "has_laundry" {
+                                    building.has_laundry = false;
+                                }
                             }
-                            _ => {}
+                            crate::data::config::UpgradeEffect::SetDesign(_) => return None,
                         }
                     }
                     Some(())
@@ -262,7 +226,7 @@ pub fn available_building_upgrades(
     actions
 }
 
-fn check_requirements(
+pub(crate) fn check_requirements(
     reqs: &[UpgradeRequirement],
     apt: &Apartment,
     _building: Option<&Building>,
@@ -333,13 +297,15 @@ fn check_requirements(
                     return false;
                 }
             }
-            _ => {} // Implement generic stat checks later if needed
         }
     }
     true
 }
 
-fn check_requirements_building(reqs: &[UpgradeRequirement], building: &Building) -> bool {
+pub(crate) fn check_requirements_building(
+    reqs: &[UpgradeRequirement],
+    building: &Building,
+) -> bool {
     for req in reqs {
         match req {
             UpgradeRequirement::MissingFlag(flag) => {
@@ -357,7 +323,9 @@ fn check_requirements_building(reqs: &[UpgradeRequirement], building: &Building)
                     return false;
                 }
             }
-            _ => {}
+            UpgradeRequirement::HasDesign(_)
+            | UpgradeRequirement::MissingDesign(_)
+            | UpgradeRequirement::MinSize(_) => return false,
         }
     }
     true
@@ -372,8 +340,9 @@ mod tests {
     #[test]
     fn test_upgrade_costs() {
         let building = Building::new("Test", 3, 2);
-        let config = GameConfig::default().economy;
-        let upgrades = GameConfig::default().upgrades;
+        let game_config = crate::data::config::load_config();
+        let config = game_config.economy;
+        let upgrades = game_config.upgrades;
 
         let repair = UpgradeAction::RepairApartment {
             apartment_id: 0,
@@ -381,8 +350,11 @@ mod tests {
         };
         assert_eq!(repair.cost(&building, &config, &upgrades), Some(100)); // 10 * $10
 
-        let design = UpgradeAction::UpgradeDesign { apartment_id: 0 };
-        assert_eq!(design.cost(&building, &config, &upgrades), Some(500)); // Bare -> Practical
+        let design = UpgradeAction::Apply {
+            upgrade_id: "upgrade_to_practical".to_string(),
+            target_id: Some(0),
+        };
+        assert_eq!(design.cost(&building, &config, &upgrades), Some(5000));
     }
 
     #[test]
@@ -400,5 +372,47 @@ mod tests {
 
         assert_eq!(cost, Some(())); // Returns Option<()>
         assert_eq!(building.apartments[0].condition, initial_condition + 20);
+    }
+
+    #[test]
+    fn configured_amenities_update_authoritative_fields() {
+        let config = crate::data::config::load_config();
+        let mut building = Building::new("Test", 1, 1);
+        let base_quality = building.apartments[0].quality_score();
+
+        assert!(apply_upgrade(
+            &mut building,
+            &UpgradeAction::Apply {
+                upgrade_id: "lighting_upgrade".to_string(),
+                target_id: Some(0),
+            },
+            &config.upgrades,
+        )
+        .is_some());
+        assert!(building.apartments[0].quality_score() > base_quality);
+
+        assert!(apply_upgrade(
+            &mut building,
+            &UpgradeAction::Apply {
+                upgrade_id: "kitchen_renovation".to_string(),
+                target_id: Some(0),
+            },
+            &config.upgrades,
+        )
+        .is_some());
+        assert_eq!(building.apartments[0].kitchen_level, 2);
+
+        let base_appeal = building.building_appeal();
+        assert!(apply_upgrade(
+            &mut building,
+            &UpgradeAction::Apply {
+                upgrade_id: "install_laundry".to_string(),
+                target_id: None,
+            },
+            &config.upgrades,
+        )
+        .is_some());
+        assert!(building.has_laundry);
+        assert_eq!(building.building_appeal(), base_appeal + 10);
     }
 }

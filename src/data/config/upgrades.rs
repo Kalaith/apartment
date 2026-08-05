@@ -25,7 +25,6 @@ pub enum UpgradeTarget {
 pub enum UpgradeEffect {
     SetFlag(String),
     RemoveFlag(String),
-    ModifyStat { stat: String, amount: i32 },
     SetDesign(String),
 }
 
@@ -34,8 +33,6 @@ pub enum UpgradeEffect {
 pub enum UpgradeRequirement {
     MissingFlag(String),
     HasFlag(String),
-    MinStat { stat: String, value: i32 },
-    MaxStat { stat: String, value: i32 },
     HasDesign(String),
     MissingDesign(String),
     MinSize(String),

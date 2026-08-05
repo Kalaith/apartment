@@ -228,8 +228,8 @@
         ],
         "requirements": [
             {
-                "type": "missing_design",
-                "value": "Practical"
+                "type": "has_design",
+                "value": "Bare"
             }
         ]
     },
@@ -246,8 +246,8 @@
         ],
         "requirements": [
             {
-                "type": "missing_design",
-                "value": "Cozy"
+                "type": "has_design",
+                "value": "Practical"
             }
         ]
     },
@@ -263,10 +263,6 @@
             }
         ],
         "requirements": [
-            {
-                "type": "missing_design",
-                "value": "Luxury"
-            },
             {
                 "type": "has_design",
                 "value": "Cozy"
@@ -289,10 +285,6 @@
             }
         ],
         "requirements": [
-            {
-                "type": "missing_design",
-                "value": "Opulent"
-            },
             {
                 "type": "has_design",
                 "value": "Luxury"

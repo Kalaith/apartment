@@ -93,6 +93,7 @@ pub(super) fn draw_sold_condo_panel(
 
 pub(super) fn draw_apartment_stats(
     apt: &Apartment,
+    building: &Building,
     _assets: &AssetManager,
     content_x: f32,
     y: &mut f32,
@@ -155,6 +156,38 @@ pub(super) fn draw_apartment_stats(
     if apt.has_soundproofing {
         if vis(*y) {
             kv_row(content_x, *y, w, "Soundproofing", "Yes", colors::POSITIVE());
+        }
+        *y += 24.0;
+    }
+
+    if apt.kitchen_level > 0 {
+        if vis(*y) {
+            kv_row(
+                content_x,
+                *y,
+                w,
+                "Kitchen",
+                if apt.kitchen_level >= 2 {
+                    "Renovated"
+                } else {
+                    "Improved"
+                },
+                colors::POSITIVE(),
+            );
+        }
+        *y += 24.0;
+    }
+
+    if apt.flags.contains("has_better_lighting") {
+        if vis(*y) {
+            kv_row(content_x, *y, w, "Lighting", "Upgraded", colors::POSITIVE());
+        }
+        *y += 24.0;
+    }
+
+    if building.has_laundry {
+        if vis(*y) {
+            kv_row(content_x, *y, w, "Laundry", "On site", colors::POSITIVE());
         }
         *y += 24.0;
     }

@@ -455,15 +455,15 @@ fn draw_unlisted_vacancy_actions(
 
         let btn_size = 25.0;
         if button(content_x + 120.0, *y - 18.0, btn_size, btn_size, "-", true) {
-            return Some(UiAction::AdjustRent {
+            return Some(UiAction::SetRent {
                 apartment_id: apt.id,
-                amount: -50,
+                new_rent: apt.rent_price - 50,
             });
         }
         if button(content_x + 150.0, *y - 18.0, btn_size, btn_size, "+", true) {
-            return Some(UiAction::AdjustRent {
+            return Some(UiAction::SetRent {
                 apartment_id: apt.id,
-                amount: 50,
+                new_rent: apt.rent_price + 50,
             });
         }
     }

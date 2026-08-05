@@ -104,6 +104,20 @@ pub struct StaffEffectsConfig {
     pub manager_happiness_bonus: i32,
     /// Whether the manager automatically approves pending tenant requests.
     pub manager_auto_approve_requests: bool,
+    /// Applicant-rate multiplier while a receptionist is employed.
+    #[serde(default = "default_receptionist_application_multiplier")]
+    pub receptionist_application_multiplier: f32,
+    /// Happiness added when the landlord includes utilities in the rent.
+    #[serde(default = "default_utilities_happiness_bonus")]
+    pub utilities_happiness_bonus: i32,
+}
+
+fn default_receptionist_application_multiplier() -> f32 {
+    1.25
+}
+
+fn default_utilities_happiness_bonus() -> i32 {
+    5
 }
 
 impl Default for StaffEffectsConfig {
@@ -114,6 +128,8 @@ impl Default for StaffEffectsConfig {
             security_failure_reduction_percent: 50,
             manager_happiness_bonus: 4,
             manager_auto_approve_requests: true,
+            receptionist_application_multiplier: default_receptionist_application_multiplier(),
+            utilities_happiness_bonus: default_utilities_happiness_bonus(),
         }
     }
 }
@@ -214,6 +230,18 @@ pub struct MarketingConfig {
     pub social_media_cost: i32,
     pub local_newspaper_cost: i32,
     pub premium_agency_cost: i32,
+    #[serde(default = "default_open_house_cost")]
+    pub open_house_cost: i32,
+    #[serde(default = "default_open_house_duration")]
+    pub open_house_duration: u32,
+}
+
+fn default_open_house_cost() -> i32 {
+    250
+}
+
+fn default_open_house_duration() -> u32 {
+    2
 }
 
 impl Default for MarketingConfig {
@@ -223,6 +251,8 @@ impl Default for MarketingConfig {
             social_media_cost: 50,
             local_newspaper_cost: 150,
             premium_agency_cost: 500,
+            open_house_cost: default_open_house_cost(),
+            open_house_duration: default_open_house_duration(),
         }
     }
 }

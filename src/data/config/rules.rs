@@ -16,10 +16,6 @@ pub struct StartingConditions {
 pub struct EconomyConfig {
     pub repair_cost_per_point: i32,
     pub hallway_repair_cost_per_point: i32,
-    pub design_upgrade_costs: HashMap<String, i32>,
-    pub kitchen_renovation_cost: i32,
-    pub laundry_installation_cost: i32,
-    pub soundproofing_cost: i32,
     #[serde(default)]
     pub staff_costs: HashMap<String, i32>,
 }

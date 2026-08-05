@@ -22,6 +22,20 @@ pub struct TickResult {
 /// Main tick processor
 pub struct GameTick;
 
+fn emergency_repair_cost(
+    base_cost: i32,
+    aging_cost: i32,
+    insured: bool,
+    insurance_reduction_percent: i32,
+) -> i32 {
+    let full_cost = base_cost + aging_cost;
+    if insured {
+        full_cost * (100 - insurance_reduction_percent.clamp(0, 100)) / 100
+    } else {
+        full_cost
+    }
+}
+
 impl GameTick {
     /// Process a single game tick (one month)
     #[allow(clippy::too_many_arguments)]
@@ -372,10 +386,18 @@ impl GameTick {
             prob = prob * (100 - reduction) / 100;
         }
         let aging_cost = failure_cfg.aging_cost_per_year * years_aged;
+        let emergency_cost = |base_cost: i32| {
+            emergency_repair_cost(
+                base_cost,
+                aging_cost,
+                building.insurance_active,
+                failure_cfg.insurance_cost_reduction_percent,
+            )
+        };
 
         // Boiler Failure (prob out of 1000)
         if rng::gen_range(0, 1000) < prob {
-            let cost = failure_cfg.boiler_repair_cost + aging_cost;
+            let cost = emergency_cost(failure_cfg.boiler_repair_cost);
             if funds.can_afford(cost) {
                 funds.deduct_expense(Transaction::expense(
                     TransactionType::CriticalFailure,
@@ -404,7 +426,7 @@ impl GameTick {
 
         // Structural Issue
         if rng::gen_range(0, 1000) < prob {
-            let cost = failure_cfg.structural_repair_cost + aging_cost;
+            let cost = emergency_cost(failure_cfg.structural_repair_cost);
             let tx = Transaction::expense(
                 TransactionType::CriticalFailure,
                 cost,
@@ -598,6 +620,12 @@ mod tests {
             .count();
         assert_eq!(restored, 5);
         assert_eq!(unmaintained, 1);
+    }
+
+    #[test]
+    fn insurance_reduces_emergency_repair_costs() {
+        assert_eq!(emergency_repair_cost(2_000, 400, false, 50), 2_400);
+        assert_eq!(emergency_repair_cost(2_000, 400, true, 50), 1_200);
     }
 
     #[test]

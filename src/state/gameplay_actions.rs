@@ -20,10 +20,8 @@ impl GameplayState {
                 self.selection = Selection::Apartment(id);
                 self.panel_scroll_offset = 0.0;
             }
-            UiAction::SelectTenant(id) => {
-                self.selection = Selection::Tenant(id);
-            }
             UiAction::SelectApplications(filter) => {
+                self.view_mode = ViewMode::Building;
                 self.selection = Selection::Applications(filter);
                 self.panel_scroll_offset = 0.0;
             }
@@ -66,74 +64,63 @@ impl GameplayState {
                 }
             }
 
-            UiAction::AdjustRent {
-                apartment_id,
-                amount,
-            } => {
-                if let Some(apt) = self.building.get_apartment_mut(apartment_id) {
-                    apt.rent_price = (apt.rent_price + amount).max(100); // Minimum rent $100
-                }
-            }
-
             UiAction::UpgradeAction(upgrade) => {
                 let description =
                     upgrade.label(&self.building, &self.config.ui, &self.config.upgrades);
-                if let Ok(cost) = process_upgrade(
+                match process_upgrade(
                     &upgrade,
                     &mut self.building,
                     &mut self.funds,
                     &self.config,
                     self.current_tick,
                 ) {
-                    self.event_log.log(
-                        GameEvent::UpgradeCompleted { description, cost },
-                        self.current_tick,
-                    );
+                    Ok(cost) => {
+                        self.event_log.log(
+                            GameEvent::UpgradeCompleted { description, cost },
+                            self.current_tick,
+                        );
 
-                    let mouse = mouse_position();
-                    self.floating_texts.spawn(
-                        format!("-${}", cost),
-                        vec2(mouse.0, mouse.1 - 20.0),
-                        colors::NEGATIVE(),
-                    );
+                        let mouse = mouse_position();
+                        self.floating_texts.spawn(
+                            format!("-${}", cost),
+                            vec2(mouse.0, mouse.1 - 20.0),
+                            colors::NEGATIVE(),
+                        );
+                    }
+                    Err(reason) => self.report_action_failure(&reason),
                 }
             }
             UiAction::SetRent {
                 apartment_id,
                 new_rent,
-            } => {
-                if let Some(apt) = self.building.get_apartment_mut(apartment_id) {
-                    let old_rent = apt.rent_price;
-                    apt.rent_price = new_rent;
-
-                    if old_rent != new_rent {
-                        self.gentrification.record_rent_change(
-                            0,
-                            self.current_tick,
-                            old_rent,
-                            new_rent,
-                            &self.config.gentrification,
-                        );
-                    }
-                }
-            }
+            } => match self.set_apartment_rent(apartment_id, new_rent) {
+                Ok((old, new)) if old != new => self.floating_texts.spawn(
+                    format!("Rent ${} → ${}", old, new),
+                    vec2(screen_width() / 2.0, screen_height() / 2.0),
+                    if new > old {
+                        colors::WARNING()
+                    } else {
+                        colors::POSITIVE()
+                    },
+                ),
+                Ok(_) => {}
+                Err(reason) => self.report_action_failure(&reason),
+            },
             UiAction::AcceptApplication { application_index } => {
-                if self
+                if let Some(app) = self
                     .applications
                     .get(application_index)
-                    .is_some_and(|application| application.building_id == self.active_building_id())
+                    .filter(|application| application.building_id == self.active_building_id())
+                    .cloned()
                 {
-                    let app = self.applications.remove(application_index);
-                    let mut tenant = app.tenant;
-
                     let Some(apt) = self.building.get_apartment(app.apartment_id) else {
                         return;
                     };
 
-                    if !apt.is_vacant() {
+                    if !apt.is_vacant() || self.building.is_unit_sold(app.apartment_id) {
                         self.event_log.log(
                             GameEvent::Notification {
-                                message: "Application could not be accepted because the unit is occupied."
+                                message: "Application could not be accepted because the unit is unavailable."
                                     .to_string(),
                                 level: crate::simulation::NotificationLevel::Warning,
                             },
@@ -143,8 +130,13 @@ impl GameplayState {
                     }
 
                     let apartment_unit = apt.unit_number.clone();
+                    let apartment_rent = apt.rent_price;
+                    // The unit is valid. From here the application is consumed
+                    // whether the applicant accepts or declines the offer.
+                    self.applications.remove(application_index);
+                    let mut tenant = app.tenant;
                     let offer = crate::tenant::matching::LeaseOffer::from_config(
-                        apt.rent_price,
+                        apartment_rent,
                         &self.config.matching.lease_defaults,
                     );
                     let accept_probability = crate::tenant::matching::evaluate_lease_offer(
@@ -292,40 +284,42 @@ impl GameplayState {
                 self.pending_quit_to_menu = true;
             }
 
-            // Phase 3: City navigation
+            // Workspace navigation
+            UiAction::OpenBuilding => {
+                self.view_mode = ViewMode::Building;
+                self.selection = Selection::None;
+            }
+            UiAction::OpenTenants => {
+                self.view_mode = ViewMode::Tenants;
+                self.selection = Selection::None;
+            }
+            UiAction::OpenFinances => {
+                self.view_mode = ViewMode::Finances;
+                self.selection = Selection::None;
+            }
             UiAction::OpenCityMap => {
+                self.save_building_to_city();
                 self.view_mode = ViewMode::CityMap;
                 self.selection = Selection::None;
             }
-            UiAction::CloseCityView => {
-                self.view_mode = ViewMode::Building;
-            }
-            UiAction::OpenMarket => {
-                self.view_mode = ViewMode::Market;
-            }
-            UiAction::CloseMarket => {
-                self.view_mode = ViewMode::CityMap;
-            }
-
             UiAction::OpenMail => {
                 self.view_mode = ViewMode::Mail;
             }
-            UiAction::CloseMail => {
-                self.view_mode = ViewMode::Building;
+            UiAction::OpenTasks => {
+                self.view_mode = ViewMode::Tasks;
             }
-
-            // Phase 3: Multi-building
-            UiAction::SwitchBuilding { index } => {
-                self.save_building_to_city();
-                self.city.switch_building(index);
-                self.sync_building();
-                self.selection = Selection::None;
-
-                self.floating_texts.spawn(
-                    "Building Changed",
-                    vec2(screen_width() / 2.0, screen_height() / 2.0),
-                    colors::ACCENT(),
-                );
+            UiAction::OpenMailItem { mail_id } => {
+                if self.mailbox.mark_read(mail_id) {
+                    self.selected_mail_id = Some(mail_id);
+                }
+            }
+            UiAction::SetInboxPage { page } => {
+                self.inbox_page = page;
+            }
+            UiAction::AcceptMission { mission_id } => {
+                if !self.missions.accept_mission(mission_id, self.current_tick) {
+                    self.report_action_failure("That task is no longer available");
+                }
             }
             UiAction::PurchaseBuilding { listing_id } => {
                 if let Some(listing) = self
@@ -372,6 +366,11 @@ impl GameplayState {
                                 self.current_tick,
                             );
                         }
+                    } else {
+                        self.report_action_failure(&format!(
+                            "Purchase requires ${}; only ${} is available",
+                            listing.asking_price, self.funds.balance
+                        ));
                     }
                 }
             }
@@ -416,15 +415,22 @@ impl GameplayState {
             UiAction::SelectOwnership => {
                 self.selection = Selection::Ownership;
             }
-            UiAction::VoteOnProposal {
-                proposal_index: _index,
-                vote_yes: _vote,
-            } => {
-                self.floating_texts.spawn(
-                    "Vote Cast",
+            UiAction::SetMarketing { strategy } => {
+                self.set_marketing_strategy(strategy);
+            }
+            UiAction::StartOpenHouse => match self.start_open_house() {
+                Ok(cost) => self.floating_texts.spawn(
+                    format!("Open House -${}", cost),
                     vec2(screen_width() / 2.0, screen_height() / 2.0),
                     colors::ACCENT(),
-                );
+                ),
+                Err(reason) => self.report_action_failure(&reason),
+            },
+            UiAction::SetUtilitiesIncluded { included } => {
+                self.set_utilities_policy(included);
+            }
+            UiAction::SetInsuranceActive { active } => {
+                self.set_insurance_policy(active);
             }
             UiAction::SellUnitAsCondo { apartment_id } => {
                 self.sell_unit_as_condo(apartment_id);
@@ -465,6 +471,21 @@ impl GameplayState {
                 }
             }
         }
+    }
+
+    fn report_action_failure(&mut self, reason: &str) {
+        self.event_log.log(
+            GameEvent::Notification {
+                message: reason.to_string(),
+                level: crate::simulation::NotificationLevel::Warning,
+            },
+            self.current_tick,
+        );
+        self.floating_texts.spawn(
+            reason,
+            vec2(screen_width() / 2.0, screen_height() / 2.0),
+            colors::NEGATIVE(),
+        );
     }
 
     pub(super) fn apply_story_impact(&mut self, tenant_id: u32, impact: StoryImpact) {
@@ -593,11 +614,13 @@ impl GameplayState {
                 // Could show neighborhood details
             }
             CityMapAction::SelectBuilding(index) => {
+                self.save_building_to_city();
                 self.city.switch_building(index);
                 self.sync_building();
                 // Stay in map view, just update selection
             }
             CityMapAction::EnterBuilding(index) => {
+                self.save_building_to_city();
                 self.city.switch_building(index);
                 self.sync_building();
                 self.view_mode = ViewMode::Building;
@@ -630,6 +653,34 @@ impl GameplayState {
 mod tests {
     use super::*;
     use crate::economy::TransactionType;
+
+    #[test]
+    fn stale_application_is_not_discarded_when_the_unit_became_unavailable() {
+        let mut state = GameplayState::new();
+        let apartment_id = state.building.apartments[0].id;
+        state.building.apartments[0].move_in(777);
+        let tenant =
+            crate::tenant::Tenant::new(888, "Applicant", crate::tenant::TenantArchetype::Student);
+        state
+            .applications
+            .push(crate::tenant::TenantApplication::new_for_building(
+                tenant,
+                state.active_building_id(),
+                apartment_id,
+                crate::tenant::matching::MatchResult {
+                    score: 50,
+                    meets_minimum: true,
+                    reasons: Vec::new(),
+                },
+                0,
+            ));
+
+        state.process_action(UiAction::AcceptApplication {
+            application_index: 0,
+        });
+
+        assert_eq!(state.applications.len(), 1);
+    }
 
     #[test]
     fn dialogue_money_reward_records_income_transaction() {
