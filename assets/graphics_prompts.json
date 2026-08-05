@@ -1,6 +1,6 @@
 {
     "version": "1.0.0",
-    "description": "Image generation prompts for Apartment game graphics. All images should be 2D pixel art or stylized flat illustration style suitable for a cozy management sim game.",
+    "description": "Image generation prompts for Second Story graphics. All images should be 2D pixel art or stylized flat illustration style suitable for a cozy building-management sim.",
     "style_guide": {
         "overall": "Cozy, muted color palette with warm tones. Pixel art or flat vector illustration style. Slightly worn/lived-in aesthetic that matches the 'custodian of a failing place' theme.",
         "color_palette": [
@@ -335,7 +335,7 @@
                     "id": "title_logo",
                     "filename": "title_logo.png",
                     "resolution": "512x256",
-                    "prompt": "2D pixel art game title logo reading 'APARTMENT' or just stylized apartment building silhouette, cozy management game feel, warm muted earth tones with slight glow, apartment management game style, transparent background"
+                    "prompt": "2D pixel art game title logo reading 'SECOND STORY' with a stylized apartment building silhouette, cozy management game feel, warm muted earth tones with softly glowing windows, Second Story art style, transparent background"
                 },
                 {
                     "id": "menu_button_bg",

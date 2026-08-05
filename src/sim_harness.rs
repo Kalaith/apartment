@@ -566,7 +566,7 @@ fn format_report(config: &GameConfig, summaries: &[StrategySummary], seeds: u64)
     let start = config.starting_conditions.player_money;
     let duration = config.win_conditions.game_duration_ticks.unwrap_or(36);
 
-    writeln!(out, "# Apartment Manager — Balance Report").unwrap();
+    writeln!(out, "# Second Story — Balance Report").unwrap();
     writeln!(out).unwrap();
     writeln!(
         out,

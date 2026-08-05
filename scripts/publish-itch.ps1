@@ -1,9 +1,9 @@
-# Package and publish Apartment's WebGL build as a self-contained itch.io upload.
+# Package and publish Second Story's WebGL build as a self-contained itch.io upload.
 # The normal RustGames package expects shared assets one directory above the game;
 # itch.io serves each channel from an isolated package root.
 
 param(
-    [string]$Target = "kalaith/apartment:html5",
+    [string]$Target = "kalaith/second-story:html5",
     [string]$ButlerPath = "",
     [switch]$DryRun = $false
 )

@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Headless screenshot harness for Apartment.
+    Headless screenshot harness for Second Story.
 
 .DESCRIPTION
     Thin wrapper around the shared macroquad-toolkit capture script. Builds the

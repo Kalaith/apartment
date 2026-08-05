@@ -150,7 +150,7 @@ impl MenuState {
                 },
             );
         } else {
-            let title = "APARTMENT";
+            let title = "SECOND STORY";
             let title_size = 60.0;
             let title_width = measure_ui_text(title, None, title_size as u16, 1.0).width;
             draw_ui_text(
