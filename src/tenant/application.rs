@@ -197,25 +197,7 @@ fn pick_archetype_with_preference(
         }
     }
 
-    let registry = crate::data::archetypes::archetypes();
-    let mut weighted_archetypes: Vec<(TenantArchetype, u32)> = registry
-        .definitions
-        .values()
-        .filter_map(|definition| {
-            TenantArchetype::from_id(&definition.id)
-                .map(|archetype| (archetype, definition.spawn_weight.max(1)))
-        })
-        .collect();
-
-    if weighted_archetypes.is_empty() {
-        weighted_archetypes = vec![
-            (TenantArchetype::Student, 35),
-            (TenantArchetype::Professional, 25),
-            (TenantArchetype::Family, 15),
-            (TenantArchetype::Elderly, 10),
-            (TenantArchetype::Artist, 15),
-        ];
-    }
+    let mut weighted_archetypes = base_weighted_archetypes();
 
     for (archetype, weight) in &mut weighted_archetypes {
         let multiplier = match marketing {
@@ -247,6 +229,34 @@ fn pick_archetype_with_preference(
     }
 
     TenantArchetype::Student
+}
+
+fn base_weighted_archetypes() -> Vec<(TenantArchetype, u32)> {
+    let registry = crate::data::archetypes::archetypes();
+    let mut weighted: Vec<(TenantArchetype, u32)> = registry
+        .definitions
+        .values()
+        .filter_map(|definition| {
+            TenantArchetype::from_id(&definition.id)
+                .map(|archetype| (archetype, definition.spawn_weight.max(1)))
+        })
+        .collect();
+
+    if weighted.is_empty() {
+        weighted = vec![
+            (TenantArchetype::Student, 35),
+            (TenantArchetype::Professional, 25),
+            (TenantArchetype::Family, 15),
+            (TenantArchetype::Elderly, 10),
+            (TenantArchetype::Artist, 15),
+        ];
+    }
+
+    // A seeded roll must map to the same archetype after every process launch.
+    // HashMap iteration order is randomized, so establish the authored ID order
+    // before applying weights and walking the cumulative distribution.
+    weighted.sort_by_key(|(archetype, _)| archetype.id());
+    weighted
 }
 
 /// Process tenant decisions to leave
@@ -332,5 +342,14 @@ mod tests {
             application_staff_multiplier(&building, &config),
             config.receptionist_application_multiplier
         );
+    }
+
+    #[test]
+    fn weighted_archetype_source_has_a_stable_order() {
+        let ids: Vec<_> = base_weighted_archetypes()
+            .into_iter()
+            .map(|(archetype, _)| archetype.id())
+            .collect();
+        assert!(ids.windows(2).all(|pair| pair[0] <= pair[1]));
     }
 }

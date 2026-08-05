@@ -295,7 +295,7 @@ pub fn draw_ownership_panel(building: &Building, market_multiplier: f32) -> Opti
         }
         _ => {
             draw_ui_text_ex(
-                "Management options not yet implemented for this ownership type.",
+                "This ownership model is governed externally; no conversion actions are available.",
                 panel_x + 10.0,
                 y,
                 TextParams {

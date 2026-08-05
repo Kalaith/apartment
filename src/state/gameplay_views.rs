@@ -3,7 +3,6 @@
 use crate::assets::AssetManager;
 use crate::narrative::NotificationCategory;
 use crate::narrative::TutorialMilestone;
-use crate::ui::layout::HEADER_HEIGHT;
 use crate::ui::workspace_nav::{draw_workspace_nav, WorkspaceTab};
 use crate::ui::{
     colors, draw_apartment_panel, draw_application_panel, draw_building_summary,
@@ -13,7 +12,7 @@ use crate::ui::{
 use macroquad::prelude::*;
 
 use super::gameplay::{GameplayState, ViewMode};
-use macroquad_toolkit::ui::{draw_ui_text, draw_ui_text_ex, measure_ui_text};
+use macroquad_toolkit::ui::{draw_ui_text, measure_ui_text};
 
 impl GameplayState {
     /// Main draw function - dispatches to appropriate view
@@ -262,141 +261,6 @@ impl GameplayState {
                 }
             }
         }
-    }
-
-    #[allow(dead_code)]
-    /// Legacy mailbox renderer retained until the responsive UI milestone removes it.
-    pub(super) fn draw_mail_view(&self, assets: &AssetManager) {
-        // Use assets to check if textures are loaded
-        let has_assets = assets.loaded;
-        draw_rectangle(
-            0.0,
-            0.0,
-            screen_width(),
-            HEADER_HEIGHT(),
-            colors::SURFACE_HEADER(),
-        );
-
-        // Show a loading indicator if assets aren't ready
-        if !has_assets {
-            draw_ui_text_ex(
-                "Loading...",
-                screen_width() - 100.0,
-                35.0,
-                TextParams {
-                    font_size: 14,
-                    color: colors::TEXT_DIM(),
-                    ..Default::default()
-                },
-            );
-        }
-
-        draw_ui_text_ex(
-            "Mailbox",
-            20.0,
-            35.0,
-            TextParams {
-                font_size: 28,
-                color: colors::TEXT(),
-                ..Default::default()
-            },
-        );
-
-        // Unread count
-        let unread = self.mailbox.unread_count();
-        if unread > 0 {
-            draw_ui_text_ex(
-                &format!("{} unread", unread),
-                150.0,
-                35.0,
-                TextParams {
-                    font_size: 16,
-                    color: colors::WARNING(),
-                    ..Default::default()
-                },
-            );
-        }
-
-        // Mail list
-        let start_y = HEADER_HEIGHT() + 20.0;
-        let mail_height = 80.0;
-
-        let mail_to_show = self.mailbox.recent(10);
-
-        for (i, mail) in mail_to_show.iter().enumerate() {
-            let y = start_y + i as f32 * (mail_height + 10.0);
-
-            let bg_color = if mail.read {
-                Color::from_rgba(40, 40, 45, 255)
-            } else {
-                Color::from_rgba(50, 55, 70, 255)
-            };
-            draw_rectangle(20.0, y, screen_width() - 40.0, mail_height, bg_color);
-
-            // Icon
-            draw_ui_text_ex(
-                mail.mail_type.icon(),
-                30.0,
-                y + 30.0,
-                TextParams {
-                    font_size: 24,
-                    color: colors::TEXT(),
-                    ..Default::default()
-                },
-            );
-
-            // Subject
-            draw_ui_text_ex(
-                &mail.subject,
-                60.0,
-                y + 25.0,
-                TextParams {
-                    font_size: 18,
-                    color: if mail.read {
-                        colors::TEXT_DIM()
-                    } else {
-                        colors::TEXT()
-                    },
-                    ..Default::default()
-                },
-            );
-
-            // Sender
-            draw_ui_text_ex(
-                &format!("From: {}", mail.sender),
-                60.0,
-                y + 45.0,
-                TextParams {
-                    font_size: 14,
-                    color: colors::TEXT_DIM(),
-                    ..Default::default()
-                },
-            );
-
-            // Month
-            draw_ui_text_ex(
-                &format!("Month {}", mail.month_received),
-                screen_width() - 120.0,
-                y + 25.0,
-                TextParams {
-                    font_size: 12,
-                    color: colors::TEXT_DIM(),
-                    ..Default::default()
-                },
-            );
-        }
-
-        // Back hint
-        draw_ui_text_ex(
-            "[Esc] Back to Building",
-            20.0,
-            screen_height() - 30.0,
-            TextParams {
-                font_size: 14,
-                color: colors::TEXT_DIM(),
-                ..Default::default()
-            },
-        );
     }
 
     /// Draw the pause menu overlay (called from draw())

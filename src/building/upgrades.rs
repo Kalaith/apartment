@@ -196,6 +196,8 @@ pub fn available_apartment_upgrades(
         }
     }
 
+    actions.sort_by(|a, b| upgrade_sort_key(a).cmp(&upgrade_sort_key(b)));
+
     actions
 }
 
@@ -223,7 +225,16 @@ pub fn available_building_upgrades(
         }
     }
 
+    actions.sort_by(|a, b| upgrade_sort_key(a).cmp(&upgrade_sort_key(b)));
+
     actions
+}
+
+fn upgrade_sort_key(action: &UpgradeAction) -> (u8, &str) {
+    match action {
+        UpgradeAction::RepairApartment { .. } | UpgradeAction::RepairHallway { .. } => (0, ""),
+        UpgradeAction::Apply { upgrade_id, .. } => (1, upgrade_id),
+    }
 }
 
 pub(crate) fn check_requirements(
@@ -414,5 +425,15 @@ mod tests {
         .is_some());
         assert!(building.has_laundry);
         assert_eq!(building.building_appeal(), base_appeal + 10);
+    }
+
+    #[test]
+    fn configured_upgrade_actions_have_a_stable_order() {
+        let config = crate::data::config::load_config();
+        let building = Building::new("Test", 1, 1);
+        let actions = available_building_upgrades(&building, &config.upgrades);
+        let keys: Vec<_> = actions.iter().map(upgrade_sort_key).collect();
+
+        assert!(keys.windows(2).all(|pair| pair[0] <= pair[1]));
     }
 }
