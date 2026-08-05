@@ -122,7 +122,7 @@ pub fn draw_tasks_view(state: &GameplayState) -> Option<UiAction> {
         );
         if mission.status == MissionStatus::Available
             && button_at(
-                Rect::new(missions.right() - 104.0, y + 18.0, 92.0, 34.0),
+                Rect::new(missions.right() - 104.0, y + 18.0, 92.0, 40.0),
                 "Accept",
                 true,
                 Tone::Primary,
@@ -170,7 +170,7 @@ pub fn draw_tasks_view(state: &GameplayState) -> Option<UiAction> {
         ry += line_height(scale::LABEL) + space::SM;
         let bw = (request_panel.w - space::SM) / 2.0;
         if button_at(
-            Rect::new(request_panel.x, ry, bw, 32.0),
+            Rect::new(request_panel.x, ry, bw, 40.0),
             "Approve",
             true,
             Tone::Positive,
@@ -180,7 +180,7 @@ pub fn draw_tasks_view(state: &GameplayState) -> Option<UiAction> {
             });
         }
         if button_at(
-            Rect::new(request_panel.x + bw + space::SM, ry, bw, 32.0),
+            Rect::new(request_panel.x + bw + space::SM, ry, bw, 40.0),
             "Deny",
             true,
             Tone::Danger,

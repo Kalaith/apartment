@@ -131,11 +131,11 @@ pub mod color {
 
 /// Type scale (font sizes in logical px). Replaces the ad-hoc 11..32 sizes.
 pub mod scale {
-    pub const TITLE: f32 = 22.0;
-    pub const HEADING: f32 = 18.0;
-    pub const BODY: f32 = 15.0;
-    pub const LABEL: f32 = 13.0;
-    pub const CAPTION: f32 = 11.0;
+    pub const TITLE: f32 = 23.0;
+    pub const HEADING: f32 = 19.0;
+    pub const BODY: f32 = 16.0;
+    pub const LABEL: f32 = 14.0;
+    pub const CAPTION: f32 = 13.0;
 }
 
 /// Spacing scale (logical px). Replaces magic 10/20/25/... offsets.

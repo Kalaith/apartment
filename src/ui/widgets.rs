@@ -210,7 +210,7 @@ pub fn draw_toast(
     if action_label.is_empty() {
         return false;
     }
-    let btn_h = 34.0;
+    let btn_h = 40.0;
     let btn_w = button_width(action_label, btn_h).max(96.0);
     let btn_x = panel_x + panel_w - btn_w - space::LG;
     let btn_y = panel_y + panel_h - btn_h - space::MD;

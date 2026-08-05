@@ -205,7 +205,7 @@ pub fn draw_tenants_view(state: &GameplayState) -> Option<UiAction> {
     );
     sy += space::LG;
     if button_at(
-        Rect::new(side_inner.x, sy, side_inner.w, 38.0),
+        Rect::new(side_inner.x, sy, side_inner.w, 40.0),
         "Review applications",
         applications > 0,
         Tone::Primary,
@@ -214,7 +214,7 @@ pub fn draw_tenants_view(state: &GameplayState) -> Option<UiAction> {
     }
     sy += 46.0;
     if button_at(
-        Rect::new(side_inner.x, sy, side_inner.w, 38.0),
+        Rect::new(side_inner.x, sy, side_inner.w, 40.0),
         "Open requests & tasks",
         true,
         Tone::Secondary,
@@ -369,7 +369,7 @@ fn draw_policies(state: &GameplayState, rect: Rect) -> Option<UiAction> {
                 inner.x + index as f32 * (button_w + button_gap),
                 y,
                 button_w,
-                32.0,
+                40.0,
             ),
             label,
             !selected,
@@ -384,7 +384,7 @@ fn draw_policies(state: &GameplayState, rect: Rect) -> Option<UiAction> {
             });
         }
     }
-    y += 38.0;
+    y += 46.0;
     let selected = choices
         .iter()
         .find(|(strategy, _, _)| *strategy == state.building.marketing_strategy)
@@ -414,14 +414,14 @@ fn draw_policies(state: &GameplayState, rect: Rect) -> Option<UiAction> {
         )
     };
     if button_at(
-        Rect::new(inner.x, y, inner.w, 34.0),
+        Rect::new(inner.x, y, inner.w, 40.0),
         &open_house_label,
         state.building.open_house_remaining == 0,
         Tone::Secondary,
     ) {
         return Some(UiAction::StartOpenHouse);
     }
-    y += 39.0;
+    y += 45.0;
     draw_ui_text(
         "Doubles applicant volume for the displayed duration.",
         inner.x,
@@ -449,7 +449,7 @@ fn draw_policies(state: &GameplayState, rect: Rect) -> Option<UiAction> {
         format_money(utility_cost as i64)
     );
     if button_at(
-        Rect::new(inner.x, y, inner.w, 34.0),
+        Rect::new(inner.x, y, inner.w, 40.0),
         &utility_label,
         true,
         if state.building.utilities_included {
@@ -462,7 +462,7 @@ fn draw_policies(state: &GameplayState, rect: Rect) -> Option<UiAction> {
             included: !state.building.utilities_included,
         });
     }
-    y += 39.0;
+    y += 45.0;
     draw_ui_text(
         &format!(
             "Included utilities add {} happiness for every resident.",
@@ -484,7 +484,7 @@ fn draw_policies(state: &GameplayState, rect: Rect) -> Option<UiAction> {
         format_money(insurance_cost as i64)
     );
     if button_at(
-        Rect::new(inner.x, y, inner.w, 34.0),
+        Rect::new(inner.x, y, inner.w, 40.0),
         &insurance_label,
         true,
         if state.building.insurance_active {
@@ -497,7 +497,7 @@ fn draw_policies(state: &GameplayState, rect: Rect) -> Option<UiAction> {
             active: !state.building.insurance_active,
         });
     }
-    y += 39.0;
+    y += 45.0;
     draw_ui_text(
         &format!(
             "Insurance pays {}% of emergency repair bills.",
@@ -625,11 +625,11 @@ pub fn draw_inbox_view(state: &GameplayState) -> Option<UiAction> {
         }
         y += 53.0;
     }
-    let pager_y = list.bottom() - 32.0;
+    let pager_y = list.bottom() - 42.0;
     let pager_w = (list.w - 92.0 - space::SM * 2.0) / 2.0;
     if button_at(
-        Rect::new(list.x, pager_y, pager_w, 30.0),
-        "Previous",
+        Rect::new(list.x, pager_y, pager_w, 40.0),
+        "Prev",
         page > 0,
         Tone::Secondary,
     ) {
@@ -644,7 +644,7 @@ pub fn draw_inbox_view(state: &GameplayState) -> Option<UiAction> {
         color::TEXT_DIM(),
     );
     if button_at(
-        Rect::new(list.right() - pager_w, pager_y, pager_w, 30.0),
+        Rect::new(list.right() - pager_w, pager_y, pager_w, 40.0),
         "Next",
         page + 1 < page_count,
         Tone::Secondary,
@@ -725,7 +725,7 @@ pub fn draw_inbox_view(state: &GameplayState) -> Option<UiAction> {
                     detail.x + index as f32 * (button_w + space::SM),
                     button_y,
                     button_w,
-                    36.0,
+                    40.0,
                 ),
                 &truncate_text_to_width(&choice.text, button_w - space::MD, scale::LABEL),
                 true,

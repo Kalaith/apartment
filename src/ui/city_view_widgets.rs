@@ -172,7 +172,7 @@ fn draw_listing_purchase(
     let can_afford = player_funds >= listing.asking_price;
     let btn_width = 80.0;
     let btn_x = x + width - btn_width - 10.0;
-    let btn_y = y + height - 30.0;
+    let btn_y = y + height - 46.0;
 
     draw_ui_text_ex(
         &format!("${}", listing.asking_price),
@@ -181,7 +181,7 @@ fn draw_listing_purchase(
         text_params(scale::HEADING as u16, price_color(listing, player_funds)),
     );
 
-    if can_afford && draw_button_mini("Buy", btn_x, btn_y, btn_width, 22.0) {
+    if can_afford && draw_button_mini("Buy", btn_x, btn_y, btn_width, 40.0) {
         return Some(CityMapAction::PurchaseBuilding(listing.id));
     }
 

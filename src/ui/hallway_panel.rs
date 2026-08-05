@@ -233,7 +233,7 @@ pub fn draw_hallway_panel(
 
             if y + 36.0 > content_top
                 && y < content_bottom
-                && button(content_x, y, btn_w, 36.0, &label, can_afford)
+                && button(content_x, y, btn_w, 40.0, &label, can_afford)
             {
                 action = Some(UiAction::UpgradeAction(upgrade));
             }
@@ -257,12 +257,32 @@ pub fn draw_hallway_panel(
 
             if y + 36.0 > content_top
                 && y < content_bottom
-                && button(content_x, y, btn_w, 36.0, &label, can_afford)
+                && button(content_x, y, btn_w, 40.0, &label, can_afford)
             {
                 action = Some(UiAction::UpgradeAction(upgrade));
             }
             y += 44.0;
         }
+    }
+
+    let content_height = (y + new_scroll) - (panel_y + 50.0);
+    let visible_height = content_bottom - (panel_y + 50.0);
+    let max_scroll = (content_height - visible_height).max(0.0);
+    new_scroll = new_scroll.min(max_scroll);
+    if max_scroll > 0.0 {
+        let hint = if new_scroll + 5.0 < max_scroll {
+            "Scroll for more"
+        } else {
+            "End of list"
+        };
+        let hint_w = macroquad_toolkit::ui::measure_ui_text(hint, None, 13, 1.0).width;
+        draw_ui_text(
+            hint,
+            panel_x + panel_w - hint_w - 14.0,
+            panel_y + 25.0,
+            13.0,
+            colors::TEXT_DIM(),
+        );
     }
 
     (action, new_scroll)

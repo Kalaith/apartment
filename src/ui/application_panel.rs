@@ -147,7 +147,7 @@ fn draw_application_card(
     let text_x = if has_portrait { x + 95.0 } else { x + 12.0 };
 
     let btn_y = y + 88.0;
-    let bh = 28.0;
+    let bh = 40.0;
     let gap = 6.0;
     let right = x + width - 8.0;
 

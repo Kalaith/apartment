@@ -257,7 +257,7 @@ fn draw_pending_request(
     *y += 6.0;
     let btn_w = ((w - 10.0) / 2.0).min(140.0);
     if crate::ui::widgets::button_at(
-        Rect::new(content_x, *y, btn_w, 32.0),
+        Rect::new(content_x, *y, btn_w, 40.0),
         "Approve",
         true,
         crate::ui::theme::Tone::Positive,
@@ -267,7 +267,7 @@ fn draw_pending_request(
         });
     }
     if crate::ui::widgets::button_at(
-        Rect::new(content_x + btn_w + 10.0, *y, btn_w, 32.0),
+        Rect::new(content_x + btn_w + 10.0, *y, btn_w, 40.0),
         "Deny",
         true,
         crate::ui::theme::Tone::Danger,

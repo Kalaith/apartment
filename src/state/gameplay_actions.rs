@@ -27,9 +27,13 @@ impl GameplayState {
             }
             UiAction::SelectHallway => {
                 self.selection = Selection::Hallway;
+                self.panel_scroll_offset = 0.0;
             }
             UiAction::ClearSelection => {
                 self.selection = Selection::None;
+            }
+            UiAction::ToggleActivityDrawer => {
+                self.activity_drawer_open = !self.activity_drawer_open;
             }
 
             UiAction::ListApartment {

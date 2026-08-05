@@ -36,33 +36,55 @@ pub fn draw_building_view(
         draw_rectangle(view_x, view_y, view_width, view_height, color::BACKGROUND());
     }
 
-    // Calculate layout - use max units per floor for total width
+    // Size the cutaway from the real workspace rectangle. This keeps five-floor
+    // / ten-unit campaigns readable at 800x600 instead of pushing the top
+    // floors behind the navigation bar.
     let max_floor = building
         .apartments
         .iter()
         .map(|a| a.floor)
         .max()
         .unwrap_or(1);
-    let max_units_per_floor = (1..=max_floor)
-        .map(|f| building.apartments.iter().filter(|a| a.floor == f).count())
+    let max_floor_slots = (1..=max_floor)
+        .map(|floor| {
+            building
+                .apartments
+                .iter()
+                .filter(|apartment| apartment.floor == floor)
+                .map(|apartment| {
+                    if matches!(apartment.size, ApartmentSize::Penthouse) {
+                        2
+                    } else {
+                        1
+                    }
+                })
+                .sum::<usize>()
+        })
         .max()
         .unwrap_or(1);
-
-    let total_width = max_units_per_floor as f32 * (layout::UNIT_WIDTH() + layout::UNIT_GAP());
-
-    let center_x = view_x + view_width / 2.0;
-    let start_x = view_x + (view_width - total_width) / 2.0;
-    let start_y = view_y + view_height - 80.0; // Start from bottom
+    let metrics = cutaway_metrics(
+        Rect::new(view_x, view_y, view_width, view_height),
+        max_floor as usize,
+        max_floor_slots,
+    );
 
     // Draw floors (bottom to top)
     for floor in 1..=max_floor {
-        let floor_y = start_y - (floor as f32 * layout::FLOOR_HEIGHT());
+        let floor_y = metrics.hallway_y
+            - space::SM
+            - metrics.unit_h
+            - (floor.saturating_sub(1) as f32 * metrics.floor_step);
 
         // Floor label
+        let floor_label = if view_width < 500.0 {
+            format!("F{}", floor)
+        } else {
+            format!("Floor {}", floor)
+        };
         draw_ui_text(
-            &format!("Floor {}", floor),
-            start_x - 80.0,
-            floor_y + layout::UNIT_HEIGHT() / 2.0,
+            &floor_label,
+            view_x + space::MD,
+            floor_y + metrics.unit_h / 2.0 + scale::LABEL / 2.0,
             scale::LABEL,
             color::TEXT_DIM(),
         );
@@ -78,39 +100,47 @@ pub fn draw_building_view(
         let mut floor_total_width = 0.0;
         for apt in &floor_apartments {
             let unit_w = if matches!(apt.size, ApartmentSize::Penthouse) {
-                (layout::UNIT_WIDTH() * 2.0) + layout::UNIT_GAP() // Double width
+                (metrics.unit_w * 2.0) + metrics.unit_gap
             } else {
-                layout::UNIT_WIDTH()
+                metrics.unit_w
             };
-            floor_total_width += unit_w + layout::UNIT_GAP();
+            floor_total_width += unit_w + metrics.unit_gap;
         }
-        floor_total_width -= layout::UNIT_GAP(); // Remove trailing gap
+        floor_total_width -= metrics.unit_gap;
 
         // Center this floor's units
-        let floor_start_x = center_x - floor_total_width / 2.0;
+        let floor_start_x = metrics.units_left + (metrics.units_width - floor_total_width) / 2.0;
 
         let mut current_x = floor_start_x;
         for apt in floor_apartments.iter() {
             let unit_w = if matches!(apt.size, ApartmentSize::Penthouse) {
-                (layout::UNIT_WIDTH() * 2.0) + layout::UNIT_GAP()
+                (metrics.unit_w * 2.0) + metrics.unit_gap
             } else {
-                layout::UNIT_WIDTH()
+                metrics.unit_w
             };
 
             if let Some(apt_action) = draw_apartment_unit_sized(
-                apt, tenants, current_x, floor_y, unit_w, selection, assets,
+                apt,
+                tenants,
+                current_x,
+                floor_y,
+                unit_w,
+                metrics.unit_h,
+                selection,
+                assets,
             ) {
                 action = Some(apt_action);
             }
 
-            current_x += unit_w + layout::UNIT_GAP();
+            current_x += unit_w + metrics.unit_gap;
         }
     }
 
     // Draw hallway at bottom
-    let hallway_y = start_y + 20.0;
-    let hallway_width = total_width - layout::UNIT_GAP();
-    let hallway_h = 44.0;
+    let hallway_y = metrics.hallway_y;
+    let hallway_width = metrics.units_width;
+    let hallway_h = metrics.hallway_h;
+    let start_x = metrics.units_left;
 
     let hallway_selected = matches!(selection, Selection::Hallway);
     let hallway_hovered = is_hovered(start_x, hallway_y, hallway_width, hallway_h);
@@ -184,10 +214,14 @@ pub fn draw_building_view(
     }
 
     // Top action buttons (clear of the header band).
-    let btn_y = view_y + space::MD;
-    let btn_h = 34.0;
+    let btn_y = view_y + space::SM;
+    let btn_h = 40.0;
+    let controls_w = (view_width - space::LG * 2.0 - space::SM).min(300.0);
+    let app_w = (controls_w * 0.54).max(112.0);
+    let owner_w = controls_w - app_w - space::SM;
+    let controls_x = view_x + (view_width - controls_w) / 2.0;
     if button_at(
-        Rect::new(start_x, btn_y, 140.0, btn_h),
+        Rect::new(controls_x, btn_y, app_w, btn_h),
         "Applications",
         true,
         Tone::Secondary,
@@ -195,7 +229,7 @@ pub fn draw_building_view(
         action = Some(UiAction::SelectApplications(None));
     }
     if button_at(
-        Rect::new(start_x + 150.0, btn_y, 130.0, btn_h),
+        Rect::new(controls_x + app_w + space::SM, btn_y, owner_w, btn_h),
         "Ownership",
         true,
         Tone::Secondary,
@@ -212,11 +246,10 @@ fn draw_apartment_unit_sized(
     x: f32,
     y: f32,
     w: f32,
+    h: f32,
     selection: &Selection,
     assets: &AssetManager,
 ) -> Option<UiAction> {
-    let h = layout::UNIT_HEIGHT();
-
     let is_selected = matches!(selection, Selection::Apartment(id) if *id == apt.id);
     let unit_hovered = is_hovered(x, y, w, h);
 
@@ -368,23 +401,33 @@ fn draw_apartment_unit_sized(
     if let Some(tenant_id) = apt.tenant_id {
         if let Some(tenant) = tenants.iter().find(|t| t.id == tenant_id) {
             let portrait_id = format!("tenant_{}", tenant.archetype.name().to_lowercase());
-            if let Some(tex) = assets.get_texture(&portrait_id) {
-                draw_texture_ex(
-                    tex,
-                    x + (w - 40.0) / 2.0,
-                    y + 38.0,
-                    WHITE,
-                    DrawTextureParams {
-                        dest_size: Some(Vec2::new(40.0, 40.0)),
-                        ..Default::default()
-                    },
-                );
+            if h >= 64.0 {
+                if let Some(tex) = assets.get_texture(&portrait_id) {
+                    let portrait_size = (h - 38.0).clamp(20.0, 40.0);
+                    draw_texture_ex(
+                        tex,
+                        x + (w - portrait_size) / 2.0,
+                        y + 36.0,
+                        WHITE,
+                        DrawTextureParams {
+                            dest_size: Some(Vec2::new(portrait_size, portrait_size)),
+                            ..Default::default()
+                        },
+                    );
+                } else {
+                    draw_rectangle(
+                        x + space::SM,
+                        y + h - 16.0,
+                        3.0,
+                        12.0,
+                        archetype_color(&tenant.archetype),
+                    );
+                }
             } else {
-                draw_rectangle(
-                    x + space::SM,
-                    y + h - 16.0,
-                    3.0,
-                    12.0,
+                draw_circle(
+                    x + space::MD,
+                    y + h - space::SM,
+                    5.0,
                     archetype_color(&tenant.archetype),
                 );
             }
@@ -428,17 +471,20 @@ fn draw_apartment_unit_sized(
         } else {
             "window_quiet"
         };
-        if let Some(tex) = assets.get_texture(window_tex) {
-            draw_texture_ex(
-                tex,
-                x + (w - 40.0) / 2.0,
-                y + 38.0,
-                WHITE,
-                DrawTextureParams {
-                    dest_size: Some(Vec2::new(40.0, 40.0)),
-                    ..Default::default()
-                },
-            );
+        if h >= 64.0 {
+            if let Some(tex) = assets.get_texture(window_tex) {
+                let window_size = (h - 38.0).clamp(20.0, 40.0);
+                draw_texture_ex(
+                    tex,
+                    x + (w - window_size) / 2.0,
+                    y + 36.0,
+                    WHITE,
+                    DrawTextureParams {
+                        dest_size: Some(Vec2::new(window_size, window_size)),
+                        ..Default::default()
+                    },
+                );
+            }
         }
 
         draw_ui_text(
@@ -465,4 +511,78 @@ fn draw_apartment_unit_sized(
     }
 
     None
+}
+
+#[derive(Clone, Copy, Debug)]
+struct CutawayMetrics {
+    unit_w: f32,
+    unit_h: f32,
+    unit_gap: f32,
+    floor_step: f32,
+    units_left: f32,
+    units_width: f32,
+    hallway_y: f32,
+    hallway_h: f32,
+}
+
+fn cutaway_metrics(view: Rect, floors: usize, max_slots: usize) -> CutawayMetrics {
+    let compact = view.w < 500.0;
+    let edge = if compact { space::SM } else { space::LG };
+    let label_w = if compact { 34.0 } else { 62.0 };
+    let unit_gap = if compact {
+        8.0
+    } else {
+        layout::UNIT_GAP().min(12.0)
+    };
+    let hallway_h = 44.0;
+    let hallway_y = view.bottom() - hallway_h - space::SM;
+    let units_top = view.y + 40.0 + space::XL;
+    let vertical_room = (hallway_y - space::SM - units_top).max(80.0);
+    let floor_step = (vertical_room / floors.max(1) as f32).min(layout::FLOOR_HEIGHT());
+    let unit_h = (floor_step - unit_gap).clamp(42.0, layout::UNIT_HEIGHT());
+
+    let horizontal_room = (view.w - edge * 2.0 - label_w).max(120.0);
+    let slots = max_slots.max(1) as f32;
+    let unit_w =
+        ((horizontal_room - unit_gap * (slots - 1.0)) / slots).clamp(68.0, layout::UNIT_WIDTH());
+    let units_width = unit_w * slots + unit_gap * (slots - 1.0);
+    let units_left = view.x + label_w + (horizontal_room - units_width) / 2.0;
+
+    CutawayMetrics {
+        unit_w,
+        unit_h,
+        unit_gap,
+        floor_step,
+        units_left,
+        units_width,
+        hallway_y,
+        hallway_h,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn ten_unit_cutaway_fits_short_workspace() {
+        let view = Rect::new(0.0, 120.0, 416.0, 440.0);
+        let metrics = cutaway_metrics(view, 5, 2);
+        let top_floor_y = metrics.hallway_y - space::SM - metrics.unit_h - 4.0 * metrics.floor_step;
+
+        assert!(top_floor_y >= view.y + 40.0);
+        assert!(metrics.units_left >= view.x);
+        assert!(metrics.units_left + metrics.units_width <= view.right());
+        assert!(metrics.unit_w >= 68.0);
+    }
+
+    #[test]
+    fn four_across_manor_units_remain_clickable_at_narrow_breakpoint() {
+        let view = Rect::new(0.0, 120.0, 416.0, 436.0);
+        let metrics = cutaway_metrics(view, 4, 4);
+
+        assert!(metrics.unit_w >= 80.0);
+        assert!(metrics.unit_h >= 60.0);
+        assert!(metrics.units_left + metrics.units_width <= view.right());
+    }
 }

@@ -5,10 +5,11 @@ use macroquad::prelude::*;
 use macroquad_toolkit::ui::draw_ui_text_ex;
 
 pub fn draw_ownership_panel(building: &Building, market_multiplier: f32) -> Option<UiAction> {
-    let panel_x = screen_width() * 0.5 + 10.0;
-    let panel_y = 80.0;
-    let panel_width = screen_width() * 0.5 - 30.0;
-    let panel_height = screen_height() - 140.0;
+    let padding = crate::ui::layout::PADDING();
+    let panel_x = screen_width() * crate::ui::layout::PANEL_SPLIT() + padding;
+    let panel_y = crate::ui::layout::HEADER_HEIGHT() + padding;
+    let panel_width = screen_width() - panel_x - padding;
+    let panel_height = screen_height() - panel_y - crate::ui::layout::FOOTER_HEIGHT() - padding;
 
     // Themed panel frame + header.
     crate::ui::common::panel(
@@ -107,7 +108,7 @@ pub fn draw_ownership_panel(building: &Building, market_multiplier: f32) -> Opti
                     panel_x + 10.0,
                     y,
                     panel_width - 20.0,
-                    30.0,
+                    44.0,
                     colors::SURFACE(),
                 );
 
@@ -148,7 +149,7 @@ pub fn draw_ownership_panel(building: &Building, market_multiplier: f32) -> Opti
                 let sale_price = (apt.market_value() as f32 * market_multiplier) as i32;
 
                 if crate::ui::widgets::button_at(
-                    Rect::new(panel_x + panel_width - 160.0, y + 4.0, 148.0, 24.0),
+                    Rect::new(panel_x + panel_width - 172.0, y + 2.0, 160.0, 40.0),
                     &format!("Sell Condo (${})", sale_price),
                     true,
                     crate::ui::theme::Tone::Positive,
@@ -158,7 +159,7 @@ pub fn draw_ownership_panel(building: &Building, market_multiplier: f32) -> Opti
                     });
                 }
 
-                y += 35.0;
+                y += 48.0;
                 if y > panel_y + panel_height - 50.0 {
                     break;
                 }
@@ -223,7 +224,7 @@ pub fn draw_ownership_panel(building: &Building, market_multiplier: f32) -> Opti
                         panel_x + 10.0,
                         y,
                         panel_width - 20.0,
-                        30.0,
+                        44.0,
                         colors::SURFACE(),
                     );
 
@@ -264,7 +265,7 @@ pub fn draw_ownership_panel(building: &Building, market_multiplier: f32) -> Opti
                     let sale_price = (apt.market_value() as f32 * market_multiplier) as i32;
 
                     if crate::ui::widgets::button_at(
-                        Rect::new(panel_x + panel_width - 140.0, y + 4.0, 128.0, 24.0),
+                        Rect::new(panel_x + panel_width - 152.0, y + 2.0, 140.0, 40.0),
                         &format!("Sell (${})", sale_price),
                         true,
                         crate::ui::theme::Tone::Positive,
@@ -274,7 +275,7 @@ pub fn draw_ownership_panel(building: &Building, market_multiplier: f32) -> Opti
                         });
                     }
 
-                    y += 35.0;
+                    y += 48.0;
                     if y > panel_y + panel_height - 80.0 {
                         break;
                     }
@@ -309,9 +310,9 @@ pub fn draw_ownership_panel(building: &Building, market_multiplier: f32) -> Opti
     // Close / Back button
     if crate::ui::common::button(
         panel_x + 10.0,
-        panel_y + panel_height - 40.0,
+        panel_y + panel_height - 46.0,
         120.0,
-        30.0,
+        40.0,
         "Close Panel",
         true,
     ) {

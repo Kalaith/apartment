@@ -21,6 +21,7 @@ mod common;
 pub mod event_modal; // Phase 4 event modal
 mod hallway_panel;
 mod header;
+mod inspector_summary;
 mod notifications;
 pub mod ownership_panel; // Phase 3 ownership
 mod tenant_panel;
@@ -36,6 +37,7 @@ pub use ownership_panel::draw_ownership_panel;
 
 pub use application_panel::draw_application_panel;
 pub use header::draw_header;
+pub use inspector_summary::draw_building_summary;
 pub use macroquad_toolkit::fx::FloatingTextLayer;
 pub use macroquad_toolkit::math::Tween;
 pub use notifications::draw_notifications;
@@ -63,6 +65,7 @@ pub enum UiAction {
     SelectHallway,
     SelectOwnership,
     ClearSelection,
+    ToggleActivityDrawer,
 
     // Generic Upgrade Action
     UpgradeAction(UpgradeAction),

@@ -123,6 +123,8 @@ pub struct GameplayState {
     #[serde(skip)]
     pub show_pause_menu: bool,
     #[serde(skip)]
+    pub activity_drawer_open: bool,
+    #[serde(skip)]
     pub is_fullscreen: bool,
     #[serde(skip)]
     pub pending_quit_to_menu: bool,
@@ -275,6 +277,7 @@ impl GameplayState {
             selected_mail_id: None,
             inbox_page: 0,
             show_pause_menu: false,
+            activity_drawer_open: false,
             is_fullscreen: false,
             pending_quit_to_menu: false,
             current_building_id: building_id,
@@ -367,6 +370,7 @@ impl GameplayState {
         self.selected_mail_id = None;
         self.inbox_page = 0;
         self.show_pause_menu = false;
+        self.activity_drawer_open = false;
         self.pending_quit_to_menu = false;
         self.active_world_events
             .retain(|event| event.remaining_ticks > 0);

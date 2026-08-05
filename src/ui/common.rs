@@ -34,16 +34,28 @@ pub mod layout {
     }
 
     pub fn HEADER_HEIGHT() -> f32 {
-        layout().header_height
+        // 64 px status bar + 56 px primary navigation. Keeping this stable
+        // makes every workspace share one predictable management shell.
+        120.0
     }
     pub fn FOOTER_HEIGHT() -> f32 {
-        layout().footer_height
+        // The old 100 px permanent event log starved short viewports. Events
+        // now live in a collapsible activity drawer with a compact handle.
+        44.0
     }
     pub fn PANEL_SPLIT() -> f32 {
-        layout().panel_split
+        match macroquad::prelude::screen_width() {
+            width if width >= 1180.0 => 0.62,
+            width if width >= 960.0 => 0.57,
+            _ => 0.52,
+        }
     }
     pub fn PADDING() -> f32 {
-        layout().padding
+        if macroquad::prelude::screen_width() < 900.0 {
+            8.0
+        } else {
+            layout().padding
+        }
     }
     pub fn UNIT_WIDTH() -> f32 {
         layout().unit_width

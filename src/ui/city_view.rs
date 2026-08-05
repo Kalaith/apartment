@@ -9,7 +9,7 @@ use crate::ui::layout;
 use crate::ui::theme::scale;
 use crate::ui::widgets::{draw_card, draw_panel};
 use macroquad::prelude::*;
-use macroquad_toolkit::ui::{draw_ui_text, draw_ui_text_ex};
+use macroquad_toolkit::ui::{draw_ui_text, draw_ui_text_ex, truncate_text_to_width};
 
 fn text_params(font_size: f32, color: Color) -> TextParams<'static> {
     TextParams {
@@ -130,7 +130,7 @@ fn draw_neighborhood_cell(
 
     // Neighborhood name
     draw_ui_text_ex(
-        &neighborhood.name,
+        &truncate_text_to_width(&neighborhood.name, width - 16.0, scale::HEADING),
         x + 8.0,
         y + 22.0,
         text_params(scale::HEADING, colors::TEXT_BRIGHT()),
@@ -144,37 +144,42 @@ fn draw_neighborhood_cell(
         text_params(scale::LABEL, colors::TEXT_DIM()),
     );
 
-    // Building count
+    // Building count. Compact cells retain name/type/reputation and elide the
+    // less important rows instead of drawing them on top of one another.
     let building_count = neighborhood.building_ids.len();
-    let slot_text = format!(
-        "Buildings: {}/{}",
-        building_count, neighborhood.available_slots
-    );
-    draw_ui_text_ex(
-        &slot_text,
-        x + 8.0,
-        y + 60.0,
-        text_params(
-            scale::LABEL,
-            if building_count > 0 {
-                colors::POSITIVE()
-            } else {
-                colors::TEXT_DIM()
-            },
-        ),
-    );
+    if height >= 105.0 {
+        let slot_text = format!(
+            "Buildings: {}/{}",
+            building_count, neighborhood.available_slots
+        );
+        draw_ui_text_ex(
+            &slot_text,
+            x + 8.0,
+            y + 60.0,
+            text_params(
+                scale::LABEL,
+                if building_count > 0 {
+                    colors::POSITIVE()
+                } else {
+                    colors::TEXT_DIM()
+                },
+            ),
+        );
+    }
 
     // Stats preview
     let stats = &neighborhood.stats;
-    draw_ui_text_ex(
-        &format!(
-            "Crime: {} | Transit: {}",
-            stats.crime_level, stats.transit_access
-        ),
-        x + 8.0,
-        y + 80.0,
-        text_params(scale::CAPTION, colors::TEXT_DIM()),
-    );
+    if height >= 135.0 {
+        draw_ui_text_ex(
+            &format!(
+                "Crime: {} | Transit: {}",
+                stats.crime_level, stats.transit_access
+            ),
+            x + 8.0,
+            y + 80.0,
+            text_params(scale::CAPTION, colors::TEXT_DIM()),
+        );
+    }
 
     // Reputation bar
     let bar_y = y + height - 25.0;
@@ -261,14 +266,18 @@ pub fn draw_portfolio_panel(
 
         if is_selected {
             // Enter Button
-            if draw_button_mini("Enter", item_x + item_width - 70.0, y + 25.0, 60.0, 30.0) {
+            if draw_button_mini("Enter", item_x + item_width - 78.0, y + 18.0, 68.0, 40.0) {
                 action = Some(CityMapAction::EnterBuilding(index));
             }
         }
 
         // Building name
         draw_ui_text_ex(
-            &building.name,
+            &truncate_text_to_width(
+                &building.name,
+                item_width - if is_selected { 100.0 } else { 20.0 },
+                scale::HEADING,
+            ),
             item_x + 10.0,
             y + 22.0,
             text_params(
@@ -331,7 +340,7 @@ pub fn draw_portfolio_panel(
         let btn_width = content.w;
         let btn_x = content.x;
 
-        if draw_button_icon("+ Acquire New Building", btn_x, y + 10.0, btn_width, 35.0) {
+        if draw_button_icon("+ Acquire New Building", btn_x, y + 8.0, btn_width, 40.0) {
             action = Some(CityMapAction::OpenMarket);
         }
     }
@@ -403,7 +412,7 @@ pub fn draw_market_panel(
         content.x,
         panel_y + panel_height - 60.0,
         150.0,
-        35.0,
+        40.0,
     ) {
         action = Some(CityMapAction::CloseMarket);
     }

@@ -2,11 +2,13 @@
 
 use crate::assets::AssetManager;
 use crate::narrative::NotificationCategory;
+use crate::narrative::TutorialMilestone;
 use crate::ui::layout::HEADER_HEIGHT;
 use crate::ui::workspace_nav::{draw_workspace_nav, WorkspaceTab};
 use crate::ui::{
-    colors, draw_apartment_panel, draw_application_panel, draw_building_view, draw_hallway_panel,
-    draw_header, draw_notifications, draw_ownership_panel, Selection,
+    colors, draw_apartment_panel, draw_application_panel, draw_building_summary,
+    draw_building_view, draw_hallway_panel, draw_header, draw_notifications, draw_ownership_panel,
+    Selection,
 };
 use macroquad::prelude::*;
 
@@ -17,6 +19,20 @@ impl GameplayState {
     /// Main draw function - dispatches to appropriate view
     pub fn draw(&mut self, assets: &AssetManager) {
         let pause_was_showing = self.show_pause_menu;
+        if self.view_mode != ViewMode::CareerSummary {
+            let monthly_net = self.ledger.reports.last().map_or(0, |report| report.net);
+            if let Some(action) = draw_header(
+                self.funds.balance,
+                monthly_net,
+                self.current_tick,
+                &self.building.name,
+                self.building.occupancy_count(),
+                self.building.rental_unit_count(),
+                assets,
+            ) {
+                self.pending_actions.push(action);
+            }
+        }
         match self.view_mode {
             ViewMode::Building => {
                 self.draw_building_mode(assets);
@@ -115,11 +131,28 @@ impl GameplayState {
                 .retain(|action| matches!(action, crate::ui::UiAction::ResolveEventChoice { .. }));
         }
 
-        // Footer event log.
-        draw_notifications(&self.event_log, self.current_tick, assets);
+        // Compact activity handle and optional history drawer.
+        if self.view_mode != ViewMode::CareerSummary {
+            if let Some(action) = draw_notifications(
+                &self.event_log,
+                self.current_tick,
+                assets,
+                self.activity_drawer_open,
+            ) {
+                self.pending_actions.push(action);
+            }
+        }
 
         // Floating text
         self.floating_texts.draw();
+
+        if self.view_mode == ViewMode::Building
+            && self.tutorial.active
+            && self.tutorial.pending_messages.is_empty()
+            && !self.activity_drawer_open
+        {
+            self.draw_tutorial_coach();
+        }
 
         // Tutorial overlay (takes precedence)
         if self.tutorial.active && !self.tutorial.pending_messages.is_empty() {
@@ -148,18 +181,6 @@ impl GameplayState {
             .filter(|tenant| tenant.building_id == building_id)
             .cloned()
             .collect();
-
-        // Draw Header
-        if let Some(action) = draw_header(
-            self.funds.balance,
-            self.current_tick,
-            &self.building.name,
-            self.building.occupancy_count(),
-            self.building.rental_unit_count(),
-            assets,
-        ) {
-            self.pending_actions.push(action);
-        }
 
         // Draw Building View
         if let Some(action) =
@@ -226,7 +247,20 @@ impl GameplayState {
                     self.pending_actions.push(action);
                 }
             }
-            _ => {}
+            Selection::None => {
+                let monthly_net = self.ledger.reports.last().map_or(0, |report| report.net);
+                if let Some(action) = draw_building_summary(
+                    &self.building,
+                    &active_tenants,
+                    self.applications
+                        .iter()
+                        .filter(|application| application.building_id == building_id)
+                        .count(),
+                    monthly_net,
+                ) {
+                    self.pending_actions.push(action);
+                }
+            }
         }
     }
 
@@ -509,6 +543,106 @@ impl GameplayState {
             "Next",
         ) {
             self.tutorial.pending_messages.remove(0);
+        }
+    }
+
+    /// Non-blocking, target-anchored coaching for the current tutorial step.
+    /// The introductory dialogue still uses a modal toast; once dismissed,
+    /// this marker stays beside the control the player actually needs.
+    fn draw_tutorial_coach(&self) {
+        use crate::ui::theme::{color, scale, space};
+        use crate::ui::widgets::{draw_card, line_height, wrap};
+
+        let Some(milestone) = self.tutorial.current_milestone.as_ref() else {
+            return;
+        };
+        let view_w = screen_width() * crate::ui::layout::PANEL_SPLIT();
+        let footer_y = screen_height() - crate::ui::layout::FOOTER_HEIGHT();
+        let (anchor, message, place_above) = match milestone {
+            TutorialMilestone::InheritedMess => (
+                vec2(view_w / 2.0, footer_y - 30.0),
+                "Start here: select the hallway, then choose a repair until it reaches 80% condition.",
+                true,
+            ),
+            TutorialMilestone::FirstResident => {
+                let listed = self
+                    .building
+                    .apartments
+                    .iter()
+                    .any(|unit| unit.is_vacant() && unit.is_listed_for_lease);
+                let active_apps = self
+                    .applications
+                    .iter()
+                    .any(|application| application.building_id == self.active_building_id());
+                if active_apps {
+                    (
+                        vec2(view_w / 2.0 - 72.0, crate::ui::layout::HEADER_HEIGHT() + 28.0),
+                        "Applicants are ready. Open Applications and choose a resident.",
+                        false,
+                    )
+                } else if listed {
+                    (
+                        vec2(screen_width() - 68.0, 32.0),
+                        "The unit is listed. End the month to bring in applicants.",
+                        false,
+                    )
+                } else {
+                    (
+                        vec2(view_w / 2.0, crate::ui::layout::HEADER_HEIGHT() + 150.0),
+                        "Select a vacant unit, set a fair rent, and list it for lease.",
+                        false,
+                    )
+                }
+            }
+            TutorialMilestone::TheLeak => (
+                vec2(view_w / 2.0, crate::ui::layout::HEADER_HEIGHT() + 190.0),
+                "The damaged unit is marked in red. Select it and make a repair.",
+                false,
+            ),
+            TutorialMilestone::Complete => return,
+        };
+
+        let card_w = view_w.min(360.0) - space::LG * 2.0;
+        let lines = wrap(message, card_w - space::LG * 2.0, scale::BODY);
+        let card_h = 42.0 + lines.len() as f32 * line_height(scale::BODY);
+        let card_x = (anchor.x - card_w / 2.0).clamp(space::SM, view_w - card_w - space::SM);
+        let preferred_y = if place_above {
+            anchor.y - card_h - 18.0
+        } else {
+            anchor.y + 18.0
+        };
+        let card_y = preferred_y.clamp(
+            crate::ui::layout::HEADER_HEIGHT() + space::SM,
+            footer_y - card_h - space::SM,
+        );
+
+        draw_line(
+            anchor.x,
+            anchor.y,
+            anchor.x,
+            if place_above { card_y + card_h } else { card_y },
+            3.0,
+            color::PRIMARY(),
+        );
+        draw_circle(anchor.x, anchor.y, 7.0, color::PRIMARY());
+        draw_card(Rect::new(card_x, card_y, card_w, card_h), true);
+        draw_ui_text(
+            "UNCLE ARTIE'S NEXT STEP",
+            card_x + space::LG,
+            card_y + 21.0,
+            scale::LABEL,
+            color::PRIMARY(),
+        );
+        let mut y = card_y + 36.0;
+        for line in lines {
+            draw_ui_text(
+                &line,
+                card_x + space::LG,
+                y + scale::BODY,
+                scale::BODY,
+                color::TEXT(),
+            );
+            y += line_height(scale::BODY);
         }
     }
 

@@ -59,7 +59,7 @@ pub(super) fn draw_sold_condo_panel(
         let can_afford = money >= buyback_price;
         let btn_label = format!("Buy Back (${})", buyback_price);
 
-        if button(content_x, y, panel_w - 30.0, 35.0, &btn_label, can_afford) {
+        if button(content_x, y, panel_w - 30.0, 40.0, &btn_label, can_afford) {
             return Some(UiAction::BuybackCondo {
                 apartment_id: apt.id,
             });
@@ -241,7 +241,7 @@ pub(super) fn draw_upgrades(
     *y += 24.0;
 
     let btn_w = w;
-    let btn_h = 34.0;
+    let btn_h = 40.0;
     let available = crate::building::upgrades::available_apartment_upgrades(apt, &config.upgrades);
 
     let upgrades_start_y = *y;

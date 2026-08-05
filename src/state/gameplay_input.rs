@@ -1,10 +1,8 @@
 //! Gameplay input dispatch and overlay ownership.
 
 use crate::assets::AssetManager;
-use crate::ui::layout::HEADER_HEIGHT;
-use crate::ui::{colors, Selection, UiAction};
+use crate::ui::{Selection, UiAction};
 use macroquad::prelude::*;
-use macroquad_toolkit::ui::draw_ui_text_ex;
 
 use super::gameplay::{GameplayState, ViewMode};
 use super::StateTransition;
@@ -99,87 +97,8 @@ impl GameplayState {
             return Some(StateTransition::ToMenu);
         }
 
-        draw_status_header(self);
         None
     }
-}
-
-fn draw_status_header(state: &GameplayState) {
-    draw_rectangle(
-        0.0,
-        0.0,
-        screen_width(),
-        HEADER_HEIGHT(),
-        colors::SURFACE_HEADER(),
-    );
-    draw_ui_text_ex(
-        &format!("{} - City Overview", state.city.name),
-        20.0,
-        35.0,
-        TextParams {
-            font_size: 28,
-            color: colors::TEXT(),
-            ..Default::default()
-        },
-    );
-    draw_ui_text_ex(
-        &format!("${}", state.funds.balance),
-        screen_width() - 200.0,
-        35.0,
-        TextParams {
-            font_size: 24,
-            color: colors::POSITIVE(),
-            ..Default::default()
-        },
-    );
-    draw_ui_text_ex(
-        &format!(
-            "{} Buildings | Month {}",
-            state.city.buildings.len(),
-            state.current_tick
-        ),
-        screen_width() - 400.0,
-        35.0,
-        TextParams {
-            font_size: 16,
-            color: colors::TEXT_DIM(),
-            ..Default::default()
-        },
-    );
-    draw_ui_text_ex(
-        &format!(
-            "Gentrification Score: {} | Affordable Units: {}",
-            state.gentrification.gentrification_score, state.gentrification.affordable_units
-        ),
-        20.0,
-        55.0,
-        TextParams {
-            font_size: 12,
-            color: colors::TEXT_DIM(),
-            ..Default::default()
-        },
-    );
-
-    let nav_hint = match state.view_mode {
-        ViewMode::Building => "Building workspace",
-        ViewMode::Tenants => "Resident roster and leasing",
-        ViewMode::Finances => "Ledger and operating policies",
-        ViewMode::CityMap => "City portfolio",
-        ViewMode::Market => "Property market",
-        ViewMode::Mail => "Letters and conversations",
-        ViewMode::Tasks => "Missions and resident requests",
-        ViewMode::CareerSummary => "",
-    };
-    draw_ui_text_ex(
-        nav_hint,
-        20.0,
-        55.0,
-        TextParams {
-            font_size: 14,
-            color: colors::TEXT_DIM(),
-            ..Default::default()
-        },
-    );
 }
 
 fn action_allowed_while_blocked(paused: bool, blocked: bool, action: &UiAction) -> bool {

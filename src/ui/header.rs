@@ -18,20 +18,22 @@ fn stat_chip(
 ) -> f32 {
     let chip_h = 34.0;
     let chip_y = (header_h - chip_h) / 2.0;
-    let icon_size = 20.0;
+    let compact = screen_width() < 1000.0;
+    let icon_size = if compact { 0.0 } else { 20.0 };
     let text_w = measure_ui_text(label, None, scale::BODY as u16, 1.0).width;
-    let icon_w = if icon.is_some() {
+    let icon_w = if icon.is_some() && !compact {
         icon_size + space::XS
     } else {
         0.0
     };
-    let w = space::MD + icon_w + text_w + space::MD;
+    let pad = if compact { space::SM } else { space::MD };
+    let w = pad + icon_w + text_w + pad;
 
     let style = SurfaceStyle::new(color::SURFACE_ALT()).with_border(1.0, color::BORDER());
     draw_surface(Rect::new(x, chip_y, w, chip_h), &style);
 
-    let mut cx = x + space::MD;
-    if let Some(tex) = icon {
+    let mut cx = x + pad;
+    if let Some(tex) = icon.filter(|_| !compact) {
         draw_texture_ex(
             tex,
             cx,
@@ -56,6 +58,7 @@ fn stat_chip(
 
 pub fn draw_header(
     money: i32,
+    monthly_net: i32,
     tick: u32,
     building_name: &str,
     occupancy: usize,
@@ -72,8 +75,10 @@ pub fn draw_header(
 
     // End Month button, right-anchored, vertically centered.
     let btn_h = 40.0;
-    let btn_w = button_width("End Month", btn_h).max(120.0);
-    let btn_x = w - btn_w - space::LG;
+    let compact = w < 1000.0;
+    let btn_w = button_width("End Month", btn_h).max(if compact { 106.0 } else { 120.0 });
+    let outer = if compact { space::SM } else { space::LG };
+    let btn_x = w - btn_w - outer;
     let btn_y = (h - btn_h) / 2.0;
     if button_at(
         Rect::new(btn_x, btn_y, btn_w, btn_h),
@@ -85,15 +90,21 @@ pub fn draw_header(
     }
     // Space hint just left of the button.
     let hint = "Space";
-    let hint_w = measure_ui_text(hint, None, scale::CAPTION as u16, 1.0).width;
-    let hint_x = btn_x - hint_w - space::MD;
-    draw_ui_text(
-        hint,
-        hint_x,
-        h / 2.0 + scale::CAPTION / 2.0,
-        scale::CAPTION,
-        color::TEXT_DIM(),
-    );
+    let hint_w = if compact {
+        0.0
+    } else {
+        measure_ui_text(hint, None, scale::CAPTION as u16, 1.0).width
+    };
+    let hint_x = btn_x - hint_w - if compact { space::SM } else { space::MD };
+    if !compact {
+        draw_ui_text(
+            hint,
+            hint_x,
+            h / 2.0 + scale::CAPTION / 2.0,
+            scale::CAPTION,
+            color::TEXT_DIM(),
+        );
+    }
 
     // Stat cluster: money / month / occupancy chips, flowed right-to-left so
     // they hug the button and never collide with the building name.
@@ -106,11 +117,26 @@ pub fn draw_header(
     };
     let money_label = macroquad_toolkit::ui::format_money(money as i64);
     let month_label = format!("Month {}", tick);
-    let occ_label = format!("{}/{}", occupancy, total_units);
+    let occ_label = format!("{}/{} leased", occupancy, total_units);
+    let net_amount = macroquad_toolkit::ui::format_money(monthly_net.unsigned_abs() as i64);
+    let net_label = if monthly_net > 0 {
+        format!("Net +{}", net_amount)
+    } else if monthly_net < 0 {
+        format!("Net -{}", net_amount)
+    } else {
+        "Net $0".to_string()
+    };
+    let net_color = if monthly_net < 0 {
+        color::NEGATIVE()
+    } else if monthly_net > 0 {
+        color::POSITIVE()
+    } else {
+        color::TEXT_DIM()
+    };
 
     // Measure chip widths (mirror stat_chip's math) to place them.
     let chip_gap = space::SM;
-    let chips: [(Option<&Texture2D>, &str, Color); 3] = [
+    let chips: [(Option<&Texture2D>, &str, Color); 4] = [
         (assets.get_texture("icon_money"), &money_label, money_color),
         (
             assets.get_texture("icon_calendar"),
@@ -118,17 +144,19 @@ pub fn draw_header(
             color::TEXT(),
         ),
         (assets.get_texture("icon_key"), &occ_label, color::TEXT()),
+        (None, &net_label, net_color),
     ];
     let widths: Vec<f32> = chips
         .iter()
         .map(|(icon, label, _)| {
             let text_w = measure_ui_text(label, None, scale::BODY as u16, 1.0).width;
-            let icon_w = if icon.is_some() {
+            let icon_w = if icon.is_some() && !compact {
                 20.0 + space::XS
             } else {
                 0.0
             };
-            space::MD + icon_w + text_w + space::MD
+            let pad = if compact { space::SM } else { space::MD };
+            pad + icon_w + text_w + pad
         })
         .collect();
     let cluster_w: f32 = widths.iter().sum::<f32>() + chip_gap * (chips.len() as f32 - 1.0);
@@ -141,7 +169,7 @@ pub fn draw_header(
     }
 
     // Building name, left-aligned, ellipsized to the space before the cluster.
-    let name_x = space::LG;
+    let name_x = outer;
     let name_avail = (cluster_left - space::MD - name_x).max(40.0);
     let name = truncate_text_to_width(building_name, name_avail, scale::TITLE);
     draw_ui_text(

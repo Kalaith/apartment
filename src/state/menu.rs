@@ -6,12 +6,32 @@ use macroquad::prelude::*;
 use macroquad_toolkit::ui::{draw_ui_text, measure_ui_text};
 
 const CARD_W: f32 = 280.0;
-const CARD_H: f32 = 120.0;
 const CARD_SPACING: f32 = 20.0;
 const GRID_EDGE_MARGIN: f32 = 40.0;
 
 fn grid_top() -> f32 {
-    screen_height() * 0.35
+    if screen_height() < 520.0 {
+        142.0
+    } else if screen_height() < 660.0 {
+        170.0
+    } else {
+        screen_height() * 0.35
+    }
+}
+
+fn card_spacing() -> f32 {
+    if screen_height() < 660.0 {
+        8.0
+    } else {
+        CARD_SPACING
+    }
+}
+
+fn card_height(count: usize) -> f32 {
+    let rows = count.div_ceil(grid_columns(count)).max(1);
+    let spacing = card_spacing();
+    let available = (screen_height() - grid_top() - 8.0).max(180.0);
+    ((available - spacing * (rows.saturating_sub(1)) as f32) / rows as f32).clamp(82.0, 120.0)
 }
 
 fn grid_columns(count: usize) -> usize {
@@ -27,12 +47,14 @@ fn card_rect(i: usize, count: usize) -> Rect {
     let row = i / columns;
     let col = i % columns;
     let cards_in_row = (count - row * columns).min(columns);
-    let row_width = cards_in_row as f32 * (CARD_W + CARD_SPACING) - CARD_SPACING;
+    let spacing = card_spacing();
+    let card_h = card_height(count);
+    let row_width = cards_in_row as f32 * (CARD_W + spacing) - spacing;
     Rect::new(
-        (screen_width() - row_width) / 2.0 + col as f32 * (CARD_W + CARD_SPACING),
-        grid_top() + row as f32 * (CARD_H + CARD_SPACING),
+        (screen_width() - row_width) / 2.0 + col as f32 * (CARD_W + spacing),
+        grid_top() + row as f32 * (card_h + spacing),
         CARD_W,
-        CARD_H,
+        card_h,
     )
 }
 
@@ -41,7 +63,23 @@ fn grid_bottom(count: usize) -> f32 {
         return grid_top();
     }
     let rows = count.div_ceil(grid_columns(count));
-    grid_top() + rows as f32 * (CARD_H + CARD_SPACING) - CARD_SPACING
+    let spacing = card_spacing();
+    grid_top() + rows as f32 * (card_height(count) + spacing) - spacing
+}
+
+fn continue_rect(count: usize) -> Rect {
+    let w = 200.0;
+    let h = 44.0;
+    if screen_height() < 660.0 {
+        Rect::new(screen_width() - w - 12.0, 12.0, w, h)
+    } else {
+        Rect::new(
+            screen_width() / 2.0 - w / 2.0,
+            grid_bottom(count) + 24.0,
+            w,
+            h,
+        )
+    }
 }
 
 pub struct MenuState {
@@ -84,12 +122,9 @@ impl MenuState {
 
         // Continue button (if save exists)
         if self.has_save {
-            let btn_w = 200.0;
-            let btn_h = 45.0;
-            let btn_x = screen_width() / 2.0 - btn_w / 2.0;
-            let btn_y = grid_bottom(count) + 40.0;
+            let rect = continue_rect(count);
 
-            if clicked && mx >= btn_x && mx <= btn_x + btn_w && my >= btn_y && my <= btn_y + btn_h {
+            if clicked && rect.contains(vec2(mx, my)) {
                 if let Ok(state) = load_game() {
                     return Some(StateTransition::ToGameplay(state));
                 } else {
@@ -139,13 +174,20 @@ impl MenuState {
 
         // Logo or Title
         if let Some(logo) = assets.get_texture("title_logo") {
+            let (logo_w, logo_h, logo_y) = if screen_height() < 520.0 {
+                (280.0, 126.0, 4.0)
+            } else if screen_height() < 660.0 {
+                (320.0, 144.0, 14.0)
+            } else {
+                (400.0, 180.0, 40.0)
+            };
             draw_texture_ex(
                 logo,
-                screen_width() / 2.0 - 200.0,
-                40.0,
+                screen_width() / 2.0 - logo_w / 2.0,
+                logo_y,
                 WHITE,
                 DrawTextureParams {
-                    dest_size: Some(Vec2::new(400.0, 180.0)),
+                    dest_size: Some(Vec2::new(logo_w, logo_h)),
                     ..Default::default()
                 },
             );
@@ -213,11 +255,24 @@ impl MenuState {
             } else {
                 Color::from_rgba(100, 100, 100, 255)
             };
-            draw_ui_text(&template.name, x + 15.0, y + 30.0, 22.0, name_color);
+            let compact_card = card_h < 105.0;
+            draw_ui_text(
+                &template.name,
+                x + 15.0,
+                y + if compact_card { 24.0 } else { 30.0 },
+                if compact_card { 19.0 } else { 22.0 },
+                name_color,
+            );
 
             // Difficulty badge
             let diff_color = border_color;
-            draw_ui_text(&template.difficulty, x + 15.0, y + 52.0, 14.0, diff_color);
+            draw_ui_text(
+                &template.difficulty,
+                x + 15.0,
+                y + if compact_card { 43.0 } else { 52.0 },
+                14.0,
+                diff_color,
+            );
 
             // Description (truncated on a char boundary — byte slicing panics on
             // multi-byte characters)
@@ -232,14 +287,16 @@ impl MenuState {
             } else {
                 Color::from_rgba(80, 80, 80, 255)
             };
-            draw_ui_text(&desc, x + 15.0, y + 75.0, 12.0, desc_color);
+            if !compact_card {
+                draw_ui_text(&desc, x + 15.0, y + 75.0, 13.0, desc_color);
+            }
 
             // Units count
             let units = template.apartments.len();
             draw_ui_text(
                 &format!("{} units", units),
                 x + 15.0,
-                y + 100.0,
+                y + card_h - 12.0,
                 14.0,
                 desc_color,
             );
@@ -249,7 +306,7 @@ impl MenuState {
                 draw_ui_text(
                     "LOCKED",
                     x + card_w - 90.0,
-                    y + 30.0,
+                    y + if compact_card { 24.0 } else { 30.0 },
                     16.0,
                     Color::from_rgba(150, 100, 100, 255),
                 );
@@ -269,10 +326,11 @@ impl MenuState {
 
         // Continue button (if save exists)
         if self.has_save {
-            let btn_w = 200.0;
-            let btn_h = 45.0;
-            let btn_x = screen_width() / 2.0 - btn_w / 2.0;
-            let btn_y = grid_bottom(count) + 40.0;
+            let rect = continue_rect(count);
+            let btn_w = rect.w;
+            let btn_h = rect.h;
+            let btn_x = rect.x;
+            let btn_y = rect.y;
 
             let hovered = mx >= btn_x && mx <= btn_x + btn_w && my >= btn_y && my <= btn_y + btn_h;
             let bg = if hovered {
