@@ -1,8 +1,14 @@
 # TODO — Second Story
 
+The implementation order and acceptance checks for the August 2026 review are
+tracked in [`docs/REMEDIATION_PLAN.md`](docs/REMEDIATION_PLAN.md). Keep this file
+as the short problem list; use the plan as the completion authority.
+
 ## Balance
 
-- Investing has to beat neglect. The last full harness run had the Greedy strategy (accept everyone, minimal upkeep) finish 36 months at ~$95.5k against the Investor's ~$96.1k, so repairs, upgrades and staff bought almost nothing. Re-run `cargo test balance_report -- --ignored --nocapture` after any economy change and check the two strategies have separated.
+- Investing has to beat neglect. The August 2026 run had Greedy finish at
+  ~$97.2k and Investor at ~$97.1k across 60 seeds, despite the harness giving
+  Investor unrealistically cheap upgrades. Rebuild the harness before tuning.
 - Money is too easy to earn overall, and there is no situation that makes selling an apartment attractive.
 - Give rejecting an applicant real teeth — a risky tenant carries a rent premium and can damage property, but the downside still rarely bites hard enough to make vetting a decision.
 
