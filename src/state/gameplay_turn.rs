@@ -12,13 +12,18 @@ use super::gameplay::{GameplayState, ViewMode};
 impl GameplayState {
     /// End the current turn and advance time.
     pub fn end_turn(&mut self) {
+        let building_id = self.active_building_id();
         // Latch once the building has ever been occupied, so the "all tenants left"
         // loss can distinguish real mass-departure from a not-yet-filled building.
-        self.has_ever_had_tenant |= !self.tenants.is_empty();
+        if self.active_tenant_count() > 0 {
+            self.has_ever_had_tenant = true;
+            self.ever_occupied_buildings.insert(building_id);
+        }
 
         let reputation_multiplier = self.application_reputation_multiplier();
 
         let result = advance_tick(
+            building_id,
             &mut self.building,
             &mut self.tenants,
             &mut self.applications,
@@ -27,7 +32,7 @@ impl GameplayState {
             &mut self.event_log,
             &mut self.current_tick,
             &mut self.next_tenant_id,
-            self.has_ever_had_tenant,
+            self.ever_occupied_buildings.contains(&building_id),
             reputation_multiplier,
             &self.config,
         );
@@ -153,8 +158,11 @@ impl GameplayState {
         }
 
         if heatwave_active {
+            let building_id = self.active_building_id();
             for tenant in &mut self.tenants {
-                tenant.happiness = (tenant.happiness - 3).max(0);
+                if tenant.building_id == building_id {
+                    tenant.happiness = (tenant.happiness - 3).max(0);
+                }
             }
         }
 
@@ -178,8 +186,9 @@ impl GameplayState {
         self.save_building_to_city();
         self.city.tick();
 
+        let active_tenants = self.active_tenants_cloned();
         let (rel_changes, rel_events) = self.tenant_network.tick(
-            &self.tenants,
+            &active_tenants,
             &self.building,
             &self.config.relationships,
             &self.relationship_events_config,
@@ -205,7 +214,7 @@ impl GameplayState {
         self.compliance.tick(self.current_tick);
         self.run_due_inspections();
         self.gentrification
-            .update_affordable_units(&self.building.apartments, &self.config.gentrification);
+            .update_affordable_units(&self.building, &self.config.gentrification);
     }
 
     /// Portfolio-lite: buildings you own but aren't actively managing run
@@ -221,7 +230,12 @@ impl GameplayState {
             if i == active || building.apartments.is_empty() {
                 continue;
             }
-            let potential: i32 = building.apartments.iter().map(|a| a.rent_price).sum();
+            let potential: i32 = building
+                .apartments
+                .iter()
+                .filter(|apartment| !building.is_unit_sold(apartment.id))
+                .map(|apartment| apartment.rent_price)
+                .sum();
             let income = (potential as f32 * cfg.passive_occupancy) as i32;
             let cost = building.apartments.len() as i32 * cfg.passive_cost_per_unit;
             net += income - cost;
@@ -270,10 +284,15 @@ impl GameplayState {
     }
 
     fn apply_monthly_social_happiness(&mut self) {
+        let building_id = self.active_building_id();
+        let active_tenants = self.active_tenants_cloned();
         let cohesion = self
             .tenant_network
-            .calculate_cohesion(&self.tenants, &self.config.cohesion);
+            .calculate_cohesion(&active_tenants, &self.config.cohesion);
         for tenant in &mut self.tenants {
+            if tenant.building_id != building_id {
+                continue;
+            }
             let relationship_bonus = crate::tenant::happiness::calculate_relationship_happiness(
                 tenant.id,
                 &self.tenant_network,
@@ -298,17 +317,14 @@ impl GameplayState {
     }
 
     fn update_context_hints(&mut self) {
-        let total_units = self.building.apartments.len();
-        let vacancy_count = self
-            .building
-            .apartments
-            .iter()
-            .filter(|apartment| apartment.is_vacant())
-            .count();
+        let building_id = self.active_building_id();
+        let total_units = self.building.rental_unit_count();
+        let vacancy_count = self.building.vacancy_count();
         let avg_condition = self.building.average_condition();
         let any_unhappy = self
             .tenants
             .iter()
+            .filter(|tenant| tenant.building_id == building_id)
             .any(|tenant| tenant.is_unhappy(self.config.happiness.unhappy_threshold));
 
         self.notifications.check_context_hints(

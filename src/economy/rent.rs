@@ -29,6 +29,7 @@ pub struct MissedPayment {
 
 /// Collect rent from all tenants
 pub fn collect_rent(
+    building_id: u32,
     tenants: &[Tenant],
     building: &Building,
     funds: &mut PlayerFunds,
@@ -42,6 +43,9 @@ pub fn collect_rent(
     };
 
     for tenant in tenants {
+        if tenant.building_id != building_id {
+            continue;
+        }
         if let Some(apt_id) = tenant.apartment_id {
             if let Some(apartment) = building.get_apartment(apt_id) {
                 // Very unhappy tenants might miss payment
@@ -115,7 +119,7 @@ mod tests {
             ..TenantRiskConfig::default()
         };
 
-        let collection = collect_rent(&tenants, &building, &mut funds, 1, &risk);
+        let collection = collect_rent(0, &tenants, &building, &mut funds, 1, &risk);
         assert_eq!(collection.total_collected, 0);
         assert_eq!(collection.missed_payments.len(), 1);
     }
@@ -133,6 +137,7 @@ mod tests {
         let tenants = vec![tenant];
 
         let collection = collect_rent(
+            0,
             &tenants,
             &building,
             &mut funds,
@@ -141,5 +146,25 @@ mod tests {
         );
         assert_eq!(collection.missed_payments.len(), 0);
         assert!(collection.total_collected > 0);
+    }
+
+    #[test]
+    fn tenant_in_another_building_does_not_pay_active_building_rent() {
+        let building = Building::new("Active", 1, 1);
+        let mut funds = PlayerFunds::new(1000);
+        let mut tenant = Tenant::new(1, "Elsewhere", TenantArchetype::Professional);
+        tenant.move_into_building(1, building.apartments[0].id);
+
+        let collection = collect_rent(
+            0,
+            &[tenant],
+            &building,
+            &mut funds,
+            1,
+            &TenantRiskConfig::default(),
+        );
+
+        assert_eq!(collection.total_collected, 0);
+        assert_eq!(funds.balance, 1000);
     }
 }

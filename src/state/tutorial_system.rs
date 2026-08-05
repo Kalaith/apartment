@@ -30,9 +30,8 @@ pub fn update_tutorial(state: &mut GameplayState) {
     }
 
     // Display hint for current milestone if stuck for a while
-    if let Some(hint) = state.tutorial.get_hint() {
-        // Show hint as floating text occasionally (every 5 ticks if no progress)
-        if state.current_tick.is_multiple_of(5) && state.current_tick > 0 {
+    if state.tutorial.should_emit_hint(state.current_tick) {
+        if let Some(hint) = state.tutorial.get_hint() {
             state.floating_texts.spawn(
                 hint,
                 vec2(screen_width() / 2.0, screen_height() - 100.0),
@@ -61,8 +60,9 @@ pub fn update_tutorial(state: &mut GameplayState) {
                 }
             }
             TutorialMilestone::FirstResident => {
-                // Completes when at least one tenant exists
-                if !state.tenants.is_empty() {
+                // Completes only after acquiring somebody beyond any starter
+                // resident supplied by the scenario template.
+                if state.tutorial.has_new_resident(state.active_tenant_count()) {
                     state.tutorial.modify_relationship(0, 15); // Mentor happy
 
                     state
@@ -108,7 +108,31 @@ pub fn update_tutorial(state: &mut GameplayState) {
                     // Messages are already in pending_messages and will be shown by the tutorial overlay
                 }
             }
-            TutorialMilestone::Complete => {}
+            TutorialMilestone::Complete => {
+                if state.tutorial.pending_messages.is_empty() {
+                    state
+                        .tutorial
+                        .complete_milestone(TutorialMilestone::Complete);
+                }
+            }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn final_milestone_closes_after_mentor_messages_are_read() {
+        let mut state = GameplayState::new();
+        state.tutorial.current_milestone = Some(TutorialMilestone::Complete);
+        state.tutorial.pending_messages.clear();
+
+        update_tutorial(&mut state);
+
+        assert!(state.tutorial.is_complete());
+        assert!(!state.tutorial.active);
+        assert!(state.tutorial.current_milestone.is_none());
     }
 }

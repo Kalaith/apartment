@@ -38,6 +38,9 @@ impl GameplayState {
                 apartment_id,
                 preference,
             } => {
+                if self.building.is_unit_sold(apartment_id) {
+                    return;
+                }
                 if let Some(apt) = self.building.get_apartment_mut(apartment_id) {
                     apt.is_listed_for_lease = true;
                     apt.preferred_archetype = preference;
@@ -115,7 +118,11 @@ impl GameplayState {
                 }
             }
             UiAction::AcceptApplication { application_index } => {
-                if application_index < self.applications.len() {
+                if self
+                    .applications
+                    .get(application_index)
+                    .is_some_and(|application| application.building_id == self.active_building_id())
+                {
                     let app = self.applications.remove(application_index);
                     let mut tenant = app.tenant;
 
@@ -170,7 +177,7 @@ impl GameplayState {
                         return;
                     }
 
-                    tenant.move_into(app.apartment_id);
+                    tenant.move_into_building(app.building_id, app.apartment_id);
 
                     if let Some(apt) = self.building.get_apartment_mut(app.apartment_id) {
                         apt.move_in(tenant.id);
@@ -198,12 +205,20 @@ impl GameplayState {
                 }
             }
             UiAction::RejectApplication { application_index } => {
-                if application_index < self.applications.len() {
+                if self
+                    .applications
+                    .get(application_index)
+                    .is_some_and(|application| application.building_id == self.active_building_id())
+                {
                     self.applications.remove(application_index);
                 }
             }
             UiAction::CreditCheck { application_index } => {
-                if application_index < self.applications.len() {
+                if self
+                    .applications
+                    .get(application_index)
+                    .is_some_and(|application| application.building_id == self.active_building_id())
+                {
                     let app = &mut self.applications[application_index];
                     if let Some(result) = crate::tenant::vetting::perform_credit_check(
                         app,
@@ -235,7 +250,11 @@ impl GameplayState {
                 }
             }
             UiAction::BackgroundCheck { application_index } => {
-                if application_index < self.applications.len() {
+                if self
+                    .applications
+                    .get(application_index)
+                    .is_some_and(|application| application.building_id == self.active_building_id())
+                {
                     let app = &mut self.applications[application_index];
                     if let Some(result) = crate::tenant::vetting::perform_background_check(
                         app,
@@ -408,68 +427,10 @@ impl GameplayState {
                 );
             }
             UiAction::SellUnitAsCondo { apartment_id } => {
-                let market_multiplier = self.condo_sale_market_multiplier();
-                let base_value = self
-                    .building
-                    .get_apartment(apartment_id)
-                    .map(|apt| apt.market_value())
-                    .unwrap_or(10_000);
-                let sale_price = (base_value as f32 * market_multiplier) as i32;
-
-                if let Some(apt) = self.building.get_apartment(apartment_id) {
-                    if let Some(tenant_id) = apt.tenant_id {
-                        self.tenants.retain(|t| t.id != tenant_id);
-                        self.tenant_stories.remove(&tenant_id);
-                    }
-                }
-
-                if self
-                    .building
-                    .convert_unit_to_condo(apartment_id, "New Owner", sale_price)
-                {
-                    let transaction = crate::economy::Transaction::income(
-                        crate::economy::TransactionType::AssetSale,
-                        sale_price,
-                        "Condo Sale",
-                        self.current_tick,
-                    );
-                    self.funds.add_income(transaction);
-
-                    self.floating_texts.spawn(
-                        format!("+${}", sale_price),
-                        vec2(screen_width() / 2.0, screen_height() / 2.0),
-                        colors::POSITIVE(),
-                    );
-
-                    self.save_building_to_city();
-                }
+                self.sell_unit_as_condo(apartment_id);
             }
             UiAction::BuybackCondo { apartment_id } => {
-                if let Some(buyback_cost) = self.building.buyback_condo(apartment_id) {
-                    if self.funds.balance >= buyback_cost {
-                        let transaction = crate::economy::Transaction::expense(
-                            crate::economy::TransactionType::BuildingPurchase,
-                            buyback_cost,
-                            "Condo Buyback",
-                            self.current_tick,
-                        );
-                        self.funds.deduct_expense(transaction);
-
-                        self.floating_texts.spawn(
-                            format!("-${}", buyback_cost),
-                            vec2(screen_width() / 2.0, screen_height() / 2.0),
-                            colors::NEGATIVE(),
-                        );
-
-                        self.floating_texts.spawn(
-                            "Unit Repurchased!",
-                            vec2(screen_width() / 2.0, screen_height() / 2.0 + 30.0),
-                            colors::POSITIVE(),
-                        );
-
-                        self.save_building_to_city();
-                    }
-                }
+                self.buy_back_condo(apartment_id);
             }
             UiAction::ResolveDialogue {
                 dialogue_id,
@@ -581,8 +542,13 @@ impl GameplayState {
                 apt_b,
                 amount,
             } => {
-                self.tenant_network
-                    .apply_tension_change(apt_a, apt_b, amount, "Dialogue choice");
+                self.tenant_network.apply_tension_change(
+                    self.active_building_id(),
+                    apt_a,
+                    apt_b,
+                    amount,
+                    "Dialogue choice",
+                );
             }
             crate::narrative::dialogue::DialogueEffect::RelationshipChange {
                 tenant_a,

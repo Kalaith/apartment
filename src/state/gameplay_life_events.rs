@@ -29,6 +29,7 @@ impl GameplayState {
         let struck: Vec<(u32, String, TenantArchetype)> = self
             .tenants
             .iter()
+            .filter(|tenant| tenant.building_id == self.active_building_id())
             .filter(|_| rng::gen_range(0, 100) < chance)
             .map(|t| (t.id, t.name.clone(), t.archetype.clone()))
             .collect();

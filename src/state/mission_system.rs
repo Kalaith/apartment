@@ -7,22 +7,23 @@ use macroquad::prelude::*;
 /// System for handling mission updates and rewards
 pub fn update_missions(state: &mut GameplayState) {
     let current_month = state.current_tick;
+    let active_building_id = state.active_building_id();
+    let active_tenants = state.active_tenants_cloned();
 
     // Snapshot this month's building-wide signals up front so per-mission
     // evaluation can read them without borrowing conflicts.
-    let avg_happiness = if state.tenants.is_empty() {
+    let avg_happiness = if active_tenants.is_empty() {
         0.0
     } else {
-        state
-            .tenants
+        active_tenants
             .iter()
             .map(|t| t.happiness as f32)
             .sum::<f32>()
-            / state.tenants.len() as f32
+            / active_tenants.len() as f32
     };
     // "Perfect collection" = at least one tenant and no missed-rent event this
     // month.
-    let perfect_collection = !state.tenants.is_empty()
+    let perfect_collection = !active_tenants.is_empty()
         && state.last_tick_result.as_ref().is_some_and(|r| {
             !r.events
                 .iter()
@@ -77,9 +78,10 @@ pub fn update_missions(state: &mut GameplayState) {
                         .tenants
                         .iter()
                         .filter(|t| {
-                            archetype
-                                .as_ref()
-                                .is_none_or(|arch| t.archetype.name() == arch)
+                            t.building_id == active_building_id
+                                && archetype
+                                    .as_ref()
+                                    .is_none_or(|arch| t.archetype.name() == arch)
                         })
                         .count();
                     if current_count as u32 >= *count {
@@ -87,7 +89,7 @@ pub fn update_missions(state: &mut GameplayState) {
                     }
                 }
                 MissionGoal::ReachOccupancy { percentage } => {
-                    let total = state.building.apartments.len();
+                    let total = state.building.rental_unit_count();
                     let occupied = state.building.occupancy_count();
                     if total > 0 && (occupied as f32 / total as f32) >= *percentage {
                         completed = true;
@@ -106,7 +108,7 @@ pub fn update_missions(state: &mut GameplayState) {
                 } => {
                     // Accrue consecutive months at/above the happiness threshold;
                     // a bad month resets the streak.
-                    if !state.tenants.is_empty() && avg_happiness >= *threshold {
+                    if !active_tenants.is_empty() && avg_happiness >= *threshold {
                         *current_months += 1;
                     } else {
                         *current_months = 0;

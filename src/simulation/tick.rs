@@ -26,6 +26,7 @@ impl GameTick {
     /// Process a single game tick (one month)
     #[allow(clippy::too_many_arguments)]
     pub fn process(
+        building_id: u32,
         building: &mut Building,
         tenants: &mut Vec<Tenant>,
         applications: &mut Vec<TenantApplication>,
@@ -47,11 +48,20 @@ impl GameTick {
         };
 
         // 1. Collect Rent
-        Self::collect_rent(building, tenants, funds, current_tick, config, &mut result);
+        Self::collect_rent(
+            building_id,
+            building,
+            tenants,
+            funds,
+            current_tick,
+            config,
+            &mut result,
+        );
 
         // 2. Operating Costs & Staff
         Self::process_operating_costs(building, funds, current_tick, &mut result, config);
         Self::process_critical_failures(
+            building_id,
             building,
             tenants,
             funds,
@@ -74,10 +84,11 @@ impl GameTick {
 
         // 4b. Staff maintenance offsets decay; disruptive tenants add damage.
         Self::process_janitor_maintenance(building, &mut result, config);
-        Self::process_tenant_risk(building, tenants, config, &mut result);
+        Self::process_tenant_risk(building_id, building, tenants, config, &mut result);
 
         // 5. Tenant Happiness & Updates
         Self::update_tenants(
+            building_id,
             building,
             tenants,
             &mut result,
@@ -86,7 +97,8 @@ impl GameTick {
         );
 
         // 6. Move-outs
-        let departure_notices = process_departures(tenants, building, &config.happiness);
+        let departure_notices =
+            process_departures(building_id, tenants, building, &config.happiness);
         for notice in departure_notices {
             result.events.push(GameEvent::TenantMovedOut {
                 message: notice.clone(),
@@ -99,6 +111,7 @@ impl GameTick {
             !app.is_expired_after(current_tick, config.applications.expire_after_ticks)
         });
         let new_apps = generate_applications(
+            building_id,
             building,
             applications,
             current_tick,
@@ -133,6 +146,7 @@ impl GameTick {
 
         // 9. Win/Lose check
         result.outcome = win_condition::check_win_condition(
+            building_id,
             building,
             tenants,
             funds,
@@ -158,6 +172,7 @@ impl GameTick {
     }
 
     fn collect_rent(
+        building_id: u32,
         building: &mut Building,
         tenants: &[Tenant],
         funds: &mut PlayerFunds,
@@ -165,7 +180,14 @@ impl GameTick {
         config: &crate::data::config::GameConfig,
         result: &mut TickResult,
     ) {
-        let rent_result = collect_rent(tenants, building, funds, current_tick, &config.tenant_risk);
+        let rent_result = collect_rent(
+            building_id,
+            tenants,
+            building,
+            funds,
+            current_tick,
+            &config.tenant_risk,
+        );
         result.rent_collected = rent_result.total_collected;
 
         for payment in &rent_result.payments {
@@ -325,6 +347,7 @@ impl GameTick {
     }
 
     fn process_critical_failures(
+        building_id: u32,
         building: &mut Building,
         tenants: &mut [Tenant],
         funds: &mut PlayerFunds,
@@ -367,7 +390,9 @@ impl GameTick {
                     happiness: 0,
                 });
                 for t in tenants.iter_mut() {
-                    t.happiness = (t.happiness - 30).max(0);
+                    if t.building_id == building_id {
+                        t.happiness = (t.happiness - 30).max(0);
+                    }
                 }
                 result.events.push(GameEvent::InsufficientFunds {
                     action: "Fix Boiler".to_string(),
@@ -410,6 +435,7 @@ impl GameTick {
     /// tenants damage their own unit and the shared hallway; unreliable rent
     /// payers are handled in `collect_rent`.
     fn process_tenant_risk(
+        building_id: u32,
         building: &mut Building,
         tenants: &[Tenant],
         config: &crate::data::config::GameConfig,
@@ -420,6 +446,9 @@ impl GameTick {
         let risk = &config.tenant_risk;
 
         for tenant in tenants {
+            if tenant.building_id != building_id {
+                continue;
+            }
             let Some(apt_id) = tenant.apartment_id else {
                 continue;
             };
@@ -449,6 +478,7 @@ impl GameTick {
     }
 
     fn update_tenants(
+        building_id: u32,
         building: &Building,
         tenants: &mut [Tenant],
         result: &mut TickResult,
@@ -456,6 +486,9 @@ impl GameTick {
         staff: &crate::data::config::StaffEffectsConfig,
     ) {
         for tenant in tenants.iter_mut() {
+            if tenant.building_id != building_id {
+                continue;
+            }
             if let Some(apt_id) = tenant.apartment_id {
                 if let Some(apartment) = building.get_apartment(apt_id) {
                     let factors = calculate_happiness(tenant, apartment, building, config, staff);
@@ -491,6 +524,7 @@ impl GameTick {
 /// Advance time and return whether game should continue
 #[allow(clippy::too_many_arguments)]
 pub fn advance_tick(
+    building_id: u32,
     building: &mut Building,
     tenants: &mut Vec<Tenant>,
     applications: &mut Vec<TenantApplication>,
@@ -506,6 +540,7 @@ pub fn advance_tick(
     *current_tick += 1;
 
     GameTick::process(
+        building_id,
         building,
         tenants,
         applications,
@@ -566,6 +601,29 @@ mod tests {
     }
 
     #[test]
+    fn inactive_building_tenant_is_not_advanced() {
+        let building = Building::new("Active", 1, 1);
+        let mut tenant = Tenant::new(1, "Elsewhere", TenantArchetype::Student);
+        tenant.move_into_building(1, 0);
+        tenant.happiness = 41;
+        let mut tenants = vec![tenant];
+        let mut result = empty_result();
+        let config = GameConfig::default();
+
+        GameTick::update_tenants(
+            0,
+            &building,
+            &mut tenants,
+            &mut result,
+            &config.happiness,
+            &config.staff_effects,
+        );
+
+        assert_eq!(tenants[0].happiness, 41);
+        assert_eq!(tenants[0].months_residing, 0);
+    }
+
+    #[test]
     fn low_behavior_tenant_damages_property() {
         let mut config = GameConfig::default();
         config.tenant_risk.low_behavior_threshold = 100;
@@ -582,7 +640,7 @@ mod tests {
         let tenants = vec![tenant];
 
         let mut result = empty_result();
-        GameTick::process_tenant_risk(&mut building, &tenants, &config, &mut result);
+        GameTick::process_tenant_risk(0, &mut building, &tenants, &config, &mut result);
 
         assert_eq!(building.apartments[0].condition, before - 6);
         assert!(result

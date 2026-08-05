@@ -111,7 +111,7 @@ impl Sim {
                     let id = next_tenant_id;
                     next_tenant_id += 1;
                     let mut tenant = Tenant::new(id, &data.name, archetype);
-                    tenant.move_into(apt.id);
+                    tenant.move_into_building(0, apt.id);
                     apt.move_in(id);
                     tenants.push(tenant);
                 }
@@ -234,7 +234,7 @@ impl Sim {
 
             let apartment_id = app.apartment_id;
             let mut tenant = app.tenant;
-            tenant.move_into(apartment_id);
+            tenant.move_into_building(0, apartment_id);
             if let Some(apt) = self.building.get_apartment_mut(apartment_id) {
                 apt.move_in(tenant.id);
             }
@@ -370,6 +370,7 @@ impl Sim {
             has_ever_had_tenant |= !self.tenants.is_empty();
 
             let result = advance_tick(
+                0,
                 &mut self.building,
                 &mut self.tenants,
                 &mut self.applications,

@@ -20,6 +20,7 @@ pub enum GameOutcome {
 
 /// Check current game state for win/lose conditions
 pub fn check_win_condition(
+    building_id: u32,
     building: &Building,
     tenants: &[Tenant],
     funds: &PlayerFunds,
@@ -29,6 +30,11 @@ pub fn check_win_condition(
     happiness_config: &HappinessConfig,
     thresholds: &ThresholdsConfig,
 ) -> Option<GameOutcome> {
+    let active_tenants: Vec<&Tenant> = tenants
+        .iter()
+        .filter(|tenant| tenant.building_id == building_id)
+        .collect();
+
     // Check for bankruptcy
     if funds.is_bankrupt() {
         return Some(GameOutcome::Bankruptcy {
@@ -38,7 +44,10 @@ pub fn check_win_condition(
 
     // Check if all tenants left (only after the building was actually occupied at
     // some point — otherwise a brand-new empty building would instantly "lose").
-    if has_ever_had_tenant && tenants.is_empty() && current_tick > thresholds.all_left_check_tick {
+    if has_ever_had_tenant
+        && active_tenants.is_empty()
+        && current_tick > thresholds.all_left_check_tick
+    {
         return Some(GameOutcome::AllTenantsLeft);
     }
 
@@ -46,16 +55,20 @@ pub fn check_win_condition(
     let game_duration = win_conditions.game_duration_ticks.unwrap_or(36);
     if current_tick >= game_duration {
         // Calculate final score based on performance
-        let avg_happiness: i32 = if tenants.is_empty() {
+        let avg_happiness: i32 = if active_tenants.is_empty() {
             0
         } else {
-            tenants.iter().map(|t| t.happiness).sum::<i32>() / tenants.len() as i32
+            active_tenants
+                .iter()
+                .map(|tenant| tenant.happiness)
+                .sum::<i32>()
+                / active_tenants.len() as i32
         };
 
         // Full occupancy is only required to earn the bonus when the config
         // says so; otherwise it's awarded unconditionally.
         let occupancy_bonus =
-            if !win_conditions.full_occupancy_required || building.vacancy_count() == 0 {
+            if !win_conditions.full_occupancy_required || building.has_full_rental_occupancy() {
                 100
             } else {
                 0
@@ -75,7 +88,7 @@ pub fn check_win_condition(
         } else {
             0
         };
-        let tenant_count_bonus = (tenants.len() as i32) * 10;
+        let tenant_count_bonus = (active_tenants.len() as i32) * 10;
 
         let score = (avg_happiness * 5)  // Happiness contribution
             + (funds.total_income / 100)  // Income contribution
@@ -105,6 +118,7 @@ mod tests {
         let funds = PlayerFunds::default(); // 5000, solvent
         let cfg = GameConfig::default(); // all_left_check_tick = 3, duration = 36
         check_win_condition(
+            0,
             &building,
             tenants,
             &funds,

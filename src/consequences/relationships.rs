@@ -54,6 +54,8 @@ pub struct TenantRelationship {
 /// Dynamic tension between apartments (e.g., noise complaints)
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SocialTension {
+    #[serde(default)]
+    pub building_id: u32,
     pub apartment_a: u32,
     pub apartment_b: u32,
     pub tension_level: i32, // 0-100
@@ -103,8 +105,9 @@ impl TenantRelationship {
 
     /// Can these tenants potentially form this relationship?
     pub fn can_form(tenant_a: &crate::tenant::Tenant, tenant_b: &crate::tenant::Tenant) -> bool {
-        // Different apartments
-        tenant_a.apartment_id != tenant_b.apartment_id
+        // Relationships are local to one building, between different units.
+        tenant_a.building_id == tenant_b.building_id
+            && tenant_a.apartment_id != tenant_b.apartment_id
     }
 }
 
@@ -182,14 +185,22 @@ impl TenantNetwork {
     }
 
     /// Apply a direct change to social tension between apartments.
-    pub fn apply_tension_change(&mut self, apt_a: u32, apt_b: u32, amount: i32, cause: &str) {
+    pub fn apply_tension_change(
+        &mut self,
+        building_id: u32,
+        apt_a: u32,
+        apt_b: u32,
+        amount: i32,
+        cause: &str,
+    ) {
         if apt_a == apt_b || amount == 0 {
             return;
         }
 
         let existing = self.tensions.iter_mut().find(|tension| {
-            (tension.apartment_a == apt_a && tension.apartment_b == apt_b)
-                || (tension.apartment_a == apt_b && tension.apartment_b == apt_a)
+            tension.building_id == building_id
+                && ((tension.apartment_a == apt_a && tension.apartment_b == apt_b)
+                    || (tension.apartment_a == apt_b && tension.apartment_b == apt_a))
         });
 
         if let Some(tension) = existing {
@@ -199,6 +210,7 @@ impl TenantNetwork {
             }
         } else if amount > 0 {
             self.tensions.push(SocialTension {
+                building_id,
                 apartment_a: apt_a,
                 apartment_b: apt_b,
                 tension_level: amount.clamp(0, 100),
@@ -248,9 +260,14 @@ impl TenantNetwork {
     ) -> (Vec<RelationshipChange>, Vec<NarrativeEvent>) {
         let mut changes = Vec::new();
         let mut events = Vec::new(); // Phase 4
+        let active_tenant_ids: std::collections::HashSet<u32> =
+            tenants.iter().map(|tenant| tenant.id).collect();
 
         // Update existing relationships
-        for relationship in &mut self.relationships {
+        for relationship in self.relationships.iter_mut().filter(|relationship| {
+            active_tenant_ids.contains(&relationship.tenant_a_id)
+                && active_tenant_ids.contains(&relationship.tenant_b_id)
+        }) {
             relationship.tick(config);
 
             // Phase 4D: Detect relationship changes (e.g. Hostile -> Neutral)
@@ -569,14 +586,19 @@ impl TenantNetwork {
         }
 
         // Bonus for friendly relationships
+        let tenant_ids: std::collections::HashSet<u32> =
+            tenants.iter().map(|tenant| tenant.id).collect();
+        let building_id = tenants[0].building_id;
         let friendly_count = self
             .relationships
             .iter()
             .filter(|r| {
-                matches!(
-                    r.relationship_type,
-                    RelationshipType::Friendly | RelationshipType::Family
-                )
+                tenant_ids.contains(&r.tenant_a_id)
+                    && tenant_ids.contains(&r.tenant_b_id)
+                    && matches!(
+                        r.relationship_type,
+                        RelationshipType::Friendly | RelationshipType::Family
+                    )
             })
             .count() as i32;
 
@@ -586,11 +608,20 @@ impl TenantNetwork {
         let hostile_count = self
             .relationships
             .iter()
-            .filter(|r| matches!(r.relationship_type, RelationshipType::Hostile))
+            .filter(|r| {
+                tenant_ids.contains(&r.tenant_a_id)
+                    && tenant_ids.contains(&r.tenant_b_id)
+                    && matches!(r.relationship_type, RelationshipType::Hostile)
+            })
             .count() as i32;
 
         bonus -= hostile_count * config.hostile_relationship_penalty;
-        bonus -= (self.tensions.len() as i32) * config.tension_penalty;
+        let tension_count = self
+            .tensions
+            .iter()
+            .filter(|tension| tension.building_id == building_id)
+            .count() as i32;
+        bonus -= tension_count * config.tension_penalty;
 
         bonus.clamp(config.cohesion_min, config.cohesion_max)
     }
@@ -659,5 +690,28 @@ mod tests {
         assert!(network.relationship_between(1, 2).is_some());
         assert!(network.relationship_between(2, 1).is_some());
         assert!(network.relationship_between(1, 3).is_none());
+    }
+
+    #[test]
+    fn tenants_in_different_buildings_cannot_form_a_relationship() {
+        let mut tenant_a =
+            crate::tenant::Tenant::new(1, "A", crate::tenant::TenantArchetype::Student);
+        let mut tenant_b =
+            crate::tenant::Tenant::new(2, "B", crate::tenant::TenantArchetype::Student);
+        tenant_a.move_into_building(0, 0);
+        tenant_b.move_into_building(1, 1);
+
+        assert!(!TenantRelationship::can_form(&tenant_a, &tenant_b));
+    }
+
+    #[test]
+    fn apartment_tensions_are_scoped_to_a_building() {
+        let mut network = TenantNetwork::new();
+        network.apply_tension_change(0, 0, 1, 20, "Noise");
+        network.apply_tension_change(1, 0, 1, 30, "Music");
+
+        assert_eq!(network.tensions.len(), 2);
+        assert_eq!(network.tensions[0].building_id, 0);
+        assert_eq!(network.tensions[1].building_id, 1);
     }
 }

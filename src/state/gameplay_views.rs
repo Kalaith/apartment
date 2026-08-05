@@ -15,6 +15,7 @@ use macroquad_toolkit::ui::{draw_ui_text, draw_ui_text_ex, measure_ui_text};
 impl GameplayState {
     /// Main draw function - dispatches to appropriate view
     pub fn draw(&mut self, assets: &AssetManager) {
+        let pause_was_showing = self.show_pause_menu;
         match self.view_mode {
             ViewMode::Building => {
                 self.draw_building_mode(assets);
@@ -68,6 +69,8 @@ impl GameplayState {
             if let Some(action) = crate::ui::event_modal::draw_event_modal(event) {
                 self.pending_actions.push(action);
             }
+            self.pending_actions
+                .retain(|action| matches!(action, crate::ui::UiAction::ResolveEventChoice { .. }));
         }
 
         // Footer event log.
@@ -79,6 +82,7 @@ impl GameplayState {
         // Tutorial overlay (takes precedence)
         if self.tutorial.active && !self.tutorial.pending_messages.is_empty() {
             self.draw_tutorial_overlay(assets);
+            self.pending_actions.clear();
         }
         // Notification overlay (shows when tutorial is done/empty)
         else if self.notifications.has_pending() {
@@ -89,16 +93,27 @@ impl GameplayState {
         if self.show_pause_menu {
             self.draw_pause_menu_overlay();
         }
+        if pause_was_showing {
+            self.pending_actions.clear();
+        }
     }
 
     pub(super) fn draw_building_mode(&mut self, assets: &AssetManager) {
+        let building_id = self.active_building_id();
+        let active_tenants: Vec<_> = self
+            .tenants
+            .iter()
+            .filter(|tenant| tenant.building_id == building_id)
+            .cloned()
+            .collect();
+
         // Draw Header
         if let Some(action) = draw_header(
             self.funds.balance,
             self.current_tick,
             &self.building.name,
             self.building.occupancy_count(),
-            self.building.apartments.len(),
+            self.building.rental_unit_count(),
             assets,
         ) {
             self.pending_actions.push(action);
@@ -106,7 +121,7 @@ impl GameplayState {
 
         // Draw Building View
         if let Some(action) =
-            draw_building_view(&self.building, &self.tenants, &self.selection, assets)
+            draw_building_view(&self.building, &active_tenants, &self.selection, assets)
         {
             self.pending_actions.push(action);
         }
@@ -121,7 +136,7 @@ impl GameplayState {
                     let (action, new_scroll) = draw_apartment_panel(
                         apt,
                         &self.building,
-                        &self.tenants,
+                        &active_tenants,
                         self.funds.balance,
                         panel_offset,
                         self.panel_scroll_offset,
@@ -151,9 +166,14 @@ impl GameplayState {
                 }
             }
             Selection::Applications(filter) => {
-                if let Some(action) =
-                    draw_application_panel(&self.applications, &self.building, filter, 0.0, assets)
-                {
+                if let Some(action) = draw_application_panel(
+                    &self.applications,
+                    self.active_building_id(),
+                    &self.building,
+                    filter,
+                    0.0,
+                    assets,
+                ) {
                     self.pending_actions.push(action);
                 }
             }

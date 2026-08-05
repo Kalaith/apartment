@@ -38,7 +38,7 @@ impl GameplayState {
     }
 
     fn generate_dialogues(&mut self) {
-        let tenants = self.tenants.clone();
+        let tenants = self.active_tenants_cloned();
         let building = self.building.clone();
         let funds = self.funds.clone();
         self.dialogue_system.generate_dialogues(
@@ -71,10 +71,17 @@ impl GameplayState {
             return;
         }
 
+        let active_ids: std::collections::HashSet<u32> = self
+            .active_tenants_cloned()
+            .into_iter()
+            .map(|tenant| tenant.id)
+            .collect();
         let tenant_ids: Vec<u32> = self
             .tenant_stories
             .iter()
-            .filter(|(_, story)| story.pending_request.is_some())
+            .filter(|(tenant_id, story)| {
+                active_ids.contains(tenant_id) && story.pending_request.is_some()
+            })
             .map(|(id, _)| *id)
             .collect();
 
@@ -98,7 +105,11 @@ impl GameplayState {
     }
 
     fn generate_tenant_requests(&mut self) {
+        let building_id = self.active_building_id();
         for tenant in &self.tenants {
+            if tenant.building_id != building_id {
+                continue;
+            }
             if let Some(story) = self.tenant_stories.get_mut(&tenant.id) {
                 if rng::gen_range(0, 100) < 10 {
                     story.make_request(&tenant.archetype, &self.tenant_events_config);

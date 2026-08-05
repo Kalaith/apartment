@@ -97,8 +97,7 @@ impl AchievementSystem {
                     // Need to verify how to check occupancy from state.
                     // state.building.apartments is Vec<Apartment>.
                     // Apartment.is_vacant().
-                    !building.apartments.is_empty()
-                        && building.apartments.iter().all(|a| !a.is_vacant())
+                    building.has_full_rental_occupancy()
                 }
                 AchievementCondition::GameComplete => {
                     current_tick >= config.win_conditions.game_duration_ticks.unwrap_or(36)

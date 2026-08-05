@@ -74,13 +74,13 @@ impl GameplayState {
                 }
             }
             NarrativeEffect::BuildingHappiness {
-                building_id: _,
+                building_id,
                 change,
             } => {
-                // Only the active building is simulated at a time, so a
-                // building-wide morale swing applies to its current tenants.
                 for tenant in &mut self.tenants {
-                    tenant.happiness = (tenant.happiness + change).clamp(0, 100);
+                    if tenant.building_id == *building_id {
+                        tenant.happiness = (tenant.happiness + change).clamp(0, 100);
+                    }
                 }
             }
             NarrativeEffect::EconomyChange {

@@ -40,6 +40,9 @@ pub fn apply_risk_rent_premium(tenant: &mut Tenant, config: &TenantRiskConfig) {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TenantApplication {
     pub tenant: Tenant,
+    /// City building index. Apartment IDs repeat between buildings.
+    #[serde(default)]
+    pub building_id: u32,
     pub apartment_id: u32,
     pub match_result: MatchResult,
     pub tick_created: u32, // When this application was generated
@@ -50,9 +53,16 @@ pub struct TenantApplication {
 }
 
 impl TenantApplication {
-    pub fn new(tenant: Tenant, apartment_id: u32, match_result: MatchResult, tick: u32) -> Self {
+    pub fn new_for_building(
+        tenant: Tenant,
+        building_id: u32,
+        apartment_id: u32,
+        match_result: MatchResult,
+        tick: u32,
+    ) -> Self {
         Self {
             tenant,
+            building_id,
             apartment_id,
             match_result,
             tick_created: tick,
@@ -68,6 +78,7 @@ impl TenantApplication {
 
 /// Generate new tenant applications for listed apartments
 pub fn generate_applications(
+    building_id: u32,
     building: &Building,
     existing_applications: &[TenantApplication],
     current_tick: u32,
@@ -136,14 +147,19 @@ pub fn generate_applications(
                 // Check dupes
                 let already_applied =
                     existing_applications.iter().any(|app| {
-                        app.apartment_id == apt.id && app.tenant.archetype == tenant.archetype
+                        app.building_id == building_id
+                            && app.apartment_id == apt.id
+                            && app.tenant.archetype == tenant.archetype
                     }) || new_applications.iter().any(|app: &TenantApplication| {
-                        app.apartment_id == apt.id && app.tenant.archetype == tenant.archetype
+                        app.building_id == building_id
+                            && app.apartment_id == apt.id
+                            && app.tenant.archetype == tenant.archetype
                     });
 
                 if !already_applied {
-                    new_applications.push(TenantApplication::new(
+                    new_applications.push(TenantApplication::new_for_building(
                         tenant,
+                        building_id,
                         apt.id,
                         match_result,
                         current_tick,
@@ -221,6 +237,7 @@ fn pick_archetype_with_preference(
 
 /// Process tenant decisions to leave
 pub fn process_departures(
+    building_id: u32,
     tenants: &mut Vec<Tenant>,
     building: &mut Building,
     config: &crate::data::config::HappinessConfig,
@@ -229,6 +246,9 @@ pub fn process_departures(
     let mut departing_ids = Vec::new();
 
     for tenant in tenants.iter_mut() {
+        if tenant.building_id != building_id {
+            continue;
+        }
         // Roll once — will_leave is probabilistic, so reuse the result rather
         // than re-rolling it for the early-warning check below.
         let leaving = tenant.will_leave(config.leave_threshold, config.leave_chance_percent);

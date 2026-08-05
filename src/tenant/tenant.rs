@@ -11,6 +11,11 @@ pub struct Tenant {
     // Current state
     pub happiness: i32,       // 0-100
     pub months_residing: u32, // How long they've lived here
+    /// Index of the city building that owns `apartment_id`. Apartment IDs are
+    /// only unique inside a building, so both fields are required to identify
+    /// a unit in a portfolio.
+    #[serde(default)]
+    pub building_id: u32,
     pub apartment_id: Option<u32>,
 
     // Tolerances (derived from archetype but can vary slightly)
@@ -44,6 +49,7 @@ impl Tenant {
             archetype,
             happiness: 70, // Start reasonably happy
             months_residing: 0,
+            building_id: 0,
             apartment_id: None,
             rent_tolerance: prefs.ideal_rent_max,
             noise_tolerance: if prefs.prefers_quiet { 30 } else { 70 },
@@ -111,10 +117,16 @@ impl Tenant {
         }
     }
 
-    /// Move into an apartment
-    pub fn move_into(&mut self, apartment_id: u32) {
+    /// Move into a unit in a specific city building.
+    pub fn move_into_building(&mut self, building_id: u32, apartment_id: u32) {
+        self.building_id = building_id;
         self.apartment_id = Some(apartment_id);
         self.months_residing = 0;
+    }
+
+    /// Whether this tenant currently lives in the addressed unit.
+    pub fn lives_in(&self, building_id: u32, apartment_id: u32) -> bool {
+        self.building_id == building_id && self.apartment_id == Some(apartment_id)
     }
 
     /// Move out of current apartment

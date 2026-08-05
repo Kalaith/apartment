@@ -1,15 +1,10 @@
-use super::StateTransition;
-use crate::assets::AssetManager;
 use crate::building::Building;
 use crate::data::config::GameConfig;
 use crate::economy::{FinancialLedger, PlayerFunds};
 use crate::simulation::{ActiveWorldEvent, EventLog, GameOutcome, TickResult};
 use crate::tenant::{Tenant, TenantApplication};
-use crate::ui::layout::HEADER_HEIGHT;
-use crate::ui::{colors, FloatingTextLayer, Selection, Tween, UiAction};
-use macroquad::prelude::*;
-use macroquad_toolkit::ui::draw_ui_text_ex;
-use std::collections::HashMap;
+use crate::ui::{FloatingTextLayer, Selection, Tween, UiAction};
+use std::collections::{HashMap, HashSet};
 
 // Phase 3 imports
 use crate::city::City;
@@ -134,6 +129,11 @@ pub struct GameplayState {
     /// simply never occupied yet.
     #[serde(default)]
     pub has_ever_had_tenant: bool,
+
+    /// Building IDs that have genuinely been occupied. This replaces the
+    /// legacy run-wide latch for per-building loss checks.
+    #[serde(default)]
+    pub ever_occupied_buildings: HashSet<u32>,
 
     /// True while a tenant council is organized. Latches when one forms (so its
     /// collective action applies once) and clears when conditions improve, so a
@@ -270,6 +270,7 @@ impl GameplayState {
             pending_quit_to_menu: false,
             current_building_id: building_id,
             has_ever_had_tenant: false,
+            ever_occupied_buildings: HashSet::new(),
             council_formed: false,
             seed,
         };
@@ -287,7 +288,7 @@ impl GameplayState {
                     state.next_tenant_id += 1;
 
                     let mut tenant = Tenant::new(tenant_id, &data.name, archetype);
-                    tenant.move_into(apt.id);
+                    tenant.move_into_building(starter_building_index, apt.id);
                     apt.move_in(tenant_id);
 
                     let story = TenantStory::generate(tenant_id, &tenant.archetype);
@@ -307,6 +308,7 @@ impl GameplayState {
 
         // Generate initial applications (neutral reputation at game start).
         state.applications = crate::tenant::generate_applications(
+            starter_building_index,
             &state.building,
             &[],
             0,
@@ -316,6 +318,14 @@ impl GameplayState {
         );
 
         state.missions.generate_available_missions(0);
+        state
+            .tutorial
+            .set_resident_baseline(state.active_tenant_count());
+
+        if state.active_tenant_count() > 0 {
+            state.has_ever_had_tenant = true;
+            state.ever_occupied_buildings.insert(starter_building_index);
+        }
 
         state
     }
@@ -351,9 +361,21 @@ impl GameplayState {
             .retain(|event| event.remaining_ticks > 0);
 
         self.ensure_city_integrity();
+        self.restore_tenant_building_ids();
+        self.ever_occupied_buildings.extend(
+            self.tenants
+                .iter()
+                .filter(|tenant| tenant.apartment_id.is_some())
+                .map(|tenant| tenant.building_id),
+        );
         self.sync_building();
         self.ensure_compliance_for_buildings();
         self.ensure_tenant_stories();
+
+        if self.ever_occupied_buildings.is_empty() && self.has_ever_had_tenant {
+            self.ever_occupied_buildings
+                .insert(self.city.active_building_index as u32);
+        }
 
         if self.current_building_id.is_empty() {
             self.current_building_id = crate::data::templates::load_templates()
@@ -436,6 +458,51 @@ impl GameplayState {
         }
     }
 
+    /// Old saves predate portfolio-scoped tenant addresses. Apartment
+    /// occupancy stores globally unique tenant IDs, so use it to recover the
+    /// correct building whenever possible.
+    fn restore_tenant_building_ids(&mut self) {
+        for tenant in &mut self.tenants {
+            if let Some((building_id, apartment_id)) = self
+                .city
+                .buildings
+                .iter()
+                .enumerate()
+                .find_map(|(building_id, building)| {
+                    building
+                        .apartments
+                        .iter()
+                        .find(|apartment| apartment.tenant_id == Some(tenant.id))
+                        .map(|apartment| (building_id as u32, apartment.id))
+                })
+            {
+                tenant.building_id = building_id;
+                tenant.apartment_id = Some(apartment_id);
+            }
+        }
+    }
+
+    pub fn active_building_id(&self) -> u32 {
+        self.city.active_building_index as u32
+    }
+
+    pub fn active_tenant_count(&self) -> usize {
+        let building_id = self.active_building_id();
+        self.tenants
+            .iter()
+            .filter(|tenant| tenant.building_id == building_id)
+            .count()
+    }
+
+    pub(super) fn active_tenants_cloned(&self) -> Vec<Tenant> {
+        let building_id = self.active_building_id();
+        self.tenants
+            .iter()
+            .filter(|tenant| tenant.building_id == building_id)
+            .cloned()
+            .collect()
+    }
+
     /// Save the current `building` state back to the city
     pub fn save_building_to_city(&mut self) {
         if let Some(city_building) = self.city.active_building_mut() {
@@ -501,171 +568,6 @@ impl GameplayState {
 
         // Save progress
         let _ = save_player_progress(&progress);
-    }
-
-    /// Main update function - handles game logic and input
-    pub fn update(&mut self, assets: &AssetManager) -> Option<StateTransition> {
-        // Ensure assets are loaded before processing
-        if !assets.loaded {
-            return None;
-        }
-
-        // Process pending UI actions from previous frame
-        let actions: Vec<UiAction> = self.pending_actions.drain(..).collect();
-        for action in actions {
-            self.process_action(action);
-        }
-
-        let dt = get_frame_time();
-
-        // Update floating texts
-        self.floating_texts.update(dt);
-
-        // Dialogue generation happens in end_turn() via gameplay_actions.rs
-        // Update Dialogue System timeouts
-        self.dialogue_system.tick(self.current_tick);
-
-        // Update panel animation
-        if matches!(self.selection, Selection::None) {
-            self.panel_tween.set_target(0.0);
-        } else {
-            self.panel_tween.set_target(1.0);
-        }
-        self.panel_tween.update(dt);
-
-        // Check if game has ended
-        // Phase 5: Use CareerSummary view instead of StateTransition
-        if self.game_outcome.is_some() && self.view_mode != ViewMode::CareerSummary {
-            self.view_mode = ViewMode::CareerSummary;
-            // Check final achievements immediately
-            let new_unlocks = self.achievements.check_new_unlocks(
-                &self.city,
-                &self.building,
-                &self.tenants,
-                &self.funds,
-                self.current_tick,
-                &self.config,
-            );
-            for id in new_unlocks {
-                self.achievements.unlock(&id);
-            }
-        }
-
-        // Update tutorial
-        self.update_tutorial();
-
-        // Tutorial/notification toasts handle their own dismissal in draw().
-
-        // Handle keyboard input for ending turn (Space)
-        if is_key_pressed(KeyCode::Space) && matches!(self.view_mode, ViewMode::Building) {
-            self.end_turn();
-        }
-
-        // ESC key toggles pause menu
-        if is_key_pressed(KeyCode::Escape) {
-            self.show_pause_menu = !self.show_pause_menu;
-        }
-
-        // If pause menu is showing, skip regular game input processing but check for quit
-        if self.show_pause_menu {
-            if self.pending_quit_to_menu {
-                self.pending_quit_to_menu = false;
-                return Some(StateTransition::ToMenu);
-            }
-            return None;
-        }
-
-        // Global check for quit (e.g. from Career Summary)
-        if self.pending_quit_to_menu {
-            self.pending_quit_to_menu = false;
-            return Some(StateTransition::ToMenu);
-        }
-
-        // Background
-        draw_rectangle(
-            0.0,
-            0.0,
-            screen_width(),
-            HEADER_HEIGHT(),
-            colors::SURFACE_HEADER(),
-        );
-
-        // Title
-        draw_ui_text_ex(
-            &format!("{} - City Overview", self.city.name),
-            20.0,
-            35.0,
-            TextParams {
-                font_size: 28,
-                color: colors::TEXT(),
-                ..Default::default()
-            },
-        );
-
-        // Funds
-        draw_ui_text_ex(
-            &format!("${}", self.funds.balance),
-            screen_width() - 200.0,
-            35.0,
-            TextParams {
-                font_size: 24,
-                color: colors::POSITIVE(),
-                ..Default::default()
-            },
-        );
-
-        // Buildings count
-        draw_ui_text_ex(
-            &format!(
-                "{} Buildings | Month {}",
-                self.city.buildings.len(),
-                self.current_tick
-            ),
-            screen_width() - 400.0,
-            35.0,
-            TextParams {
-                font_size: 16,
-                color: colors::TEXT_DIM(),
-                ..Default::default()
-            },
-        );
-
-        // Gentrification score
-        draw_ui_text_ex(
-            &format!(
-                "Gentrification Score: {} | Affordable Units: {}",
-                self.gentrification.gentrification_score, self.gentrification.affordable_units
-            ),
-            20.0,
-            55.0,
-            TextParams {
-                font_size: 12,
-                color: colors::TEXT_DIM(),
-                ..Default::default()
-            },
-        );
-
-        // Navigation hint
-        let nav_hint = match self.view_mode {
-            ViewMode::Building => "[Tab] City Map | [M] Mail",
-            ViewMode::CityMap => "[Tab] Building View | [M] Mail",
-            ViewMode::Market => "[Tab] City Map | [M] Mail",
-            ViewMode::Mail => "[Tab] Return | [Esc] Return",
-            ViewMode::CareerSummary => "",
-        };
-
-        draw_ui_text_ex(
-            nav_hint,
-            20.0,
-            55.0,
-            TextParams {
-                font_size: 14,
-                color: colors::TEXT_DIM(),
-                ..Default::default()
-            },
-        );
-
-        None
     }
 }
 

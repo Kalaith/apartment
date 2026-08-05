@@ -283,9 +283,7 @@ impl NarrativeEventSystem {
 
         // Building milestones
         for building in buildings.iter() {
-            if building.occupancy_count() == building.apartments.len()
-                && rng::gen_range(0, 100) < 30
-            {
+            if building.has_full_rental_occupancy() && rng::gen_range(0, 100) < 30 {
                 let event = NarrativeEvent::news(
                     0,
                     month,

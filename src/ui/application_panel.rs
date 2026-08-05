@@ -7,6 +7,7 @@ use macroquad_toolkit::ui::draw_ui_text;
 
 pub fn draw_application_panel(
     applications: &[TenantApplication],
+    building_id: u32,
     building: &Building,
     filter_apartment_id: Option<u32>,
     offset_x: f32,
@@ -26,7 +27,10 @@ pub fn draw_application_panel(
     let filtered_apps: Vec<(usize, &TenantApplication)> = applications
         .iter()
         .enumerate()
-        .filter(|(_, app)| filter_apartment_id.is_none_or(|id| app.apartment_id == id))
+        .filter(|(_, app)| {
+            app.building_id == building_id
+                && filter_apartment_id.is_none_or(|id| app.apartment_id == id)
+        })
         .collect();
 
     if filtered_apps.is_empty() {

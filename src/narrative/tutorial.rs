@@ -61,6 +61,14 @@ pub struct TutorialManager {
     pub pending_messages: Vec<String>,
     /// Whether the rival has been introduced
     pub rival_introduced: bool,
+    /// Number of residents present when the guided lease milestone begins.
+    /// Starter tenants therefore do not skip the acquisition lesson.
+    #[serde(default)]
+    pub resident_baseline: usize,
+    /// Last month in which the contextual hint was emitted. `None` also lets
+    /// old saves enter the new one-hint-per-month behavior cleanly.
+    #[serde(default)]
+    pub last_hint_month: Option<u32>,
 }
 
 impl TutorialManager {
@@ -88,7 +96,27 @@ impl TutorialManager {
                 "First, select the Hallway and repair it to fix up the place.".to_string(),
             ],
             rival_introduced: false,
+            resident_baseline: 0,
+            last_hint_month: None,
         }
+    }
+
+    pub fn set_resident_baseline(&mut self, residents: usize) {
+        self.resident_baseline = residents;
+    }
+
+    pub fn has_new_resident(&self, residents: usize) -> bool {
+        residents > self.resident_baseline
+    }
+
+    /// Hints are evaluated every frame, but should only be emitted once for a
+    /// qualifying month rather than dozens of times during that frame loop.
+    pub fn should_emit_hint(&mut self, month: u32) -> bool {
+        if month == 0 || !month.is_multiple_of(5) || self.last_hint_month == Some(month) {
+            return false;
+        }
+        self.last_hint_month = Some(month);
+        true
     }
 
     /// Check if a milestone is completed
@@ -245,5 +273,22 @@ mod tests {
         assert_eq!(tutorial.mentor.relationship, 70);
         tutorial.modify_relationship(mentor_id, 50);
         assert_eq!(tutorial.mentor.relationship, 100); // Clamped
+    }
+
+    #[test]
+    fn starter_resident_does_not_complete_acquisition_lesson() {
+        let mut tutorial = TutorialManager::new();
+        tutorial.set_resident_baseline(1);
+        assert!(!tutorial.has_new_resident(1));
+        assert!(tutorial.has_new_resident(2));
+    }
+
+    #[test]
+    fn hint_only_emits_once_per_qualifying_month() {
+        let mut tutorial = TutorialManager::new();
+        assert!(!tutorial.should_emit_hint(4));
+        assert!(tutorial.should_emit_hint(5));
+        assert!(!tutorial.should_emit_hint(5));
+        assert!(tutorial.should_emit_hint(10));
     }
 }

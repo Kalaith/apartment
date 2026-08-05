@@ -65,16 +65,17 @@ impl GameplayState {
     }
 
     pub(super) fn check_annual_awards(&mut self) {
-        let avg_happiness = if self.tenants.is_empty() {
+        let active_tenants = self.active_tenants_cloned();
+        let avg_happiness = if active_tenants.is_empty() {
             0.0
         } else {
-            self.tenants
+            active_tenants
                 .iter()
                 .map(|tenant| tenant.happiness as f32)
                 .sum::<f32>()
-                / self.tenants.len() as f32
+                / active_tenants.len() as f32
         };
-        let total = self.building.apartments.len();
+        let total = self.building.rental_unit_count();
         let occupied = self.building.occupancy_count();
         let occupancy_rate = if total > 0 {
             occupied as f32 / total as f32
@@ -87,11 +88,11 @@ impl GameplayState {
             &self.building.name,
             avg_happiness,
             occupancy_rate,
-            self.tenants.len() as u32,
+            active_tenants.len() as u32,
         );
 
         let forming = self.tenant_network.should_form_council(
-            &self.tenants,
+            &active_tenants,
             &self.config.gentrification,
             self.config.happiness.unhappy_threshold,
         );
@@ -115,8 +116,11 @@ impl GameplayState {
             (self.building.rent_multiplier * (1.0 - rollback)).clamp(0.5, 2.0);
 
         let bump = self.config.gentrification.council_solidarity_happiness;
+        let building_id = self.active_building_id();
         for tenant in &mut self.tenants {
-            tenant.happiness = (tenant.happiness + bump).clamp(0, 100);
+            if tenant.building_id == building_id {
+                tenant.happiness = (tenant.happiness + bump).clamp(0, 100);
+            }
         }
 
         self.spawn_center_text(

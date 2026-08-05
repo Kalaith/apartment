@@ -147,17 +147,33 @@ impl Building {
 
     /// Get all vacant apartments
     pub fn vacant_apartments(&self) -> Vec<&Apartment> {
-        self.apartments.iter().filter(|a| a.is_vacant()).collect()
+        self.apartments
+            .iter()
+            .filter(|a| a.is_vacant() && !self.is_unit_sold(a.id))
+            .collect()
     }
 
-    /// Count vacant units
+    /// Count vacant units still owned and available to rent.
     pub fn vacancy_count(&self) -> usize {
-        self.apartments.iter().filter(|a| a.is_vacant()).count()
+        self.vacant_apartments().len()
     }
 
-    /// Count occupied units
+    /// Count occupied rental units. Sold condos are outside the rental roll.
     pub fn occupancy_count(&self) -> usize {
-        self.apartments.iter().filter(|a| !a.is_vacant()).count()
+        self.apartments
+            .iter()
+            .filter(|a| !self.is_unit_sold(a.id) && !a.is_vacant())
+            .count()
+    }
+
+    /// Number of units still owned by the player as rental inventory.
+    pub fn rental_unit_count(&self) -> usize {
+        self.apartments.len().saturating_sub(self.sold_unit_count())
+    }
+
+    pub fn has_full_rental_occupancy(&self) -> bool {
+        let rental_units = self.rental_unit_count();
+        rental_units > 0 && self.occupancy_count() == rental_units
     }
 
     /// Calculate overall building appeal (affects tenant applications)
@@ -213,10 +229,6 @@ impl Building {
         owner_name: &str,
         sale_price: i32,
     ) -> bool {
-        // Ensure apartment exists and is handled correctly ??
-        // Actually, we're just updating the ownership model state here.
-        // We probably need to verify it's not already owned?
-
         use super::ownership::CondoBoard;
 
         // Check if apartment exists
@@ -225,7 +237,7 @@ impl Building {
         }
 
         // Initialize board if rental
-        match &mut self.ownership_model {
+        let converted = match &mut self.ownership_model {
             OwnershipType::FullRental => {
                 let mut board = CondoBoard::new();
                 board.add_unit(apartment_id, owner_name, 200, sale_price); // $200 HOA default
@@ -238,14 +250,14 @@ impl Building {
                     return false; // Already owned
                 }
                 board.add_unit(apartment_id, owner_name, 200, sale_price);
-
-                // If all units sold, switch to FullCondo ??
-                // Logic for "all units" check might be expensive here?
-                // Let's just keep Mixed for now unless strict transition needed.
                 true
             }
             _ => false, // Can't convert from Coop/Social easily yet
+        };
+        if converted {
+            self.normalize_condo_ownership();
         }
+        converted
     }
     pub fn update_ownership(&mut self, current_month: u32) -> bool {
         match &mut self.ownership_model {
@@ -268,6 +280,15 @@ impl Building {
         }
     }
 
+    pub fn sold_unit_count(&self) -> usize {
+        match &self.ownership_model {
+            OwnershipType::MixedOwnership(board) | OwnershipType::FullCondo(board) => {
+                board.units.len()
+            }
+            _ => 0,
+        }
+    }
+
     /// Get the condo info for a sold unit (owner name, HOA, purchase price)
     pub fn get_condo_info(&self, apartment_id: u32) -> Option<(String, i32)> {
         match &self.ownership_model {
@@ -280,31 +301,52 @@ impl Building {
         }
     }
 
-    /// Buy back a condo unit (returns cost if successful)
-    pub fn buyback_condo(&mut self, apartment_id: u32) -> Option<i32> {
-        match &mut self.ownership_model {
-            OwnershipType::MixedOwnership(board) | OwnershipType::FullCondo(board) => {
-                if let Some(idx) = board
-                    .units
-                    .iter()
-                    .position(|u| u.apartment_id == apartment_id)
-                {
-                    // Buyback costs 110% of original purchase price
-                    let buyback_price = (board.units[idx].purchase_price as f32 * 1.1) as i32;
-                    board.units.remove(idx);
-
-                    // If no more sold units, revert to FullRental
-                    if board.units.is_empty() {
-                        self.ownership_model = OwnershipType::FullRental;
-                    }
-
-                    Some(buyback_price)
-                } else {
-                    None
-                }
-            }
+    /// Quote a condo buyback without changing ownership.
+    pub fn condo_buyback_price(&self, apartment_id: u32) -> Option<i32> {
+        match &self.ownership_model {
+            OwnershipType::MixedOwnership(board) | OwnershipType::FullCondo(board) => board
+                .units
+                .iter()
+                .find(|unit| unit.apartment_id == apartment_id)
+                .map(|unit| (unit.purchase_price as f32 * 1.1) as i32),
             _ => None,
         }
+    }
+
+    /// Complete a previously validated condo buyback.
+    pub fn complete_condo_buyback(&mut self, apartment_id: u32) -> bool {
+        match &mut self.ownership_model {
+            OwnershipType::MixedOwnership(board) | OwnershipType::FullCondo(board) => {
+                let Some(index) = board
+                    .units
+                    .iter()
+                    .position(|unit| unit.apartment_id == apartment_id)
+                else {
+                    return false;
+                };
+                board.units.remove(index);
+            }
+            _ => return false,
+        }
+
+        self.normalize_condo_ownership();
+        true
+    }
+
+    fn normalize_condo_ownership(&mut self) {
+        let ownership = std::mem::take(&mut self.ownership_model);
+        self.ownership_model = match ownership {
+            OwnershipType::MixedOwnership(board) | OwnershipType::FullCondo(board) => {
+                if board.units.is_empty() {
+                    OwnershipType::FullRental
+                } else if board.units.len() == self.apartments.len() {
+                    OwnershipType::FullCondo(board)
+                } else {
+                    OwnershipType::MixedOwnership(board)
+                }
+            }
+            other => other,
+        };
     }
 }
 
@@ -338,6 +380,38 @@ mod tests {
 
         assert_eq!(building.vacancy_count(), 4);
         assert_eq!(building.occupancy_count(), 2);
+    }
+
+    #[test]
+    fn sold_condos_leave_the_rental_roll() {
+        let mut building = Building::new("Test", 1, 2);
+        building.get_apartment_mut(0).unwrap().move_in(7);
+        assert!(building.convert_unit_to_condo(0, "Owner", 20_000));
+
+        assert_eq!(building.rental_unit_count(), 1);
+        assert_eq!(building.occupancy_count(), 0);
+        assert_eq!(building.vacancy_count(), 1);
+        assert!(!building.has_full_rental_occupancy());
+    }
+
+    #[test]
+    fn buyback_quote_does_not_change_ownership() {
+        let mut building = Building::new("Test", 1, 1);
+        assert!(building.convert_unit_to_condo(0, "Owner", 20_000));
+        assert!(matches!(
+            building.ownership_model,
+            OwnershipType::FullCondo(_)
+        ));
+
+        assert_eq!(building.condo_buyback_price(0), Some(22_000));
+        assert!(building.is_unit_sold(0));
+        assert!(building.complete_condo_buyback(0));
+        assert!(matches!(
+            building.ownership_model,
+            OwnershipType::FullRental
+        ));
+        assert!(!building.is_unit_sold(0));
+        assert_eq!(building.vacancy_count(), 1);
     }
 
     #[test]

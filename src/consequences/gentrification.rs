@@ -1,5 +1,5 @@
 use crate::data::config::GentrificationConfig;
-use crate::tenant::TenantArchetype;
+use crate::tenant::{Tenant, TenantArchetype};
 use serde::{Deserialize, Serialize};
 
 /// Tracks a displacement event
@@ -104,15 +104,45 @@ impl GentrificationTracker {
         }
     }
 
+    /// Record the forced departure caused by converting an occupied rental to
+    /// a privately owned condo.
+    pub fn record_unit_conversion(
+        &mut self,
+        tenant: &Tenant,
+        rent: i32,
+        month: u32,
+        building_name: &str,
+        neighborhood_name: &str,
+        config: &GentrificationConfig,
+    ) {
+        self.displacements.push(DisplacementEvent {
+            tenant_name: tenant.name.clone(),
+            archetype: tenant.archetype.clone(),
+            original_rent: rent,
+            final_rent: rent,
+            months_resided: tenant.months_residing,
+            reason: DisplacementReason::UnitConversion,
+            month,
+            building_name: building_name.to_string(),
+            neighborhood_name: neighborhood_name.to_string(),
+        });
+        self.gentrification_score =
+            (self.gentrification_score + 5).min(config.max_gentrification_score);
+    }
+
     /// Update affordable unit count
     pub fn update_affordable_units(
         &mut self,
-        apartments: &[crate::building::Apartment],
+        building: &crate::building::Building,
         config: &GentrificationConfig,
     ) {
-        self.affordable_units = apartments
+        self.affordable_units = building
+            .apartments
             .iter()
-            .filter(|a| a.rent_price <= config.affordable_threshold)
+            .filter(|apartment| {
+                !building.is_unit_sold(apartment.id)
+                    && apartment.rent_price <= config.affordable_threshold
+            })
             .count() as u32;
     }
 }
